@@ -22,40 +22,58 @@
 
 /* ============================================================
    Image Position — desktop base rules
-   Classes are on the Elementor widget wrapper via prefix_class.
+   Classes are added to the Elementor widget wrapper via prefix_class.
+
+   Gap margin specificity note
+   ───────────────────────────
+   Elementor's frontend.min.css contains:
+     .elementor .elementor-widget:not(...):not(...) figure { margin: 0 }
+   which has specificity (0,4,1) and resets all figure margins.
+
+   Rules that only set float / display / order use short selectors
+   (no conflict). Rules that set the gap margin use the longer form
+     .elementor-widget.elementor-widget-dte_editorial_text.e-et-flow-X figure.dte-et-figure
+   which also reaches (0,4,1) and wins by source order (our stylesheet
+   is enqueued after Elementor's frontend CSS).
    ============================================================ */
 
-/*
- * NOTE: Elementor's frontend.min.css resets all <figure> margins with a
- * high-specificity selector (0,4,1). We use !important on the gap side only
- * so the user-controlled distance always applies. The other sides stay 0.
- */
-
-/* none / before — image is a block element above text */
+/* none / before — layout */
 .e-et-flow-none .dte-et-figure,
-.e-et-flow-before .dte-et-figure {
-	display: block;
-	margin-bottom: var(--dte-et-gap, 1em) !important;
+.e-et-flow-before .dte-et-figure { display: block; }
+
+/* none / before — gap */
+.elementor-widget.elementor-widget-dte_editorial_text.e-et-flow-none figure.dte-et-figure,
+.elementor-widget.elementor-widget-dte_editorial_text.e-et-flow-before figure.dte-et-figure {
+	margin-bottom: var(--dte-et-gap, 1em);
 }
 
-/* after — image rendered first in DOM, reordered below text via flexbox */
+/* after — layout */
 .e-et-flow-after .dte-editorial-text {
 	display: flex;
 	flex-direction: column;
 }
-.e-et-flow-after .dte-et-figure { order: 2; margin-top: var(--dte-et-gap, 1em) !important; }
+.e-et-flow-after .dte-et-figure { order: 2; }
 .e-et-flow-after .dte-et-text   { order: 1; }
 
-/* float_left */
-.e-et-flow-float_left .dte-et-figure {
-	float: left;
-	margin-right: var(--dte-et-gap, 1.5em) !important;
+/* after — gap */
+.elementor-widget.elementor-widget-dte_editorial_text.e-et-flow-after figure.dte-et-figure {
+	margin-top: var(--dte-et-gap, 1em);
 }
 
-/* float_right */
-.e-et-flow-float_right .dte-et-figure {
-	float: right;
-	margin-left: var(--dte-et-gap, 1.5em) !important;
+/* float_left — layout */
+.e-et-flow-float_left .dte-et-figure { float: left; }
+
+/* float_left — gap */
+.elementor-widget.elementor-widget-dte_editorial_text.e-et-flow-float_left figure.dte-et-figure {
+	margin-right: var(--dte-et-gap, 1.5em);
+}
+
+/* float_right — layout */
+.e-et-flow-float_right .dte-et-figure { float: right; }
+
+/* float_right — gap */
+.elementor-widget.elementor-widget-dte_editorial_text.e-et-flow-float_right figure.dte-et-figure {
+	margin-left: var(--dte-et-gap, 1.5em);
 }
 
 /* Clearfix — CSS ::after replaces the old <div class="dte-et-clearfix"> */
@@ -71,12 +89,10 @@
    ============================================================ */
 
 /*
- * text-align on the wrapper cascades into .dte-et-text.
- * align-items is harmless on display:block but activates for
- * the 'after' flex mode, centering / right-aligning flex children.
- * display:inline-block on the figure lets it respond to the
- * parent's text-align (works in block layout; float overrides it
- * in float modes, so no side-effect there).
+ * text-align cascades into .dte-et-text.
+ * align-items activates only in 'after' flex mode.
+ * display:inline-block on the figure lets it respond to text-align
+ * in block layout; float overrides it in float modes.
  */
 
 .e-et-align-left .dte-editorial-text   { text-align: left;   align-items: flex-start; }
@@ -93,45 +109,63 @@
 
 @media (max-width: 1024px) {
 
-	/* none / before */
+	/* none / before — layout */
 	.e-et-tablet-flow-none .dte-et-figure,
 	.e-et-tablet-flow-before .dte-et-figure {
 		float: none;
-		margin: 0 0 1em 0;
 		order: unset;
 	}
 	.e-et-tablet-flow-none .dte-editorial-text,
-	.e-et-tablet-flow-before .dte-editorial-text {
-		display: block;
+	.e-et-tablet-flow-before .dte-editorial-text { display: block; }
+
+	/* none / before — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-tablet-flow-none figure.dte-et-figure,
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-tablet-flow-before figure.dte-et-figure {
+		margin-top: 0;
+		margin-right: 0;
+		margin-left: 0;
+		margin-bottom: var(--dte-et-gap, 1em);
 	}
 
-	/* after */
+	/* after — layout */
 	.e-et-tablet-flow-after .dte-editorial-text {
 		display: flex;
 		flex-direction: column;
 	}
-	.e-et-tablet-flow-after .dte-et-figure {
-		float: none;
-		order: 2;
-		margin: 1em 0 0;
-	}
-	.e-et-tablet-flow-after .dte-et-text { order: 1; }
+	.e-et-tablet-flow-after .dte-et-figure { float: none; order: 2; }
+	.e-et-tablet-flow-after .dte-et-text   { order: 1; }
 
-	/* float_left */
-	.e-et-tablet-flow-float_left .dte-et-figure {
-		float: left;
-		margin: 0 1.5em 1em 0;
-		order: unset;
+	/* after — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-tablet-flow-after figure.dte-et-figure {
+		margin-bottom: 0;
+		margin-right: 0;
+		margin-left: 0;
+		margin-top: var(--dte-et-gap, 1em);
 	}
+
+	/* float_left — layout */
+	.e-et-tablet-flow-float_left .dte-et-figure { float: left; order: unset; }
 	.e-et-tablet-flow-float_left .dte-editorial-text { display: block; }
 
-	/* float_right */
-	.e-et-tablet-flow-float_right .dte-et-figure {
-		float: right;
-		margin: 0 0 1em 1.5em;
-		order: unset;
+	/* float_left — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-tablet-flow-float_left figure.dte-et-figure {
+		margin-top: 0;
+		margin-bottom: 0;
+		margin-left: 0;
+		margin-right: var(--dte-et-gap, 1.5em);
 	}
+
+	/* float_right — layout */
+	.e-et-tablet-flow-float_right .dte-et-figure { float: right; order: unset; }
 	.e-et-tablet-flow-float_right .dte-editorial-text { display: block; }
+
+	/* float_right — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-tablet-flow-float_right figure.dte-et-figure {
+		margin-top: 0;
+		margin-bottom: 0;
+		margin-right: 0;
+		margin-left: var(--dte-et-gap, 1.5em);
+	}
 
 	/* Clearfix for tablet floats */
 	.e-et-tablet-flow-float_left .dte-editorial-text::after,
@@ -164,45 +198,63 @@
 
 @media (max-width: 767px) {
 
-	/* none / before */
+	/* none / before — layout */
 	.e-et-mobile-flow-none .dte-et-figure,
 	.e-et-mobile-flow-before .dte-et-figure {
 		float: none;
-		margin: 0 0 1em 0;
 		order: unset;
 	}
 	.e-et-mobile-flow-none .dte-editorial-text,
-	.e-et-mobile-flow-before .dte-editorial-text {
-		display: block;
+	.e-et-mobile-flow-before .dte-editorial-text { display: block; }
+
+	/* none / before — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-mobile-flow-none figure.dte-et-figure,
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-mobile-flow-before figure.dte-et-figure {
+		margin-top: 0;
+		margin-right: 0;
+		margin-left: 0;
+		margin-bottom: var(--dte-et-gap, 1em);
 	}
 
-	/* after */
+	/* after — layout */
 	.e-et-mobile-flow-after .dte-editorial-text {
 		display: flex;
 		flex-direction: column;
 	}
-	.e-et-mobile-flow-after .dte-et-figure {
-		float: none;
-		order: 2;
-		margin: 1em 0 0;
-	}
-	.e-et-mobile-flow-after .dte-et-text { order: 1; }
+	.e-et-mobile-flow-after .dte-et-figure { float: none; order: 2; }
+	.e-et-mobile-flow-after .dte-et-text   { order: 1; }
 
-	/* float_left */
-	.e-et-mobile-flow-float_left .dte-et-figure {
-		float: left;
-		margin: 0 1.5em 1em 0;
-		order: unset;
+	/* after — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-mobile-flow-after figure.dte-et-figure {
+		margin-bottom: 0;
+		margin-right: 0;
+		margin-left: 0;
+		margin-top: var(--dte-et-gap, 1em);
 	}
+
+	/* float_left — layout */
+	.e-et-mobile-flow-float_left .dte-et-figure { float: left; order: unset; }
 	.e-et-mobile-flow-float_left .dte-editorial-text { display: block; }
 
-	/* float_right */
-	.e-et-mobile-flow-float_right .dte-et-figure {
-		float: right;
-		margin: 0 0 1em 1.5em;
-		order: unset;
+	/* float_left — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-mobile-flow-float_left figure.dte-et-figure {
+		margin-top: 0;
+		margin-bottom: 0;
+		margin-left: 0;
+		margin-right: var(--dte-et-gap, 1.5em);
 	}
+
+	/* float_right — layout */
+	.e-et-mobile-flow-float_right .dte-et-figure { float: right; order: unset; }
 	.e-et-mobile-flow-float_right .dte-editorial-text { display: block; }
+
+	/* float_right — gap */
+	.elementor-widget.elementor-widget-dte_editorial_text.e-et-mobile-flow-float_right figure.dte-et-figure {
+		margin-top: 0;
+		margin-bottom: 0;
+		margin-right: 0;
+		margin-left: var(--dte-et-gap, 1.5em);
+	}
 
 	/* Clearfix for mobile floats */
 	.e-et-mobile-flow-float_left .dte-editorial-text::after,
@@ -227,5 +279,4 @@
 
 	.e-et-mobile-align-right .dte-editorial-text  { text-align: right;  align-items: flex-end; }
 	.e-et-mobile-align-right .dte-et-figure       { display: inline-block; }
-	.e-et-mobile-align-right .dte-et-figure  { margin-left: auto; margin-right: 0; }
 }
