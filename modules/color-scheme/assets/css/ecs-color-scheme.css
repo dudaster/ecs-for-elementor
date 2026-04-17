@@ -1,0 +1,93 @@
+/* ============================================================
+   DTE Color Scheme Module
+   ============================================================
+   CSS custom properties define both the default and the
+   alternative (alt) scheme.  Switching is done by setting
+   data-dte-scheme="alt" on <html>.
+   ============================================================ */
+
+/* ── Default scheme variables ─────────────────────────────── */
+:root {
+	--dte-color-primary:    #2271b1;
+	--dte-color-secondary:  #135e96;
+	--dte-color-text:       #1e1e1e;
+	--dte-color-accent:     #d63638;
+	--dte-color-bg:         #ffffff;
+	--dte-color-bg-alt:     #f6f6f6;
+}
+
+/* ── Alternative scheme overrides ────────────────────────────
+   These only apply when <html data-dte-scheme="alt">
+   ──────────────────────────────────────────────────────────── */
+[data-dte-scheme="alt"] {
+	--dte-color-primary:    #3a9ad4;
+	--dte-color-secondary:  #1e6fa0;
+	--dte-color-text:       #f0f0f0;
+	--dte-color-accent:     #ff6b6b;
+	--dte-color-bg:         #1a1a2e;
+	--dte-color-bg-alt:     #16213e;
+}
+
+/* ── Dark Mode Switcher Widget ────────────────────────────── */
+
+/* Wrapper is a flex row; justify-content is set by Elementor controls */
+.dte-dms-wrap {
+	display: flex;
+	align-items: center;
+}
+
+/* ── Button base ──────────────────────────────────────────── */
+
+.dte-dms-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 8px 16px;
+	background: transparent;
+	color: inherit;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	cursor: pointer;
+	font: inherit;
+	line-height: 1;
+	transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.dte-dms-btn:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+/* ── Toggle: state spans are layout-transparent ───────────── */
+
+/* Span wrappers dissolve into button's flex layout */
+.dte-dms-state {
+	display: contents;
+}
+
+/* Default scheme: hide dark state */
+.dte-dms-type-toggle .dte-dms-state-dark {
+	display: none;
+}
+
+/* Alt scheme: hide light state, reveal dark state */
+.dte-dms-type-toggle.is-alt .dte-dms-state-light {
+	display: none;
+}
+
+.dte-dms-type-toggle.is-alt .dte-dms-state-dark {
+	display: contents;
+}
+
+/* ── Dropdown ─────────────────────────────────────────────── */
+
+.dte-dms-select {
+	padding: 8px 12px;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}

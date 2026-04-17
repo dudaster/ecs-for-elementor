@@ -1,0 +1,147 @@
+/* ============================================================
+   DTE Mobile Menu — WordPress Menu Responsive Layout Controls
+   ============================================================
+
+   HOW IT WORKS
+   ─────────────────────────────────────────────────────────
+   Elementor PHP does NOT add breakpoint prefixes (tablet-/mobile-)
+   to prefix_class values. All breakpoint values of the `layout`
+   responsive control are added as dte-nav-layout-{value} without
+   any device prefix, meaning the same class appears multiple times
+   when multiple breakpoints share a value.
+
+   To handle responsive behaviour correctly, we use CSS Custom
+   Properties (--dte-nav-main-display, etc.) that are set by
+   Elementor's dynamic CSS engine via the `selectors` configuration
+   in upgrade_layout(). Elementor generates:
+     • @media max-width rules for frontend
+     • body.elementor-device-* rules for editor device preview
+
+   The presence of any dte-nav-layout-* class on the wrapper
+   indicates DTE layout is active for that widget, scoping our
+   CSS variable rules so they never affect other nav-menu widgets.
+   ============================================================ */
+
+/* Apply CSS variables to nav-menu elements when DTE layout is active.
+   Fallbacks (flex / row / none) = default "horizontal" behaviour.    */
+
+.dte-nav-layout-horizontal .elementor-nav-menu--main,
+.dte-nav-layout-vertical   .elementor-nav-menu--main,
+.dte-nav-layout-dropdown   .elementor-nav-menu--main {
+	display: var( --dte-nav-main-display, flex ) !important;
+}
+
+/* flex-direction must target the inner <ul>, not the <nav> wrapper */
+.dte-nav-layout-horizontal .elementor-nav-menu--main .elementor-nav-menu,
+.dte-nav-layout-vertical   .elementor-nav-menu--main .elementor-nav-menu,
+.dte-nav-layout-dropdown   .elementor-nav-menu--main .elementor-nav-menu {
+	flex-direction: var( --dte-nav-main-dir, row ) !important;
+}
+
+.dte-nav-layout-horizontal .elementor-menu-toggle,
+.dte-nav-layout-vertical   .elementor-menu-toggle,
+.dte-nav-layout-dropdown   .elementor-menu-toggle {
+	display: var( --dte-nav-toggle-display, none ) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DROPDOWN ALIGNMENT — follows Toggle Button align
+   Uses prefix_class dte-toggle-align-{left|center|right} set
+   by the Toggle Align CHOOSE control.
+
+   NOTE: Elementor only sets position:absolute on the dropdown
+   when Full Width (stretch) is ON. For non-stretch dropdowns,
+   the panel is position:static, so left/right have no effect.
+   We add position:absolute here when any dte-toggle-align-*
+   class is present. The widget wrapper is position:relative,
+   so absolute positioning is correct.
+
+   Skipped when Full Width is ON (:not(.elementor-nav-menu--stretch))
+   to avoid conflict with the stretch rules below.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Base: make dropdown absolutely positioned when DTE align is active.
+   top: 100% places it immediately below the widget (same as Full Width). */
+.dte-toggle-align-left:not(.elementor-nav-menu--stretch)
+	.elementor-nav-menu--dropdown.elementor-nav-menu__container,
+.dte-toggle-align-center:not(.elementor-nav-menu--stretch)
+	.elementor-nav-menu--dropdown.elementor-nav-menu__container,
+.dte-toggle-align-right:not(.elementor-nav-menu--stretch)
+	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
+	position:  absolute    !important;
+	top:       100%        !important;
+	width:     auto        !important;
+	min-width: max-content;
+}
+
+.dte-toggle-align-left:not(.elementor-nav-menu--stretch)
+	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
+	left:  0    !important;
+	right: auto !important;
+}
+
+.dte-toggle-align-center:not(.elementor-nav-menu--stretch)
+	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
+	left:      50%                !important;
+	right:     auto               !important;
+	transform: translateX( -50% ) !important;
+}
+
+.dte-toggle-align-right:not(.elementor-nav-menu--stretch)
+	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
+	right: 0    !important;
+	left:  auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FIX: Dropdown panel width (Fill Width ON)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Fill Width ON → full width (reinforce existing behaviour) */
+.elementor-nav-menu--stretch
+	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
+	width: 100% !important;
+	left:  0    !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FORCE BREAKPOINT
+   When "Force Breakpoint" is ON, the menu switches to dropdown
+   mode at the Elementor native breakpoint regardless of the DTE
+   Layout setting.
+
+   Combines .dte-force-breakpoint (DTE prefix_class) with
+   .elementor-nav-menu--dropdown-{mobile|tablet} (Elementor's own
+   prefix_class for the Breakpoint control) to target exactly the
+   right viewport without needing JS.
+
+   CSS custom properties use !important to override the inline
+   variables set by dte-mobile-menu-editor.js in the editor.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Frontend: Mobile breakpoint (≤ 767px) */
+@media (max-width: 767px) {
+	.dte-force-breakpoint.elementor-nav-menu--dropdown-mobile {
+		--dte-nav-main-display:   none !important;
+		--dte-nav-main-dir:       row  !important;
+		--dte-nav-toggle-display: flex !important;
+	}
+}
+
+/* Frontend: Tablet breakpoint (≤ 1024px, covers mobile too) */
+@media (max-width: 1024px) {
+	.dte-force-breakpoint.elementor-nav-menu--dropdown-tablet {
+		--dte-nav-main-display:   none !important;
+		--dte-nav-main-dir:       row  !important;
+		--dte-nav-toggle-display: flex !important;
+	}
+}
+
+/* Editor device preview */
+body.elementor-device-mobile .dte-force-breakpoint.elementor-nav-menu--dropdown-mobile,
+body.elementor-device-mobile .dte-force-breakpoint.elementor-nav-menu--dropdown-tablet,
+body.elementor-device-tablet .dte-force-breakpoint.elementor-nav-menu--dropdown-tablet {
+	--dte-nav-main-display:   none !important;
+	--dte-nav-main-dir:       row  !important;
+	--dte-nav-toggle-display: flex !important;
+}

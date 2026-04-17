@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+*.min.js
+*.min.css
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# WordPress
+*.log
+
+# Tests / local dev
+tests/results/

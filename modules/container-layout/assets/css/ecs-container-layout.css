@@ -1,0 +1,320 @@
+/* ============================================================
+   DTE Container Layout Module
+   ============================================================ */
+
+/* ── Fix --display for DTE modes ─────────────────────────── */
+/*
+ * dte_container_type responsive control uses prefix_class 'e-dte%s-'.
+ * Desktop: e-dte-slider, e-dte-custom, e-dte-flex, e-dte-grid
+ * Tablet:  e-dte-tablet-flex, e-dte-tablet-grid, etc.
+ * Mobile:  e-dte-mobile-flex, e-dte-mobile-grid, etc.
+ *
+ * Elementor's --display CSS var must be overridden for DTE modes.
+ * Two-class specificity (0-0-2-0) beats Elementor's single-class rule.
+ */
+.e-con.e-dte-slider,
+.e-con.e-dte-custom {
+	--display: flex;
+}
+
+/* Desktop flex/grid classes from our responsive control */
+.e-con.e-dte-flex {
+	--display: flex;
+	display: flex;
+}
+.e-con.e-dte-grid {
+	--display: grid;
+	display: grid;
+}
+
+/* ── Slider mode (Swiper) ─────────────────────────────────── */
+
+/*
+ * Editor preview: buffering is disabled in edit mode, so children are
+ * rendered directly inside the container (no Swiper wrapper).
+ * A simple horizontal scroll gives a basic visual indication.
+ */
+.e-con.e-dte-slider {
+	overflow-x: auto;
+	flex-wrap: nowrap !important;
+}
+.e-con.e-dte-slider > .e-con-inner {
+	flex-wrap: nowrap !important;
+}
+
+/*
+ * Editor: real children are moved into swiper slides. Hide the now-empty
+ * .e-con-inner (Boxed containers) so it doesn't occupy space or show
+ * Elementor's "drag widget here" placeholder.
+ * Full Width containers have no .e-con-inner — no rule needed.
+ */
+.dte-editor-slider-active > .e-con-inner {
+	display: none !important;
+}
+
+/*
+ * Live mode: outer container allows overflow so arrow buttons that are
+ * positioned outside the swiper are visible.
+ * The .dte-swiper wrapper clips the slides.
+ */
+.e-con.e-dte-slider {
+	overflow: visible;
+}
+
+.dte-swiper {
+	width: 100%;
+	overflow: hidden;
+	position: relative;
+}
+
+/* ── Custom Layout mode ───────────────────────────────────── */
+
+.e-con.e-dte-custom > .e-con-inner {
+	display: contents;
+}
+
+/*
+ * Live mode: wrapper emitted by after_container_render() around all cycling
+ * template instances. flex-direction is set inline from the dte_direction
+ * control; width:100% + flex-wrap:wrap ensure correct block behaviour.
+ */
+.ecs-custom-layout-wrap {
+	width: 100%;
+	flex-wrap: wrap;
+}
+
+/* ── Missing placeholder fallback ────────────────────────── */
+
+.dte-missing-placeholder {
+	outline: 2px dashed #d63638;
+}
+
+.dte-missing-placeholder::after {
+	content: 'DTE: missing placeholder';
+	display: block;
+	background: #d63638;
+	color: #fff;
+	font-size: 11px;
+	padding: 2px 6px;
+	text-align: center;
+}
+
+/* ── Editor: Placeholder hint ────────────────────────────── */
+
+.dte-placeholder-editor-hint {
+	min-height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* ── Hide empty slot containers ──────────────────────────── */
+/*
+ * .e-dte-hide-empty-slots appears in two contexts:
+ *  - Editor: on the .e-con container itself (Elementor applies prefix_class)
+ *  - Live:   on a display:contents wrapper div emitted by after_container_render
+ * Both cases work with this selector (no .e-con requirement on the ancestor).
+ */
+
+/* Boxed mode: slot container wraps e-con-inner > widget */
+.e-dte-hide-empty-slots .e-con:has(
+	> .e-con-inner
+	> .elementor-widget-dte_container_placeholder
+	> .elementor-widget-container
+	> .dte-slot-empty
+) {
+	display: none;
+}
+
+/* Full Width mode: slot container wraps widget directly */
+.e-dte-hide-empty-slots .e-con:has(
+	> .elementor-widget-dte_container_placeholder
+	> .elementor-widget-container
+	> .dte-slot-empty
+) {
+	display: none;
+}
+
+/* ── Editor: AJAX preview injection ──────────────────────── */
+
+/*
+ * The injected template structure sits inside .e-con-inner alongside the
+ * live child elements that have been moved into its slots.
+ * width: 100% + min-width: 0 ensure it fills a flex parent correctly.
+ */
+.dte-injected-structure {
+	width: 100%;
+	min-width: 0;
+}
+
+/* ── Responsive Layout Override ──────────────────────────── */
+/*
+ * When dte_layout_tablet / dte_layout_mobile is set to 'flex' or 'grid',
+ * the container gets e-dte-tablet-{value} / e-dte-mobile-{value} classes.
+ * Swiper has enabled:false at those breakpoints via JS breakpoints config.
+ * CSS resets the Swiper wrapper so slides behave as normal block elements.
+ */
+
+/* ── Tablet overrides (≤1024px) ──────────────────────────── */
+
+@media (max-width: 1024px) {
+
+	/* Flexbox/Grid → Slider on tablet (desktop is NOT slider) */
+	.e-con.e-dte-tablet-slider {
+		overflow-x: auto;
+		flex-wrap: nowrap !important;
+	}
+	.e-con.e-dte-tablet-slider > .e-con-inner {
+		flex-wrap: nowrap !important;
+	}
+
+	/* Slider → Flexbox on tablet */
+	.e-con.e-dte-slider.e-dte-tablet-flex {
+		overflow: visible;
+	}
+	.e-con.e-dte-slider.e-dte-tablet-flex > .dte-swiper {
+		overflow: visible;
+	}
+	.e-con.e-dte-slider.e-dte-tablet-flex > .dte-swiper > .swiper-wrapper {
+		flex-wrap: wrap;
+		transform: none !important;
+		transition: none !important;
+		width: 100%;
+	}
+	.e-con.e-dte-slider.e-dte-tablet-flex > .dte-swiper > .swiper-wrapper > .swiper-slide {
+		width: 100% !important;
+		height: auto !important;
+		margin-right: 0 !important;
+	}
+	.e-con.e-dte-tablet-flex > .dte-swiper > .elementor-swiper-button,
+	.e-con.e-dte-tablet-flex > .dte-swiper > .swiper-pagination {
+		display: none !important;
+	}
+
+	/* Slider → Grid on tablet */
+	.e-con.e-dte-slider.e-dte-tablet-grid > .dte-swiper {
+		overflow: visible;
+	}
+	.e-con.e-dte-slider.e-dte-tablet-grid > .dte-swiper > .swiper-wrapper {
+		display: grid !important;
+		grid-template-columns: repeat(var(--dte-slider-columns, 2), 1fr) !important;
+		transform: none !important;
+		transition: none !important;
+		width: 100%;
+	}
+	.e-con.e-dte-slider.e-dte-tablet-grid > .dte-swiper > .swiper-wrapper > .swiper-slide {
+		width: auto !important;
+		height: auto !important;
+		margin-right: 0 !important;
+	}
+	.e-con.e-dte-tablet-grid > .dte-swiper > .elementor-swiper-button,
+	.e-con.e-dte-tablet-grid > .dte-swiper > .swiper-pagination {
+		display: none !important;
+	}
+
+	/* Custom Layout → Flexbox on tablet */
+	.e-con.e-dte-custom.e-dte-tablet-flex .dte-injected-structure {
+		display: flex !important;
+		flex-direction: column !important;
+		width: 100%;
+	}
+	.e-con.e-dte-custom.e-dte-tablet-flex .dte-injected-structure > * {
+		width: 100% !important;
+		position: static !important;
+		grid-area: unset !important;
+	}
+
+	/* Custom Layout → Grid on tablet */
+	.e-con.e-dte-custom.e-dte-tablet-grid .dte-injected-structure {
+		display: grid !important;
+		grid-template-columns: repeat(2, 1fr) !important;
+		width: 100%;
+	}
+	.e-con.e-dte-custom.e-dte-tablet-grid .dte-injected-structure > * {
+		width: 100% !important;
+		position: static !important;
+		grid-area: unset !important;
+	}
+}
+
+/* ── Mobile overrides (≤767px) ───────────────────────────── */
+
+@media (max-width: 767px) {
+
+	/* Flexbox/Grid → Slider on mobile (desktop is NOT slider) */
+	.e-con.e-dte-mobile-slider {
+		overflow-x: auto;
+		flex-wrap: nowrap !important;
+	}
+	.e-con.e-dte-mobile-slider > .e-con-inner {
+		flex-wrap: nowrap !important;
+	}
+
+	/* Slider → Flexbox on mobile */
+	.e-con.e-dte-slider.e-dte-mobile-flex {
+		overflow: visible;
+	}
+	.e-con.e-dte-slider.e-dte-mobile-flex > .dte-swiper {
+		overflow: visible;
+	}
+	.e-con.e-dte-slider.e-dte-mobile-flex > .dte-swiper > .swiper-wrapper {
+		flex-wrap: wrap;
+		transform: none !important;
+		transition: none !important;
+		width: 100%;
+	}
+	.e-con.e-dte-slider.e-dte-mobile-flex > .dte-swiper > .swiper-wrapper > .swiper-slide {
+		width: 100% !important;
+		height: auto !important;
+		margin-right: 0 !important;
+	}
+	.e-con.e-dte-mobile-flex > .dte-swiper > .elementor-swiper-button,
+	.e-con.e-dte-mobile-flex > .dte-swiper > .swiper-pagination {
+		display: none !important;
+	}
+
+	/* Slider → Grid on mobile */
+	.e-con.e-dte-slider.e-dte-mobile-grid > .dte-swiper {
+		overflow: visible;
+	}
+	.e-con.e-dte-slider.e-dte-mobile-grid > .dte-swiper > .swiper-wrapper {
+		display: grid !important;
+		grid-template-columns: repeat(var(--dte-slider-columns, 2), 1fr) !important;
+		transform: none !important;
+		transition: none !important;
+		width: 100%;
+	}
+	.e-con.e-dte-slider.e-dte-mobile-grid > .dte-swiper > .swiper-wrapper > .swiper-slide {
+		width: auto !important;
+		height: auto !important;
+		margin-right: 0 !important;
+	}
+	.e-con.e-dte-mobile-grid > .dte-swiper > .elementor-swiper-button,
+	.e-con.e-dte-mobile-grid > .dte-swiper > .swiper-pagination {
+		display: none !important;
+	}
+
+	/* Custom Layout → Flexbox on mobile */
+	.e-con.e-dte-custom.e-dte-mobile-flex .dte-injected-structure {
+		display: flex !important;
+		flex-direction: column !important;
+		width: 100%;
+	}
+	.e-con.e-dte-custom.e-dte-mobile-flex .dte-injected-structure > * {
+		width: 100% !important;
+		position: static !important;
+		grid-area: unset !important;
+	}
+
+	/* Custom Layout → Grid on mobile */
+	.e-con.e-dte-custom.e-dte-mobile-grid .dte-injected-structure {
+		display: grid !important;
+		grid-template-columns: repeat(2, 1fr) !important;
+		width: 100%;
+	}
+	.e-con.e-dte-custom.e-dte-mobile-grid .dte-injected-structure > * {
+		width: 100% !important;
+		position: static !important;
+		grid-area: unset !important;
+	}
+}

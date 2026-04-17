@@ -1,0 +1,72 @@
+/* ============================================================
+   DTE Editorial Text Module
+   ============================================================ */
+
+/* ── Figure ───────────────────────────────────────────────── */
+
+.dte-et-figure {
+	margin: 0;      /* Reset browser default <figure> margin */
+	line-height: 0; /* Prevents inline-block gap below img */
+}
+
+.dte-et-figure img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
+/* ── Flow: none (image block above text) ─────────────────── */
+
+.dte-et-flow-none .dte-et-figure {
+	display: block;
+	margin-bottom: 1em;
+}
+
+/* ── Flow: before / after (flex column) ──────────────────── */
+
+.dte-et-flow-before,
+.dte-et-flow-after {
+	display: flex;
+	flex-direction: column;
+}
+
+.dte-et-flow-before .dte-et-figure {
+	margin-bottom: 1em;
+}
+
+.dte-et-flow-after .dte-et-figure {
+	margin-top: 1em;
+}
+
+/* ── Flow: float_left ─────────────────────────────────────── */
+
+.dte-et-flow-float_left .dte-et-figure {
+	float: left;
+	margin: 0 1.5em 1em 0;
+}
+
+/* ── Flow: float_right ────────────────────────────────────── */
+
+.dte-et-flow-float_right .dte-et-figure {
+	float: right;
+	margin: 0 0 1em 1.5em;
+}
+
+/* ── Clearfix (float modes only) ──────────────────────────── */
+
+.dte-et-clearfix {
+	clear: both;
+	display: block;
+	height: 0;
+	overflow: hidden;
+}
+
+/* ── Text ─────────────────────────────────────────────────── */
+
+.dte-et-text > *:first-child {
+	margin-top: 0;
+}
+
+.dte-et-text > *:last-child {
+	margin-bottom: 0;
+}
