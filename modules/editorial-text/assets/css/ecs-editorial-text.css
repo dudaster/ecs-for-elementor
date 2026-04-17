@@ -25,11 +25,17 @@
    Classes are on the Elementor widget wrapper via prefix_class.
    ============================================================ */
 
+/*
+ * NOTE: Elementor's frontend.min.css resets all <figure> margins with a
+ * high-specificity selector (0,4,1). We use !important on the gap side only
+ * so the user-controlled distance always applies. The other sides stay 0.
+ */
+
 /* none / before — image is a block element above text */
 .e-et-flow-none .dte-et-figure,
 .e-et-flow-before .dte-et-figure {
 	display: block;
-	margin-bottom: 1em;
+	margin-bottom: var(--dte-et-gap, 1em) !important;
 }
 
 /* after — image rendered first in DOM, reordered below text via flexbox */
@@ -37,19 +43,19 @@
 	display: flex;
 	flex-direction: column;
 }
-.e-et-flow-after .dte-et-figure { order: 2; margin-top: 1em; }
+.e-et-flow-after .dte-et-figure { order: 2; margin-top: var(--dte-et-gap, 1em) !important; }
 .e-et-flow-after .dte-et-text   { order: 1; }
 
 /* float_left */
 .e-et-flow-float_left .dte-et-figure {
 	float: left;
-	margin: 0 1.5em 1em 0;
+	margin-right: var(--dte-et-gap, 1.5em) !important;
 }
 
 /* float_right */
 .e-et-flow-float_right .dte-et-figure {
 	float: right;
-	margin: 0 0 1em 1.5em;
+	margin-left: var(--dte-et-gap, 1.5em) !important;
 }
 
 /* Clearfix — CSS ::after replaces the old <div class="dte-et-clearfix"> */

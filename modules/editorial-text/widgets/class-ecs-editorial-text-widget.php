@@ -1,6 +1,6 @@
 <?php
 /**
- * Elementor Widget: DTE Editorial Text
+ * Elementor Widget: ECS Editorial Text
  *
  * Combines WYSIWYG content with an optional image.
  * Image can flow as: none / before / after / float_left / float_right.
@@ -15,6 +15,7 @@ use Elementor\Controls_Manager;
 use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Image_Size;
 use Elementor\Group_Control_Box_Shadow;
+use Elementor\Group_Control_Border;
 
 class ECS_Editorial_Text_Widget extends Widget_Base {
 
@@ -42,6 +43,7 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 		$this->register_content_controls();
 		$this->register_image_settings_controls();
 		$this->register_style_text_controls();
+		$this->register_style_image_controls();
 	}
 
 	// ── Content Tab ───────────────────────────────────────────────────────────
@@ -97,6 +99,7 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 	}
 
 	// ── Image Settings Section (Content Tab) ──────────────────────────────────
+	// Keeps only the WP image size selector — all visual styling is in Style > Image.
 
 	private function register_image_settings_controls(): void {
 
@@ -106,14 +109,79 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 			'condition' => [ 'dte_et_image[url]!' => '' ],
 		] );
 
-		// 'name' => 'dte_et_image' generates:
-		//   dte_et_image_size              (WP size slug)
-		//   dte_et_image_custom_dimension  (custom width/height)
-		// Both are read by get_attachment_image_html() via the same 'dte_et_image' key.
+		// 'name' => 'dte_et_image' generates dte_et_image_size + dte_et_image_custom_dimension,
+		// both read by Group_Control_Image_Size::get_attachment_image_html().
 		$this->add_group_control( Group_Control_Image_Size::get_type(), [
 			'name'    => 'dte_et_image',
 			'default' => 'large',
 		] );
+
+		$this->end_controls_section();
+	}
+
+	// ── Style Tab — Text ──────────────────────────────────────────────────────
+
+	private function register_style_text_controls(): void {
+
+		$this->start_controls_section( 'section_style_text', [
+			'label' => esc_html__( 'Text', 'ele-custom-skin' ),
+			'tab'   => Controls_Manager::TAB_STYLE,
+		] );
+
+		$this->add_group_control( Group_Control_Typography::get_type(), [
+			'name'     => 'dte_et_typography',
+			'selector' => '{{WRAPPER}} .dte-et-text',
+		] );
+
+		$this->add_control( 'dte_et_color', [
+			'label'     => esc_html__( 'Color', 'ele-custom-skin' ),
+			'type'      => Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .dte-et-text' => 'color: {{VALUE}};' ],
+		] );
+
+		$this->end_controls_section();
+	}
+
+	// ── Style Tab — Image ─────────────────────────────────────────────────────
+
+	private function register_style_image_controls(): void {
+
+		$this->start_controls_section( 'section_style_image', [
+			'label'     => esc_html__( 'Image', 'ele-custom-skin' ),
+			'tab'       => Controls_Manager::TAB_STYLE,
+			'condition' => [ 'dte_et_image[url]!' => '' ],
+		] );
+
+		// ── Distance from text ─────────────────────────────────────────────────
+		// Sets --dte-et-gap CSS variable on the widget wrapper.
+		// CSS rules consume it on the correct margin side per flow direction:
+		//   float_left  → margin-right   float_right → margin-left
+		//   none/before → margin-bottom  after       → margin-top
+		$this->add_responsive_control( 'dte_et_img_gap', [
+			'label'      => esc_html__( 'Distance from Text', 'ele-custom-skin' ),
+			'type'       => Controls_Manager::SLIDER,
+			'size_units' => [ 'px', 'em', '%' ],
+			'range'      => [
+				'px' => [ 'min' => 0, 'max' => 200 ],
+				'em' => [ 'min' => 0, 'max' => 10, 'step' => 0.1 ],
+				'%'  => [ 'min' => 0, 'max' => 50 ],
+			],
+			'selectors'  => [
+				'{{WRAPPER}}' => '--dte-et-gap: {{SIZE}}{{UNIT}};',
+			],
+		] );
+
+		$this->add_control( 'dte_et_img_gap_note', [
+			'type'            => Controls_Manager::RAW_HTML,
+			'raw'             => esc_html__( 'Float Left → right gap · Float Right → left gap · Before/None → bottom gap · After → top gap', 'ele-custom-skin' ),
+			'content_classes' => 'elementor-descriptor',
+		] );
+
+		$this->add_control( 'dte_et_style_divider_size', [
+			'type' => Controls_Manager::DIVIDER,
+		] );
+
+		// ── Dimensions ────────────────────────────────────────────────────────
 
 		$this->add_responsive_control( 'dte_et_img_width', [
 			'label'      => esc_html__( 'Width', 'ele-custom-skin' ),
@@ -137,28 +205,16 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 			'selectors'  => [ '{{WRAPPER}} .dte-et-figure' => 'max-width: {{SIZE}}{{UNIT}};' ],
 		] );
 
-		$this->add_responsive_control( 'dte_et_img_margin', [
-			'label'      => esc_html__( 'Margin', 'ele-custom-skin' ),
-			'type'       => Controls_Manager::DIMENSIONS,
-			'size_units' => [ 'px', 'em', '%' ],
-			'selectors'  => [
-				'{{WRAPPER}} .dte-et-figure' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+		$this->add_responsive_control( 'dte_et_img_height', [
+			'label'      => esc_html__( 'Height', 'ele-custom-skin' ),
+			'type'       => Controls_Manager::SLIDER,
+			'size_units' => [ 'px', 'vh', '%' ],
+			'range'      => [
+				'px' => [ 'min' => 50,  'max' => 800 ],
+				'vh' => [ 'min' => 5,   'max' => 100 ],
+				'%'  => [ 'min' => 5,   'max' => 100 ],
 			],
-		] );
-
-		$this->add_responsive_control( 'dte_et_img_border_radius', [
-			'label'      => esc_html__( 'Border Radius', 'ele-custom-skin' ),
-			'type'       => Controls_Manager::DIMENSIONS,
-			'size_units' => [ 'px', '%', 'em' ],
-			'selectors'  => [
-				'{{WRAPPER}} .dte-et-figure'     => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}; overflow: hidden;',
-				'{{WRAPPER}} .dte-et-figure img' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-			],
-		] );
-
-		$this->add_group_control( Group_Control_Box_Shadow::get_type(), [
-			'name'     => 'dte_et_img_box_shadow',
-			'selector' => '{{WRAPPER}} .dte-et-figure',
+			'selectors'  => [ '{{WRAPPER}} .dte-et-figure img' => 'height: {{SIZE}}{{UNIT}};' ],
 		] );
 
 		$this->add_responsive_control( 'dte_et_img_object_fit', [
@@ -174,27 +230,30 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 			'selectors' => [ '{{WRAPPER}} .dte-et-figure img' => 'object-fit: {{VALUE}};' ],
 		] );
 
-		$this->end_controls_section();
-	}
-
-	// ── Style Tab ─────────────────────────────────────────────────────────────
-
-	private function register_style_text_controls(): void {
-
-		$this->start_controls_section( 'section_style_text', [
-			'label' => esc_html__( 'Text', 'ele-custom-skin' ),
-			'tab'   => Controls_Manager::TAB_STYLE,
+		$this->add_control( 'dte_et_style_divider_border', [
+			'type' => Controls_Manager::DIVIDER,
 		] );
 
-		$this->add_group_control( Group_Control_Typography::get_type(), [
-			'name'     => 'dte_et_typography',
-			'selector' => '{{WRAPPER}} .dte-et-text',
+		// ── Border & decoration ───────────────────────────────────────────────
+
+		$this->add_group_control( Group_Control_Border::get_type(), [
+			'name'     => 'dte_et_img_border',
+			'selector' => '{{WRAPPER}} .dte-et-figure',
 		] );
 
-		$this->add_control( 'dte_et_color', [
-			'label'     => esc_html__( 'Color', 'ele-custom-skin' ),
-			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-et-text' => 'color: {{VALUE}};' ],
+		$this->add_responsive_control( 'dte_et_img_border_radius', [
+			'label'      => esc_html__( 'Border Radius', 'ele-custom-skin' ),
+			'type'       => Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', '%', 'em' ],
+			'selectors'  => [
+				'{{WRAPPER}} .dte-et-figure'     => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}; overflow: hidden;',
+				'{{WRAPPER}} .dte-et-figure img' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+			],
+		] );
+
+		$this->add_group_control( Group_Control_Box_Shadow::get_type(), [
+			'name'     => 'dte_et_img_box_shadow',
+			'selector' => '{{WRAPPER}} .dte-et-figure',
 		] );
 
 		$this->end_controls_section();
