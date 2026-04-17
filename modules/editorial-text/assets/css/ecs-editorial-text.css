@@ -95,13 +95,15 @@
  * in block layout; float overrides it in float modes.
  */
 
-.e-et-align-left .dte-editorial-text   { text-align: left;   align-items: flex-start; }
+.e-et-align-left .dte-editorial-text    { text-align: left;    align-items: flex-start; }
 
-.e-et-align-center .dte-editorial-text { text-align: center; align-items: center; }
+.e-et-align-center .dte-editorial-text { text-align: center;  align-items: center; }
 .e-et-align-center .dte-et-figure      { display: inline-block; }
 
-.e-et-align-right .dte-editorial-text  { text-align: right;  align-items: flex-end; }
+.e-et-align-right .dte-editorial-text  { text-align: right;   align-items: flex-end; }
 .e-et-align-right .dte-et-figure       { display: inline-block; }
+
+.e-et-align-justify .dte-editorial-text { text-align: justify; align-items: flex-start; }
 
 /* ============================================================
    Tablet overrides  (≤ 1024px)
@@ -183,13 +185,15 @@
 	}
 
 	/* Content align — tablet */
-	.e-et-tablet-align-left .dte-editorial-text   { text-align: left;   align-items: flex-start; }
+	.e-et-tablet-align-left .dte-editorial-text    { text-align: left;    align-items: flex-start; }
 
-	.e-et-tablet-align-center .dte-editorial-text { text-align: center; align-items: center; }
-	.e-et-tablet-align-center .dte-et-figure      { display: inline-block; }
+	.e-et-tablet-align-center .dte-editorial-text  { text-align: center;  align-items: center; }
+	.e-et-tablet-align-center .dte-et-figure       { display: inline-block; }
 
-	.e-et-tablet-align-right .dte-editorial-text  { text-align: right;  align-items: flex-end; }
-	.e-et-tablet-align-right .dte-et-figure       { display: inline-block; }
+	.e-et-tablet-align-right .dte-editorial-text   { text-align: right;   align-items: flex-end; }
+	.e-et-tablet-align-right .dte-et-figure        { display: inline-block; }
+
+	.e-et-tablet-align-justify .dte-editorial-text { text-align: justify; align-items: flex-start; }
 }
 
 /* ============================================================
@@ -272,11 +276,13 @@
 	}
 
 	/* Content align — mobile */
-	.e-et-mobile-align-left .dte-editorial-text   { text-align: left;   align-items: flex-start; }
+	.e-et-mobile-align-left .dte-editorial-text    { text-align: left;    align-items: flex-start; }
 
-	.e-et-mobile-align-center .dte-editorial-text { text-align: center; align-items: center; }
-	.e-et-mobile-align-center .dte-et-figure      { display: inline-block; }
+	.e-et-mobile-align-center .dte-editorial-text  { text-align: center;  align-items: center; }
+	.e-et-mobile-align-center .dte-et-figure       { display: inline-block; }
 
-	.e-et-mobile-align-right .dte-editorial-text  { text-align: right;  align-items: flex-end; }
-	.e-et-mobile-align-right .dte-et-figure       { display: inline-block; }
+	.e-et-mobile-align-right .dte-editorial-text   { text-align: right;   align-items: flex-end; }
+	.e-et-mobile-align-right .dte-et-figure        { display: inline-block; }
+
+	.e-et-mobile-align-justify .dte-editorial-text { text-align: justify; align-items: flex-start; }
 }

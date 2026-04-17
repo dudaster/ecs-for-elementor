@@ -88,9 +88,10 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 			'label'        => esc_html__( 'Content Align', 'ele-custom-skin' ),
 			'type'         => Controls_Manager::CHOOSE,
 			'options'      => [
-				'left'   => [ 'title' => esc_html__( 'Left', 'ele-custom-skin' ),   'icon' => 'eicon-text-align-left' ],
-				'center' => [ 'title' => esc_html__( 'Center', 'ele-custom-skin' ), 'icon' => 'eicon-text-align-center' ],
-				'right'  => [ 'title' => esc_html__( 'Right', 'ele-custom-skin' ),  'icon' => 'eicon-text-align-right' ],
+				'left'    => [ 'title' => esc_html__( 'Left', 'ele-custom-skin' ),    'icon' => 'eicon-text-align-left' ],
+				'center'  => [ 'title' => esc_html__( 'Center', 'ele-custom-skin' ),  'icon' => 'eicon-text-align-center' ],
+				'right'   => [ 'title' => esc_html__( 'Right', 'ele-custom-skin' ),   'icon' => 'eicon-text-align-right' ],
+				'justify' => [ 'title' => esc_html__( 'Justify', 'ele-custom-skin' ), 'icon' => 'eicon-text-align-justify' ],
 			],
 			'prefix_class' => 'e-et%s-align-',
 		] );
@@ -214,7 +215,12 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 				'vh' => [ 'min' => 5,   'max' => 100 ],
 				'%'  => [ 'min' => 5,   'max' => 100 ],
 			],
-			'selectors'  => [ '{{WRAPPER}} .dte-et-figure img' => 'height: {{SIZE}}{{UNIT}};' ],
+			// Set height on the figure container + make img fill it so object-fit works.
+			// When no height is set this selector generates no CSS → natural image sizing.
+			'selectors'  => [
+				'{{WRAPPER}} .dte-et-figure'     => 'height: {{SIZE}}{{UNIT}}; overflow: hidden;',
+				'{{WRAPPER}} .dte-et-figure img' => 'width: 100%; height: 100%;',
+			],
 		] );
 
 		$this->add_responsive_control( 'dte_et_img_object_fit', [
