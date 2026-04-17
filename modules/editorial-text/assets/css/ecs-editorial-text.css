@@ -64,11 +64,22 @@
    Content Align — desktop base rules
    ============================================================ */
 
-.e-et-align-center .dte-et-text  { text-align: center; }
-.e-et-align-center .dte-et-figure { margin-left: auto; margin-right: auto; }
+/*
+ * text-align on the wrapper cascades into .dte-et-text.
+ * align-items is harmless on display:block but activates for
+ * the 'after' flex mode, centering / right-aligning flex children.
+ * display:inline-block on the figure lets it respond to the
+ * parent's text-align (works in block layout; float overrides it
+ * in float modes, so no side-effect there).
+ */
 
-.e-et-align-right .dte-et-text   { text-align: right; }
-.e-et-align-right .dte-et-figure  { margin-left: auto; }
+.e-et-align-left .dte-editorial-text   { text-align: left;   align-items: flex-start; }
+
+.e-et-align-center .dte-editorial-text { text-align: center; align-items: center; }
+.e-et-align-center .dte-et-figure      { display: inline-block; }
+
+.e-et-align-right .dte-editorial-text  { text-align: right;  align-items: flex-end; }
+.e-et-align-right .dte-et-figure       { display: inline-block; }
 
 /* ============================================================
    Tablet overrides  (≤ 1024px)
@@ -132,14 +143,13 @@
 	}
 
 	/* Content align — tablet */
-	.e-et-tablet-align-left .dte-et-text    { text-align: left; }
-	.e-et-tablet-align-left .dte-et-figure  { margin-left: 0; margin-right: 0; }
+	.e-et-tablet-align-left .dte-editorial-text   { text-align: left;   align-items: flex-start; }
 
-	.e-et-tablet-align-center .dte-et-text  { text-align: center; }
-	.e-et-tablet-align-center .dte-et-figure { margin-left: auto; margin-right: auto; }
+	.e-et-tablet-align-center .dte-editorial-text { text-align: center; align-items: center; }
+	.e-et-tablet-align-center .dte-et-figure      { display: inline-block; }
 
-	.e-et-tablet-align-right .dte-et-text   { text-align: right; }
-	.e-et-tablet-align-right .dte-et-figure  { margin-left: auto; margin-right: 0; }
+	.e-et-tablet-align-right .dte-editorial-text  { text-align: right;  align-items: flex-end; }
+	.e-et-tablet-align-right .dte-et-figure       { display: inline-block; }
 }
 
 /* ============================================================
@@ -204,12 +214,12 @@
 	}
 
 	/* Content align — mobile */
-	.e-et-mobile-align-left .dte-et-text    { text-align: left; }
-	.e-et-mobile-align-left .dte-et-figure  { margin-left: 0; margin-right: 0; }
+	.e-et-mobile-align-left .dte-editorial-text   { text-align: left;   align-items: flex-start; }
 
-	.e-et-mobile-align-center .dte-et-text  { text-align: center; }
-	.e-et-mobile-align-center .dte-et-figure { margin-left: auto; margin-right: auto; }
+	.e-et-mobile-align-center .dte-editorial-text { text-align: center; align-items: center; }
+	.e-et-mobile-align-center .dte-et-figure      { display: inline-block; }
 
-	.e-et-mobile-align-right .dte-et-text   { text-align: right; }
+	.e-et-mobile-align-right .dte-editorial-text  { text-align: right;  align-items: flex-end; }
+	.e-et-mobile-align-right .dte-et-figure       { display: inline-block; }
 	.e-et-mobile-align-right .dte-et-figure  { margin-left: auto; margin-right: 0; }
 }
