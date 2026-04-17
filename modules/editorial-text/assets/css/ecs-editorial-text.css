@@ -1,5 +1,5 @@
 /* ============================================================
-   DTE Editorial Text Module
+   ECS Editorial Text Module
    ============================================================ */
 
 /* ── Figure ───────────────────────────────────────────────── */
@@ -15,58 +15,201 @@
 	height: auto;
 }
 
-/* ── Flow: none (image block above text) ─────────────────── */
+/* ── Text ─────────────────────────────────────────────────── */
 
-.dte-et-flow-none .dte-et-figure {
+.dte-et-text > *:first-child { margin-top: 0; }
+.dte-et-text > *:last-child  { margin-bottom: 0; }
+
+/* ============================================================
+   Image Position — desktop base rules
+   Classes are on the Elementor widget wrapper via prefix_class.
+   ============================================================ */
+
+/* none / before — image is a block element above text */
+.e-et-flow-none .dte-et-figure,
+.e-et-flow-before .dte-et-figure {
 	display: block;
 	margin-bottom: 1em;
 }
 
-/* ── Flow: before / after (flex column) ──────────────────── */
-
-.dte-et-flow-before,
-.dte-et-flow-after {
+/* after — image rendered first in DOM, reordered below text via flexbox */
+.e-et-flow-after .dte-editorial-text {
 	display: flex;
 	flex-direction: column;
 }
+.e-et-flow-after .dte-et-figure { order: 2; margin-top: 1em; }
+.e-et-flow-after .dte-et-text   { order: 1; }
 
-.dte-et-flow-before .dte-et-figure {
-	margin-bottom: 1em;
-}
-
-.dte-et-flow-after .dte-et-figure {
-	margin-top: 1em;
-}
-
-/* ── Flow: float_left ─────────────────────────────────────── */
-
-.dte-et-flow-float_left .dte-et-figure {
+/* float_left */
+.e-et-flow-float_left .dte-et-figure {
 	float: left;
 	margin: 0 1.5em 1em 0;
 }
 
-/* ── Flow: float_right ────────────────────────────────────── */
-
-.dte-et-flow-float_right .dte-et-figure {
+/* float_right */
+.e-et-flow-float_right .dte-et-figure {
 	float: right;
 	margin: 0 0 1em 1.5em;
 }
 
-/* ── Clearfix (float modes only) ──────────────────────────── */
-
-.dte-et-clearfix {
+/* Clearfix — CSS ::after replaces the old <div class="dte-et-clearfix"> */
+.e-et-flow-float_left .dte-editorial-text::after,
+.e-et-flow-float_right .dte-editorial-text::after {
+	content: '';
+	display: table;
 	clear: both;
-	display: block;
-	height: 0;
-	overflow: hidden;
 }
 
-/* ── Text ─────────────────────────────────────────────────── */
+/* ============================================================
+   Content Align — desktop base rules
+   ============================================================ */
 
-.dte-et-text > *:first-child {
-	margin-top: 0;
+.e-et-align-center .dte-et-text  { text-align: center; }
+.e-et-align-center .dte-et-figure { margin-left: auto; margin-right: auto; }
+
+.e-et-align-right .dte-et-text   { text-align: right; }
+.e-et-align-right .dte-et-figure  { margin-left: auto; }
+
+/* ============================================================
+   Tablet overrides  (≤ 1024px)
+   ============================================================ */
+
+@media (max-width: 1024px) {
+
+	/* none / before */
+	.e-et-tablet-flow-none .dte-et-figure,
+	.e-et-tablet-flow-before .dte-et-figure {
+		float: none;
+		margin: 0 0 1em 0;
+		order: unset;
+	}
+	.e-et-tablet-flow-none .dte-editorial-text,
+	.e-et-tablet-flow-before .dte-editorial-text {
+		display: block;
+	}
+
+	/* after */
+	.e-et-tablet-flow-after .dte-editorial-text {
+		display: flex;
+		flex-direction: column;
+	}
+	.e-et-tablet-flow-after .dte-et-figure {
+		float: none;
+		order: 2;
+		margin: 1em 0 0;
+	}
+	.e-et-tablet-flow-after .dte-et-text { order: 1; }
+
+	/* float_left */
+	.e-et-tablet-flow-float_left .dte-et-figure {
+		float: left;
+		margin: 0 1.5em 1em 0;
+		order: unset;
+	}
+	.e-et-tablet-flow-float_left .dte-editorial-text { display: block; }
+
+	/* float_right */
+	.e-et-tablet-flow-float_right .dte-et-figure {
+		float: right;
+		margin: 0 0 1em 1.5em;
+		order: unset;
+	}
+	.e-et-tablet-flow-float_right .dte-editorial-text { display: block; }
+
+	/* Clearfix for tablet floats */
+	.e-et-tablet-flow-float_left .dte-editorial-text::after,
+	.e-et-tablet-flow-float_right .dte-editorial-text::after {
+		content: '';
+		display: table;
+		clear: both;
+	}
+
+	/* Remove clearfix for tablet non-float modes */
+	.e-et-tablet-flow-none .dte-editorial-text::after,
+	.e-et-tablet-flow-before .dte-editorial-text::after,
+	.e-et-tablet-flow-after .dte-editorial-text::after {
+		content: none;
+	}
+
+	/* Content align — tablet */
+	.e-et-tablet-align-left .dte-et-text    { text-align: left; }
+	.e-et-tablet-align-left .dte-et-figure  { margin-left: 0; margin-right: 0; }
+
+	.e-et-tablet-align-center .dte-et-text  { text-align: center; }
+	.e-et-tablet-align-center .dte-et-figure { margin-left: auto; margin-right: auto; }
+
+	.e-et-tablet-align-right .dte-et-text   { text-align: right; }
+	.e-et-tablet-align-right .dte-et-figure  { margin-left: auto; margin-right: 0; }
 }
 
-.dte-et-text > *:last-child {
-	margin-bottom: 0;
+/* ============================================================
+   Mobile overrides  (≤ 767px)
+   ============================================================ */
+
+@media (max-width: 767px) {
+
+	/* none / before */
+	.e-et-mobile-flow-none .dte-et-figure,
+	.e-et-mobile-flow-before .dte-et-figure {
+		float: none;
+		margin: 0 0 1em 0;
+		order: unset;
+	}
+	.e-et-mobile-flow-none .dte-editorial-text,
+	.e-et-mobile-flow-before .dte-editorial-text {
+		display: block;
+	}
+
+	/* after */
+	.e-et-mobile-flow-after .dte-editorial-text {
+		display: flex;
+		flex-direction: column;
+	}
+	.e-et-mobile-flow-after .dte-et-figure {
+		float: none;
+		order: 2;
+		margin: 1em 0 0;
+	}
+	.e-et-mobile-flow-after .dte-et-text { order: 1; }
+
+	/* float_left */
+	.e-et-mobile-flow-float_left .dte-et-figure {
+		float: left;
+		margin: 0 1.5em 1em 0;
+		order: unset;
+	}
+	.e-et-mobile-flow-float_left .dte-editorial-text { display: block; }
+
+	/* float_right */
+	.e-et-mobile-flow-float_right .dte-et-figure {
+		float: right;
+		margin: 0 0 1em 1.5em;
+		order: unset;
+	}
+	.e-et-mobile-flow-float_right .dte-editorial-text { display: block; }
+
+	/* Clearfix for mobile floats */
+	.e-et-mobile-flow-float_left .dte-editorial-text::after,
+	.e-et-mobile-flow-float_right .dte-editorial-text::after {
+		content: '';
+		display: table;
+		clear: both;
+	}
+
+	/* Remove clearfix for mobile non-float modes */
+	.e-et-mobile-flow-none .dte-editorial-text::after,
+	.e-et-mobile-flow-before .dte-editorial-text::after,
+	.e-et-mobile-flow-after .dte-editorial-text::after {
+		content: none;
+	}
+
+	/* Content align — mobile */
+	.e-et-mobile-align-left .dte-et-text    { text-align: left; }
+	.e-et-mobile-align-left .dte-et-figure  { margin-left: 0; margin-right: 0; }
+
+	.e-et-mobile-align-center .dte-et-text  { text-align: center; }
+	.e-et-mobile-align-center .dte-et-figure { margin-left: auto; margin-right: auto; }
+
+	.e-et-mobile-align-right .dte-et-text   { text-align: right; }
+	.e-et-mobile-align-right .dte-et-figure  { margin-left: auto; margin-right: 0; }
 }

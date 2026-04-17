@@ -67,18 +67,30 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 			'dynamic' => [ 'active' => true ],
 		] );
 
-		$this->add_control( 'dte_et_image_flow', [
-			'label'     => esc_html__( 'Image Position', 'ele-custom-skin' ),
-			'type'      => Controls_Manager::SELECT,
-			'default'   => 'float_left',
-			'options'   => [
+		$this->add_responsive_control( 'dte_et_image_flow', [
+			'label'        => esc_html__( 'Image Position', 'ele-custom-skin' ),
+			'type'         => Controls_Manager::SELECT,
+			'default'      => 'float_left',
+			'options'      => [
 				'none'        => esc_html__( 'None (block, above text)', 'ele-custom-skin' ),
 				'before'      => esc_html__( 'Before Text', 'ele-custom-skin' ),
 				'after'       => esc_html__( 'After Text', 'ele-custom-skin' ),
 				'float_left'  => esc_html__( 'Float Left', 'ele-custom-skin' ),
 				'float_right' => esc_html__( 'Float Right', 'ele-custom-skin' ),
 			],
-			'condition' => [ 'dte_et_image[url]!' => '' ],
+			'prefix_class' => 'e-et%s-flow-',
+			'condition'    => [ 'dte_et_image[url]!' => '' ],
+		] );
+
+		$this->add_responsive_control( 'dte_et_content_align', [
+			'label'        => esc_html__( 'Content Align', 'ele-custom-skin' ),
+			'type'         => Controls_Manager::CHOOSE,
+			'options'      => [
+				'left'   => [ 'title' => esc_html__( 'Left', 'ele-custom-skin' ),   'icon' => 'eicon-text-align-left' ],
+				'center' => [ 'title' => esc_html__( 'Center', 'ele-custom-skin' ), 'icon' => 'eicon-text-align-center' ],
+				'right'  => [ 'title' => esc_html__( 'Right', 'ele-custom-skin' ),  'icon' => 'eicon-text-align-right' ],
+			],
+			'prefix_class' => 'e-et%s-align-',
 		] );
 
 		$this->end_controls_section();
@@ -191,38 +203,17 @@ class ECS_Editorial_Text_Widget extends Widget_Base {
 	// ── Render ────────────────────────────────────────────────────────────────
 
 	protected function render(): void {
-		$s    = $this->get_settings_for_display();
-		$flow = $s['dte_et_image_flow'] ?? 'float_left';
-		$text = $s['dte_et_text']       ?? '';
-
+		$s         = $this->get_settings_for_display();
+		$text      = $s['dte_et_text'] ?? '';
 		$has_image = ! empty( $s['dte_et_image']['url'] );
-
-		if ( ! $has_image ) {
-			$flow = 'none';
-		}
-
-		$is_float = in_array( $flow, [ 'float_left', 'float_right' ], true );
 		?>
-		<div class="dte-editorial-text dte-et-flow-<?php echo esc_attr( $flow ); ?>">
+		<div class="dte-editorial-text">
 
-			<?php
-			if ( $has_image && 'after' !== $flow ) {
-				$this->render_figure( $s );
-			}
-			?>
+			<?php if ( $has_image ) { $this->render_figure( $s ); } ?>
 
 			<div class="dte-et-text">
 				<?php echo wp_kses_post( $text ); ?>
 			</div>
-
-			<?php
-			if ( $has_image && 'after' === $flow ) {
-				$this->render_figure( $s );
-			}
-
-			if ( $is_float ) : ?>
-				<div class="dte-et-clearfix"></div>
-			<?php endif; ?>
 
 		</div>
 		<?php
