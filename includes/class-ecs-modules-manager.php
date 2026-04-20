@@ -49,6 +49,7 @@ class ECS_Modules_Manager {
 			'mobile-menu'        => ECS_PATH . 'modules/mobile-menu/class-ecs-mobile-menu-module.php',
 			'editorial-text'     => ECS_PATH . 'modules/editorial-text/class-ecs-editorial-text-module.php',
 			'style-templates'    => ECS_PATH . 'modules/style-templates/class-ecs-style-templates-module.php',
+			'json-poweredit'     => ECS_PATH . 'modules/json-poweredit/class-ecs-json-poweredit-module.php',
 		];
 
 		foreach ( $module_files as $file ) {
@@ -65,6 +66,7 @@ class ECS_Modules_Manager {
 			'ECS_Mobile_Menu_Module',
 			'ECS_Editorial_Text_Module',
 			'ECS_Style_Templates_Module',
+			'ECS_JSON_PowerEdit_Module',
 		];
 
 		foreach ( $module_classes as $class ) {
