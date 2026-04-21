@@ -1,0 +1,91 @@
+<?php
+/**
+ * Dynamic Repeater Builder — ACF Repeater Source
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class ECS_DRB_Source_ACF extends ECS_DRB_Source_Base {
+
+	public function get_id(): string {
+		return 'acf';
+	}
+
+	public function get_label(): string {
+		return __( 'ACF Repeater', 'ele-custom-skin' );
+	}
+
+	public function get_config_schema(): array {
+		return [
+			[
+				'key'         => 'field_name',
+				'label'       => __( 'Repeater Field Name', 'ele-custom-skin' ),
+				'type'        => 'text',
+				'default'     => '',
+				'placeholder' => 'e.g. my_repeater_field',
+			],
+			[
+				'key'         => 'post_id',
+				'label'       => __( 'Post ID', 'ele-custom-skin' ),
+				'type'        => 'text',
+				'default'     => '',
+				'placeholder' => __( 'Leave empty for current post', 'ele-custom-skin' ),
+			],
+		];
+	}
+
+	public function get_available_fields( array $config ): array {
+		if ( ! function_exists( 'acf_get_field' ) || empty( $config['field_name'] ) ) {
+			return [];
+		}
+
+		$field = acf_get_field( sanitize_text_field( $config['field_name'] ) );
+		if ( ! $field || $field['type'] !== 'repeater' ) {
+			return [];
+		}
+
+		$fields = [];
+		foreach ( $field['sub_fields'] ?? [] as $sub ) {
+			$fields[] = [
+				'key'   => $sub['name'],
+				'label' => $sub['label'],
+			];
+		}
+
+		return $fields;
+	}
+
+	public function get_rows( array $config ): array {
+		if ( ! function_exists( 'get_field' ) || empty( $config['field_name'] ) ) {
+			return [];
+		}
+
+		$post_id = ! empty( $config['post_id'] ) ? intval( $config['post_id'] ) : get_the_ID();
+		$rows    = get_field( sanitize_text_field( $config['field_name'] ), $post_id );
+
+		if ( ! is_array( $rows ) ) {
+			return [];
+		}
+
+		return array_map( function ( $row ) {
+			$clean = [];
+			foreach ( $row as $key => $val ) {
+				if ( is_array( $val ) ) {
+					// ACF image/file fields return arrays; normalise to URL or ID.
+					if ( isset( $val['url'] ) ) {
+						$clean[ $key ] = $val['url'];
+					} elseif ( isset( $val['ID'] ) ) {
+						$clean[ $key ] = (string) $val['ID'];
+					} else {
+						$clean[ $key ] = implode( ', ', array_filter( $val, 'is_scalar' ) );
+					}
+				} else {
+					$clean[ $key ] = (string) $val;
+				}
+			}
+			return $clean;
+		}, $rows );
+	}
+}
