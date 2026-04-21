@@ -146,7 +146,6 @@
 	function autoSuggestMappings( repeaterFields, sourceFields ) {
 		const srcKeys = sourceFields.map( f => f.key );
 
-		// Aliases: repeater key fragment → ranked list of source key candidates.
 		const aliases = {
 			title       : [ 'post_title', 'name', 'title' ],
 			name        : [ 'name', 'post_title', 'title' ],
@@ -175,13 +174,8 @@
 			parent      : [ 'parent_id', 'parent' ],
 		};
 
-		return repeaterFields.map( rf => {
-			const key = rf.key.toLowerCase();
-
-			// 1. Exact match.
-			let matched = srcKeys.find( k => k === rf.key );
-
-			// 2. Alias lookup — match on any fragment of the repeater key.
+		function matchKey( key ) {
+			let matched = srcKeys.find( k => k === key );
 			if ( ! matched ) {
 				for ( const [ fragment, candidates ] of Object.entries( aliases ) ) {
 					if ( key === fragment || key.includes( fragment ) || fragment.includes( key ) ) {
@@ -190,19 +184,79 @@
 					}
 				}
 			}
+			if ( ! matched ) matched = srcKeys.find( k => k.includes( key ) || key.includes( k ) );
+			return matched || null;
+		}
 
-			// 3. Substring fallback.
-			if ( ! matched ) {
-				matched = srcKeys.find( k => k.includes( key ) || key.includes( k ) );
+		const result = [];
+
+		for ( const rf of repeaterFields ) {
+			const key = rf.key.toLowerCase();
+
+			// Image/media → two sub-rules for [id] and [url].
+			if ( rf.type === 'media' || rf.type === 'image' ) {
+				const idCandidates  = [ 'thumbnail_id', 'image_id', 'acf_image' ];
+				const urlCandidates = [ 'thumbnail_url', 'image_url', 'acf_image_url' ];
+				const matchedId  = srcKeys.find( k => idCandidates.includes( k ) )
+					|| srcKeys.find( k => ( k.includes( 'thumb' ) || k.includes( 'image' ) ) && k.includes( 'id' ) )
+					|| null;
+				const matchedUrl = srcKeys.find( k => urlCandidates.includes( k ) )
+					|| srcKeys.find( k => ( k.includes( 'thumb' ) || k.includes( 'image' ) ) && k.includes( 'url' ) )
+					|| null;
+				result.push( { repeater_field: rf.key + '[id]',  source_field: matchedId  ? `{${ matchedId }}` : '',  fallback: '', skip_if_empty: false } );
+				result.push( { repeater_field: rf.key + '[url]', source_field: matchedUrl ? `{${ matchedUrl }}` : '', fallback: '', skip_if_empty: false } );
+				continue;
 			}
 
-			return {
+			const matched = matchKey( key );
+			result.push( {
 				repeater_field : rf.key,
 				source_field   : matched ? `{${ matched }}` : '',
 				fallback       : '',
 				skip_if_empty  : false,
-			};
-		} );
+			} );
+		}
+
+		return result;
+	}
+
+	// ── Config persistence (localStorage) ───────────────────────────────────
+
+	function getConfigKey() {
+		const elementId = state.container?.model?.get( 'id' ) || 'unknown';
+		return 'ecs_drb_cfg_' + elementId + '_' + state.controlKey;
+	}
+
+	function saveConfig() {
+		try {
+			localStorage.setItem( getConfigKey(), JSON.stringify( {
+				sourceType  : state.sourceType,
+				sourceConfig: state.sourceConfig,
+				mapping     : state.mapping,
+				applyMode   : state.applyMode,
+				emptyState  : state.emptyState,
+				useCache    : state.useCache,
+				cacheTtl    : state.cacheTtl,
+			} ) );
+		} catch ( _ ) {}
+	}
+
+	function loadConfig() {
+		try {
+			const raw = localStorage.getItem( getConfigKey() );
+			if ( ! raw ) return false;
+			const d = JSON.parse( raw );
+			state.sourceType   = d.sourceType   || state.sourceType;
+			state.sourceConfig = d.sourceConfig  || {};
+			state.mapping      = d.mapping       || [];
+			state.applyMode    = d.applyMode     || 'replace';
+			state.emptyState   = d.emptyState    || 'keep';
+			state.useCache     = d.useCache      ?? true;
+			state.cacheTtl     = d.cacheTtl      || 300;
+			return true;
+		} catch ( _ ) {
+			return false;
+		}
 	}
 
 	// ── Modal ─────────────────────────────────────────────────────────────────
@@ -279,12 +333,33 @@
 	}
 
 	function openModal( controlKey, widgetLabel, container ) {
+		const prevElementId  = state.container?.model?.get( 'id' );
+		const prevControlKey = state.controlKey;
+
 		state.controlKey     = controlKey;
 		state.widgetLabel    = widgetLabel;
 		state.container      = container;
 		state.postId         = getCurrentPostId();
 		state.repeaterFields = getRepeaterFields( container, controlKey );
 		state.previewRows    = null;
+
+		const elementId  = container?.model?.get( 'id' );
+		const isNewWidget = elementId !== prevElementId || controlKey !== prevControlKey;
+
+		if ( isNewWidget ) {
+			// Reset to defaults before loading saved config for this widget.
+			state.sourceType   = SOURCES[0]?.id || 'posts';
+			state.sourceConfig = {};
+			state.mapping      = [];
+			state.applyMode    = 'replace';
+			state.emptyState   = 'keep';
+			state.useCache     = true;
+			state.cacheTtl     = 300;
+			state.sourceSchema = [];
+			state.sourceFields = [];
+			state.activeTab    = 'source';
+			loadConfig();
+		}
 
 		const modal = getOrCreateModal();
 		modal.querySelector( '.ecs-drb-header-meta .ecs-drb-meta-widget' ).textContent  = widgetLabel;
@@ -306,6 +381,7 @@
 	}
 
 	function closeModal() {
+		saveConfig();
 		const modal = document.getElementById( 'ecs-drb-modal' );
 		if ( modal ) modal.classList.remove( 'ecs-drb-open' );
 		document.body.style.overflow = '';
@@ -624,6 +700,34 @@
 		const hasSourceFields = state.sourceFields.length > 0;
 
 		const rows = state.repeaterFields.map( rf => {
+			const isImage = rf.type === 'media' || rf.type === 'image';
+
+			if ( isImage ) {
+				const ruleId  = state.mapping.find( m => m.repeater_field === rf.key + '[id]' )  || { repeater_field: rf.key + '[id]',  source_field: '', fallback: '', skip_if_empty: false };
+				const ruleUrl = state.mapping.find( m => m.repeater_field === rf.key + '[url]' ) || { repeater_field: rf.key + '[url]', source_field: '', fallback: '', skip_if_empty: false };
+
+				const subRow = ( subKey, label, rule ) => `
+					<div class="ecs-drb-map-subrow" data-rfield="${ esc( subKey ) }">
+						<span class="ecs-drb-map-sublabel">${ label }</span>
+						<div class="ecs-drb-map-expr-wrap">
+							<input class="ecs-drb-map-expr" type="text" placeholder="{field}" value="${ esc( rule.source_field ) }" spellcheck="false">
+							<button class="ecs-drb-map-tag-btn" type="button" title="Insert tag"${ ! hasSourceFields ? ' disabled' : '' }>{…}</button>
+						</div>
+					</div>`;
+
+				return `
+					<div class="ecs-drb-map-row ecs-drb-map-row--image" data-rfield="${ esc( rf.key ) }">
+						<div class="ecs-drb-map-rfield">
+							<span class="ecs-drb-map-rfield-label">${ esc( rf.label || rf.key ) }</span>
+							<span class="ecs-drb-map-rfield-key">${ esc( rf.key ) }</span>
+						</div>
+						<div class="ecs-drb-map-subrows">
+							${ subRow( rf.key + '[id]',  'ID',  ruleId  ) }
+							${ subRow( rf.key + '[url]', 'URL', ruleUrl ) }
+						</div>
+					</div>`;
+			}
+
 			const rule = state.mapping.find( m => m.repeater_field === rf.key ) || {
 				repeater_field: rf.key, source_field: '', fallback: '', skip_if_empty: false,
 			};
@@ -689,7 +793,8 @@
 			}
 		} );
 
-		body.querySelectorAll( '.ecs-drb-map-row' ).forEach( row => bindMappingRow( row ) );
+		body.querySelectorAll( '.ecs-drb-map-row:not(.ecs-drb-map-row--image)' ).forEach( row => bindMappingRow( row ) );
+		body.querySelectorAll( '.ecs-drb-map-subrow' ).forEach( row => bindMappingRow( row ) );
 	}
 
 	function bindMappingRow( rowEl ) {
@@ -802,7 +907,7 @@
 			<div class="ecs-drb-presets-tab">
 				<div class="ecs-drb-save-preset">
 					<input class="ecs-drb-preset-name-input" type="text" placeholder="Preset name…">
-					<button class="ecs-drb-btn-save-preset">${ esc( L10N.savePreset ) }</button>
+					<button class="ecs-drb-btn-secondary ecs-drb-btn-save-preset">${ esc( L10N.savePreset ) }</button>
 				</div>
 				<div class="ecs-drb-preset-list">${ items }</div>
 			</div>
@@ -920,6 +1025,7 @@
 			} else {
 				msg = 'No records found for the selected source configuration.';
 			}
+			saveConfig();
 			setStatus( msg );
 
 			const applyBtn = document.querySelector( '.ecs-drb-btn-apply' );
@@ -951,24 +1057,39 @@
 			finalRows = [ ...existingArr, ...rows ];
 		}
 
-		// Elementor repeater items need a _id so the Backbone collection
-		// can identify them across re-renders (e.g. switching Style/Content tabs).
-		finalRows = finalRows.map( row => ( { _id: makeId(), ...row } ) );
+		// Use Elementor's proper repeater commands (document/repeater/remove + insert).
+		// Direct collection manipulation (reset/set) is deprecated since 3.0 — Elementor
+		// requires these commands so it can create/destroy the per-item containers that
+		// the panel views depend on.
+		const collection = cont?.settings?.get( cKey );
+		const existingCount = collection?.models?.length ?? 0;
 
-		try {
-			$e.run( 'document/elements/settings', {
-				containers : [ cont ],
-				settings   : { [ cKey ]: finalRows },
-				options    : { render: true },
-			} );
-		} catch ( _ ) {
-			cont?.settings?.set( cKey, finalRows );
-			cont?.render?.();
+		// Remove existing items back-to-front so indices stay valid.
+		for ( let i = existingCount - 1; i >= 0; i-- ) {
+			try {
+				$e.run( 'document/repeater/remove', { container: cont, name: cKey, index: i } );
+			} catch ( _ ) {}
 		}
 
-		// Mark document as changed so Elementor knows to save.
-		try { window.elementor.saver.setFlagEditorChange(); } catch ( _ ) {}
+		// Insert new items.
+		finalRows.forEach( ( row, i ) => {
+			try {
+				$e.run( 'document/repeater/insert', {
+					container : cont,
+					name      : cKey,
+					model     : row,
+					options   : { at: i },
+				} );
+			} catch ( _ ) {}
+		} );
 
+		try {
+			$e.internal( 'document/save/set-is-modified', { status: true } );
+		} catch ( _ ) {
+			try { window.elementor.saver.setFlagEditorChange(); } catch ( _ ) {}
+		}
+
+		saveConfig();
 		setStatus( L10N.appliedRows.replace( '%d', finalRows.length ) );
 	}
 

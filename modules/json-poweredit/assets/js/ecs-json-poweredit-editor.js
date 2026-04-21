@@ -142,6 +142,10 @@
 			'  </div>',
 			'  <div class="ecs-jpe-meta"></div>',
 			'  <textarea class="ecs-jpe-textarea" spellcheck="false"></textarea>',
+			'  <div class="ecs-jpe-tree-toolbar" style="display:none">',
+			'    <button class="ecs-jpe-action" data-tree-action="expand">Expand All</button>',
+			'    <button class="ecs-jpe-action" data-tree-action="collapse">Collapse All</button>',
+			'  </div>',
 			'  <div class="ecs-jpe-tree" style="display:none"></div>',
 			'  <div class="ecs-jpe-error"></div>',
 			'  <div class="ecs-jpe-toolbar">',
@@ -163,12 +167,28 @@
 		return modal;
 	}
 
+	function setAllNodes( treeEl, expand ) {
+		treeEl.querySelectorAll( '.ecs-jpe-tn' ).forEach( function( node ) {
+			var btn      = node.querySelector( ':scope > .ecs-jpe-tn-row .ecs-jpe-tn-toggle' );
+			var children = node.querySelector( ':scope > .ecs-jpe-tn-children' );
+			var close    = node.querySelector( ':scope > .ecs-jpe-tn-close' );
+			var preview  = node.querySelector( ':scope > .ecs-jpe-tn-row .ecs-jpe-tn-preview' );
+			if ( ! btn ) return;
+			btn.setAttribute( 'aria-expanded', expand );
+			btn.textContent = expand ? '▾' : '▸';
+			if ( children ) children.style.display = expand ? '' : 'none';
+			if ( close )    close.style.display    = expand ? '' : 'none';
+			if ( preview )  preview.style.display  = expand ? 'none' : '';
+		} );
+	}
+
 	function openModal( controlKey, widgetLabel, currentVal, container ) {
-		var modal    = getOrCreateModal();
-		var textarea = modal.querySelector( '.ecs-jpe-textarea' );
-		var treeEl   = modal.querySelector( '.ecs-jpe-tree' );
-		var metaEl   = modal.querySelector( '.ecs-jpe-meta' );
-		var errorEl  = modal.querySelector( '.ecs-jpe-error' );
+		var modal       = getOrCreateModal();
+		var textarea    = modal.querySelector( '.ecs-jpe-textarea' );
+		var treeEl      = modal.querySelector( '.ecs-jpe-tree' );
+		var treeToolbar = modal.querySelector( '.ecs-jpe-tree-toolbar' );
+		var metaEl      = modal.querySelector( '.ecs-jpe-meta' );
+		var errorEl     = modal.querySelector( '.ecs-jpe-error' );
 
 		var originalJson = JSON.stringify( currentVal, null, 2 );
 		var isTreeMode   = false;
@@ -194,23 +214,31 @@
 		function switchToTree() {
 			var parsed;
 			try { parsed = JSON.parse( textarea.value ); } catch ( e ) { setError( 'Invalid JSON — fix before switching to Tree view.' ); return; }
-			isTreeMode             = true;
-			treeEl.innerHTML       = renderTree( parsed );
+			isTreeMode                  = true;
+			treeEl.innerHTML            = renderTree( parsed );
 			bindTreeEvents( treeEl );
-			textarea.style.display = 'none';
-			treeEl.style.display   = '';
-			treeBtn.innerHTML = '{ } Raw JSON';
+			textarea.style.display      = 'none';
+			treeEl.style.display        = '';
+			treeToolbar.style.display   = '';
+			treeBtn.innerHTML           = '{ } Raw JSON';
 			treeBtn.classList.add( 'ecs-jpe-action--active' );
 			setError( '' );
 		}
 
 		function switchToRaw() {
-			isTreeMode             = false;
-			textarea.style.display = '';
-			treeEl.style.display   = 'none';
-			treeBtn.innerHTML = ACCESSIBILITY_SVG + 'Accessibility';
+			isTreeMode                  = false;
+			textarea.style.display      = '';
+			treeEl.style.display        = 'none';
+			treeToolbar.style.display   = 'none';
+			treeBtn.innerHTML           = ACCESSIBILITY_SVG + 'Accessibility';
 			treeBtn.classList.remove( 'ecs-jpe-action--active' );
 		}
+
+		treeToolbar.addEventListener( 'click', function( e ) {
+			var act = e.target.dataset.treeAction;
+			if ( act === 'expand' )   setAllNodes( treeEl, true );
+			if ( act === 'collapse' ) setAllNodes( treeEl, false );
+		} );
 
 		function handleAction( e ) {
 			var action = e.target.dataset.action;
@@ -294,17 +322,34 @@
 	// ── Apply to Elementor ────────────────────────────────────────────────────
 
 	function applyToContainer( container, controlKey, newValue ) {
-		var settings = {};
-		settings[ controlKey ] = newValue;
+		var collection    = container.settings.get( controlKey );
+		var existingCount = ( collection && collection.models ) ? collection.models.length : 0;
+
+		// Remove existing items back-to-front so indices stay valid.
+		for ( var i = existingCount - 1; i >= 0; i-- ) {
+			try {
+				$e.run( 'document/repeater/remove', { container: container, name: controlKey, index: i } );
+			} catch ( _ ) {}
+		}
+
+		// Insert new items — document/repeater/insert creates the per-item
+		// containers that the panel views depend on (direct collection
+		// manipulation is deprecated since Elementor 3.0).
+		newValue.forEach( function ( row, idx ) {
+			try {
+				$e.run( 'document/repeater/insert', {
+					container : container,
+					name      : controlKey,
+					model     : row,
+					options   : { at: idx },
+				} );
+			} catch ( _ ) {}
+		} );
+
 		try {
-			$e.run( 'document/elements/settings', {
-				containers : [ container ],
-				settings   : settings,
-				options    : { render: true },
-			} );
-		} catch ( err ) {
-			container.settings.set( controlKey, newValue );
-			container.render();
+			$e.internal( 'document/save/set-is-modified', { status: true } );
+		} catch ( _ ) {
+			try { window.elementor.saver.setFlagEditorChange(); } catch ( _ ) {}
 		}
 	}
 

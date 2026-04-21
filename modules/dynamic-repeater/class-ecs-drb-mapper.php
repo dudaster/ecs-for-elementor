@@ -31,12 +31,33 @@ class ECS_DRB_Mapper {
 				$resolved = self::resolve_field( $source_row, $rule );
 				if ( null !== $resolved ) {
 					$field_key  = $rule['repeater_field'];
-					$field_type = $field_types[ $field_key ] ?? 'text';
+					$base_key   = preg_replace( '/\[(id|url)\]$/', '', $field_key );
+					// Sub-key rows (image[id], image[url]) must stay as raw strings —
+					// their wrapping into ['id'=>N,'url'=>'...'] happens at the merge step.
+					$field_type = ( $field_key !== $base_key )
+						? 'text'
+						: ( $field_types[ $field_key ] ?? 'text' );
 					$row[ $field_key ] = self::wrap_value( $resolved, $field_type );
 				}
 			}
-			if ( ! empty( $row ) ) {
-				$result[] = $row;
+
+			// Merge image sub-keys: 'img[id]' + 'img[url]' → 'img' => ['id' => N, 'url' => '...']
+			$merged = [];
+			foreach ( $row as $key => $val ) {
+				if ( preg_match( '/^(.+)\[(id|url)\]$/', $key, $m ) ) {
+					$base = $m[1];
+					$sub  = $m[2];
+					if ( ! isset( $merged[ $base ] ) ) {
+						$merged[ $base ] = [ 'id' => 0, 'url' => '' ];
+					}
+					$merged[ $base ][ $sub ] = $sub === 'id' ? intval( $val ) : (string) $val;
+				} else {
+					$merged[ $key ] = $val;
+				}
+			}
+
+			if ( ! empty( $merged ) ) {
+				$result[] = $merged;
 			}
 		}
 
