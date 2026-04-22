@@ -125,6 +125,22 @@
 	}
 
 	function getCurrentPostId() {
+		// For templates with a preview post, prefer the preview post ID
+		// (e.g. editing Single template id=41 with preview post id=1946).
+		try {
+			const previewId = window.elementor?.config?.document?.settings?.settings?.preview_id;
+			if ( previewId ) return parseInt( previewId );
+		} catch ( _ ) {}
+
+		// Fallback: parse preview_id from the iframe URL.
+		try {
+			const src = document.querySelector( 'iframe#elementor-preview-iframe' )?.src;
+			if ( src ) {
+				const match = src.match( /[?&]preview_id=(\d+)/ );
+				if ( match ) return parseInt( match[1] );
+			}
+		} catch ( _ ) {}
+
 		return window.elementor?.config?.document?.id || 0;
 	}
 
@@ -306,7 +322,7 @@
 					<div class="ecs-drb-status"></div>
 					<div class="ecs-drb-footer-actions">
 						<button class="ecs-drb-btn-secondary ecs-drb-btn-generate">${ esc( L10N.generate ) }</button>
-						<button class="ecs-drb-btn-primary ecs-drb-btn-apply" disabled>${ esc( L10N.apply ) }</button>
+						<button class="ecs-drb-btn-primary ecs-drb-btn-apply">${ esc( L10N.apply ) }</button>
 					</div>
 				</div>
 			</div>
@@ -339,7 +355,8 @@
 		state.controlKey     = controlKey;
 		state.widgetLabel    = widgetLabel;
 		state.container      = container;
-		state.postId         = getCurrentPostId();
+		state.documentId     = window.elementor?.config?.document?.id || 0;
+		state.postId         = getCurrentPostId(); // preview post (for source queries)
 		state.repeaterFields = getRepeaterFields( container, controlKey );
 		state.previewRows    = null;
 
@@ -401,7 +418,16 @@
 		const body = modal.querySelector( '.ecs-drb-tab-body' );
 		switch ( tabId ) {
 			case 'source':  body.innerHTML = renderSourceTab();  bindSourceTab( body );  break;
-			case 'mapping': body.innerHTML = renderMappingTab(); bindMappingTab( body ); break;
+			case 'mapping':
+				body.innerHTML = renderMappingTab(); bindMappingTab( body );
+				if ( ! state.isLoading ) {
+					const refreshMapping = () => { body.innerHTML = renderMappingTab(); bindMappingTab( body ); };
+					if ( state.sourceFields.length === 0 ) {
+						loadAvailableFields().then( refreshMapping );
+					}
+					handleGenerate();
+				}
+				break;
 			case 'options': body.innerHTML = renderOptionsTab(); bindOptionsTab( body ); break;
 			case 'presets': body.innerHTML = renderPresetsTab(); bindPresetsTab( body ); break;
 			case 'binding': body.innerHTML = renderBindingTab(); bindBindingTab( body ); break;
@@ -428,6 +454,13 @@
 	}
 
 	function renderConfigField( f ) {
+		if ( f.type === 'info' ) {
+			return `<p class="ecs-drb-source-info">${ esc( f.text ) }</p>`;
+		}
+		if ( f.type === 'error' ) {
+			return `<p class="ecs-drb-source-error">${ esc( f.text ) }</p>`;
+		}
+
 		const val = state.sourceConfig[ f.key ] ?? f.default ?? '';
 		const placeholder = f.placeholder ? `placeholder="${ esc( f.placeholder ) }"` : '';
 
@@ -492,6 +525,9 @@
 		// Autocomplete for fields that declare it.
 		body.querySelectorAll( 'input[data-autocomplete="taxonomy_terms"]' ).forEach( input => {
 			bindTermAutocomplete( input, body );
+		} );
+		body.querySelectorAll( 'input[data-autocomplete="acf_repeaters"]' ).forEach( input => {
+			bindAcfRepeatersAutocomplete( input );
 		} );
 	}
 
@@ -585,6 +621,64 @@
 		} );
 	}
 
+	function bindAcfRepeatersAutocomplete( input ) {
+		let dropdown = null;
+		let allFields = null;
+
+		function getDropdown() {
+			if ( dropdown ) return dropdown;
+			dropdown = document.createElement( 'div' );
+			dropdown.className = 'ecs-drb-ac-dropdown';
+			input.parentElement.style.position = 'relative';
+			input.parentElement.appendChild( dropdown );
+			return dropdown;
+		}
+
+		function closeDropdown() {
+			if ( dropdown ) dropdown.style.display = 'none';
+		}
+
+		function showSuggestions( fields ) {
+			const q  = input.value.toLowerCase();
+			const dd = getDropdown();
+			const filtered = fields.filter( f =>
+				! q || f.name.includes( q ) || f.label.toLowerCase().includes( q ) || f.group.toLowerCase().includes( q )
+			);
+			if ( ! filtered.length ) { closeDropdown(); return; }
+			dd.innerHTML = filtered.map( f => `
+				<div class="ecs-drb-ac-item" data-slug="${ esc( f.name ) }">
+					<span class="ecs-drb-ac-slug">${ esc( f.name ) }</span>
+					<span class="ecs-drb-ac-name">${ esc( f.label ) }</span>
+					<span class="ecs-drb-ac-count">${ esc( f.group ) }</span>
+				</div>
+			` ).join( '' );
+			dd.querySelectorAll( '.ecs-drb-ac-item' ).forEach( item => {
+				item.addEventListener( 'mousedown', e => {
+					e.preventDefault();
+					input.value = item.dataset.slug;
+					input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+					closeDropdown();
+					input.focus();
+				} );
+			} );
+			dd.style.display = 'block';
+		}
+
+		function fetchAndShow() {
+			if ( allFields ) { showSuggestions( allFields ); return; }
+			post( 'ecs_drb_get_acf_repeaters', {} )
+				.then( data => {
+					allFields = data.fields || [];
+					showSuggestions( allFields );
+				} )
+				.catch( closeDropdown );
+		}
+
+		input.addEventListener( 'focus', fetchAndShow );
+		input.addEventListener( 'input', () => allFields && showSuggestions( allFields ) );
+		input.addEventListener( 'blur',  () => setTimeout( closeDropdown, 150 ) );
+	}
+
 	function syncConfigFromDOM( body ) {
 		body.querySelectorAll( '[data-cfg]' ).forEach( el => {
 			const key = el.dataset.cfg;
@@ -660,12 +754,19 @@
 			} );
 		} );
 
-		// Position below anchor.
-		const rect = anchorEl.getBoundingClientRect();
-		picker.style.top  = ( rect.bottom + window.scrollY + 4 ) + 'px';
-		picker.style.left = ( rect.left + window.scrollX ) + 'px';
-
+		// Position: below anchor when there's room, above when near bottom of viewport.
+		picker.style.visibility = 'hidden';
 		picker.classList.add( 'ecs-drb-tp-open' );
+		const rect        = anchorEl.getBoundingClientRect();
+		const pickerH     = picker.offsetHeight;
+		const spaceBelow  = window.innerHeight - rect.bottom;
+		const openAbove   = spaceBelow < pickerH + 8 && rect.top > pickerH + 8;
+		picker.style.top  = openAbove
+			? ( rect.top + window.scrollY - pickerH - 4 ) + 'px'
+			: ( rect.bottom + window.scrollY + 4 ) + 'px';
+		picker.style.left = ( rect.left + window.scrollX ) + 'px';
+		picker.style.visibility = '';
+
 		picker.querySelector( '.ecs-drb-tp-search-input' ).focus();
 	}
 
@@ -777,7 +878,7 @@
 
 	function bindMappingTab( body ) {
 		body.querySelector( '.ecs-drb-btn-fetch-fields' )?.addEventListener( 'click', () => {
-			loadAvailableFields().then( () => setActiveTab( 'mapping' ) );
+			fillEmptyFieldsFromFirstRow();
 		} );
 
 		body.querySelector( '.ecs-drb-btn-auto-suggest' )?.addEventListener( 'click', () => {
@@ -974,8 +1075,9 @@
 	function loadSourceSchema( sourceType ) {
 		setLoading( true );
 		post( 'ecs_drb_get_source_schema', {
-			source_type  : sourceType,
-			source_config: JSON.stringify( state.sourceConfig ),
+			source_type      : sourceType,
+			source_config    : JSON.stringify( state.sourceConfig ),
+			current_post_id  : state.postId,
 		} ).then( data => {
 			state.sourceSchema = data.schema || [];
 			state.sourceFields = data.fields || [];
@@ -985,11 +1087,71 @@
 		} ).finally( () => setLoading( false ) );
 	}
 
+	function fillEmptyFieldsFromFirstRow() {
+		// Read the existing repeater items directly from the Elementor widget —
+		// no AJAX needed, the data is already in the editor's Backbone model.
+		const rawVal   = state.container?.settings?.get( state.controlKey );
+		let   allItems = rawVal;
+		if ( allItems && typeof allItems.toJSON === 'function' ) allItems = allItems.toJSON();
+		if ( allItems && allItems.models )                        allItems = allItems.models.map( m => m.toJSON ? m.toJSON() : m );
+		if ( ! Array.isArray( allItems ) || allItems.length === 0 ) {
+			setStatus( 'No existing items in repeater to read from.', true );
+			return;
+		}
+
+		const firstItem = allItems[ 0 ];
+
+		// If no mapping rules yet, seed them from the repeater field definitions.
+		if ( state.mapping.length === 0 && state.repeaterFields.length > 0 ) {
+			state.mapping = state.repeaterFields.map( rf => ( {
+				repeater_field : rf.key,
+				source_field   : '',
+				before         : '',
+				after          : '',
+				fallback       : '',
+				skip_if_empty  : false,
+			} ) );
+		}
+
+		// Helper: resolve a value from firstItem for a given repeater_field key.
+		// Handles sub-keys like "image[url]" → firstItem.image?.url.
+		function resolveValue( rfKey ) {
+			const subMatch = rfKey.match( /^([^\[]+)\[([^\]]+)\]$/ );
+			if ( subMatch ) {
+				const parent = firstItem[ subMatch[ 1 ] ];
+				if ( parent && typeof parent === 'object' ) return parent[ subMatch[ 2 ] ] ?? '';
+				return '';
+			}
+			const val = firstItem[ rfKey ];
+			if ( val === null || val === undefined ) return '';
+			if ( typeof val === 'object' ) return '';   // skip nested objects (e.g. image sub-fields)
+			return String( val );
+		}
+
+		let filled = 0;
+		state.mapping = state.mapping.map( rule => {
+			const val = resolveValue( rule.repeater_field );
+			if ( val === '' ) return rule;
+
+			filled++;
+			return { ...rule, fallback: val };
+		} );
+
+		if ( filled === 0 ) {
+			setStatus( 'No empty fields found with a value in the first item.', true );
+			return;
+		}
+
+		setStatus( filled + ' field(s) set as fallback from first item.' );
+		setActiveTab( 'mapping' );
+	}
+
 	function loadAvailableFields() {
 		setLoading( true );
 		return post( 'ecs_drb_get_available_fields', {
-			source_type  : state.sourceType,
-			source_config: JSON.stringify( state.sourceConfig ),
+			source_type    : state.sourceType,
+			source_config  : JSON.stringify( state.sourceConfig ),
+			current_post_id: state.postId,
 		} ).then( data => {
 			state.sourceFields = data.fields || [];
 			if ( state.mapping.length === 0 ) {
@@ -1002,17 +1164,18 @@
 	}
 
 	function handleGenerate() {
-		if ( state.isLoading ) return;
+		if ( state.isLoading ) return Promise.resolve( false );
 		setLoading( true );
 		setStatus( L10N.loading );
 
-		post( 'ecs_drb_generate', {
-			source_type  : state.sourceType,
-			source_config: JSON.stringify( state.sourceConfig ),
-			mapping      : JSON.stringify( state.mapping ),
-			field_types  : JSON.stringify( getFieldTypes() ),
-			use_cache    : state.useCache ? '1' : '0',
-			cache_ttl    : state.cacheTtl,
+		return post( 'ecs_drb_generate', {
+			source_type    : state.sourceType,
+			source_config  : JSON.stringify( state.sourceConfig ),
+			mapping        : JSON.stringify( state.mapping ),
+			field_types    : JSON.stringify( getFieldTypes() ),
+			use_cache      : state.useCache ? '1' : '0',
+			cache_ttl      : state.cacheTtl,
+			current_post_id: state.postId,
 		} ).then( data => {
 			state.previewRows = data.rows || [];
 			const cachedLabel = data.cached ? ' ' + L10N.cached : '';
@@ -1028,10 +1191,10 @@
 			saveConfig();
 			setStatus( msg );
 
-			const applyBtn = document.querySelector( '.ecs-drb-btn-apply' );
-			if ( applyBtn ) applyBtn.disabled = data.result_count === 0;
+			return data.result_count > 0;
 		} ).catch( err => {
 			setStatus( err, true );
+			return false;
 		} ).finally( () => setLoading( false ) );
 	}
 
@@ -1040,7 +1203,12 @@
 	}
 
 	function handleApply() {
-		if ( ! state.previewRows || state.isLoading ) return;
+		if ( state.isLoading ) return;
+		handleGenerate().then( ok => { if ( ok ) doApply(); } );
+	}
+
+	function doApply() {
+		if ( ! state.previewRows ) return;
 
 		const rows = state.previewRows;
 		const cKey = state.controlKey;
@@ -1142,8 +1310,8 @@
 	}
 
 	function loadBindingStatus() {
-		if ( ! state.postId ) return;
-		post( 'ecs_drb_get_bindings', { post_id: state.postId } )
+		if ( ! state.documentId ) return;
+		post( 'ecs_drb_get_bindings', { post_id: state.documentId } )
 			.then( data => {
 				const key = state.container?.model?.get( 'id' ) + ':' + state.controlKey;
 				const binding = ( data.bindings || [] ).find(
@@ -1166,7 +1334,7 @@
 			cache_ttl    : state.cacheTtl,
 		};
 		post( 'ecs_drb_save_binding', {
-			post_id    : state.postId,
+			post_id    : state.documentId,
 			element_id : state.container?.model?.get( 'id' ),
 			control_key: state.controlKey,
 			config     : JSON.stringify( config ),
@@ -1183,7 +1351,7 @@
 
 	function handleBreakSync() {
 		post( 'ecs_drb_break_binding', {
-			post_id    : state.postId,
+			post_id    : state.documentId,
 			element_id : state.container?.model?.get( 'id' ),
 			control_key: state.controlKey,
 		} ).then( () => {

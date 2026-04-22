@@ -20,6 +20,10 @@ class ECS_DRB_Source_JSON extends ECS_DRB_Source_Base {
 	public function get_config_schema(): array {
 		return [
 			[
+				'type' => 'info',
+				'text' => __( 'Paste any JSON array here — each object becomes a repeater row. Useful for static data (menus, pricing, team members) or data copied from an external API. Go to Mapping to connect JSON keys to repeater fields, then Apply.', 'ele-custom-skin' ),
+			],
+			[
 				'key'         => 'json',
 				'label'       => __( 'JSON Array', 'ele-custom-skin' ),
 				'type'        => 'textarea',

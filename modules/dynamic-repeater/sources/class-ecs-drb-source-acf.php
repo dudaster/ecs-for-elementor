@@ -18,13 +18,23 @@ class ECS_DRB_Source_ACF extends ECS_DRB_Source_Base {
 	}
 
 	public function get_config_schema(): array {
+		if ( ! $this->is_acf_pro_active() ) {
+			return [
+				[
+					'type' => 'error',
+					'text' => __( 'ACF Pro is required for this source. Please install and activate Advanced Custom Fields Pro.', 'ele-custom-skin' ),
+				],
+			];
+		}
+
 		return [
 			[
-				'key'         => 'field_name',
-				'label'       => __( 'Repeater Field Name', 'ele-custom-skin' ),
-				'type'        => 'text',
-				'default'     => '',
-				'placeholder' => 'e.g. my_repeater_field',
+				'key'          => 'field_name',
+				'label'        => __( 'Repeater Field Name', 'ele-custom-skin' ),
+				'type'         => 'text',
+				'default'      => '',
+				'placeholder'  => 'e.g. my_repeater_field',
+				'autocomplete' => 'acf_repeaters',
 			],
 			[
 				'key'         => 'post_id',
@@ -34,6 +44,35 @@ class ECS_DRB_Source_ACF extends ECS_DRB_Source_Base {
 				'placeholder' => __( 'Leave empty for current post', 'ele-custom-skin' ),
 			],
 		];
+	}
+
+	private function is_acf_pro_active(): bool {
+		return defined( 'ACF_PRO' ) || class_exists( 'acf_field_repeater' );
+	}
+
+	/**
+	 * Returns all ACF repeater field names available in the site.
+	 */
+	public static function get_repeater_field_names(): array {
+		if ( ! function_exists( 'acf_get_field_groups' ) ) {
+			return [];
+		}
+
+		$results = [];
+		foreach ( acf_get_field_groups() as $group ) {
+			$fields = acf_get_fields( $group['key'] ) ?: [];
+			foreach ( $fields as $field ) {
+				if ( $field['type'] === 'repeater' ) {
+					$results[] = [
+						'name'  => $field['name'],
+						'label' => $field['label'],
+						'group' => $group['title'],
+					];
+				}
+			}
+		}
+
+		return $results;
 	}
 
 	public function get_available_fields( array $config ): array {
@@ -62,7 +101,9 @@ class ECS_DRB_Source_ACF extends ECS_DRB_Source_Base {
 			return [];
 		}
 
-		$post_id = ! empty( $config['post_id'] ) ? intval( $config['post_id'] ) : get_the_ID();
+		$post_id = ! empty( $config['post_id'] )
+			? intval( $config['post_id'] )
+			: ( intval( $config['_current_post_id'] ?? 0 ) ?: get_the_ID() );
 		$rows    = get_field( sanitize_text_field( $config['field_name'] ), $post_id );
 
 		if ( ! is_array( $rows ) ) {

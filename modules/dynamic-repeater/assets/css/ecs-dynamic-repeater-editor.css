@@ -450,6 +450,30 @@
 
 .ecs-drb-hidden { display: none !important; }
 
+.ecs-drb-source-error {
+	margin        : 0 0 12px;
+	padding       : 8px 12px;
+	background    : #fff5f5;
+	border        : 1px solid #fecaca;
+	border-radius : var(--drb-radius-sm);
+	font-size     : 11px;
+	line-height   : 1.6;
+	color         : #dc2626;
+	font-family   : var(--drb-font);
+}
+
+.ecs-drb-source-info {
+	margin        : 0 0 12px;
+	padding       : 8px 12px;
+	background    : var(--drb-surface);
+	border        : 1px solid var(--drb-border);
+	border-radius : var(--drb-radius-sm);
+	font-size     : 11px;
+	line-height   : 1.6;
+	color         : var(--drb-text-ter);
+	font-family   : var(--drb-font);
+}
+
 .ecs-drb-hint {
 	color       : var(--drb-text-ter);
 	font-size   : 12px;

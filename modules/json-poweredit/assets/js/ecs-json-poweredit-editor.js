@@ -164,6 +164,19 @@
 		var tb = modal.querySelector( '#ecs-jpe-tree-btn' );
 		if ( tb ) { tb.innerHTML = ACCESSIBILITY_SVG + 'Accessibility'; tb.removeAttribute( 'id' ); }
 
+		// Tree toolbar and tree toggle listeners are attached once here so they
+		// don't accumulate on every openModal() / switchToTree() call.
+		var treeEl      = modal.querySelector( '.ecs-jpe-tree' );
+		var treeToolbar = modal.querySelector( '.ecs-jpe-tree-toolbar' );
+
+		treeToolbar.addEventListener( 'click', function( e ) {
+			var act = e.target.dataset.treeAction;
+			if ( act === 'expand' )   setAllNodes( treeEl, true );
+			if ( act === 'collapse' ) setAllNodes( treeEl, false );
+		} );
+
+		bindTreeEvents( treeEl );
+
 		return modal;
 	}
 
@@ -198,8 +211,9 @@
 		errorEl.style.display = 'none';
 
 		// Always start in raw mode.
-		textarea.style.display = '';
-		treeEl.style.display   = 'none';
+		textarea.style.display      = '';
+		treeEl.style.display        = 'none';
+		treeToolbar.style.display   = 'none';
 		var treeBtn = modal.querySelector( '[data-action="tree"]' );
 		if ( treeBtn ) { treeBtn.innerHTML = ACCESSIBILITY_SVG + 'Accessibility'; treeBtn.classList.remove( 'ecs-jpe-action--active' ); }
 
@@ -216,7 +230,6 @@
 			try { parsed = JSON.parse( textarea.value ); } catch ( e ) { setError( 'Invalid JSON — fix before switching to Tree view.' ); return; }
 			isTreeMode                  = true;
 			treeEl.innerHTML            = renderTree( parsed );
-			bindTreeEvents( treeEl );
 			textarea.style.display      = 'none';
 			treeEl.style.display        = '';
 			treeToolbar.style.display   = '';
@@ -233,12 +246,6 @@
 			treeBtn.innerHTML           = ACCESSIBILITY_SVG + 'Accessibility';
 			treeBtn.classList.remove( 'ecs-jpe-action--active' );
 		}
-
-		treeToolbar.addEventListener( 'click', function( e ) {
-			var act = e.target.dataset.treeAction;
-			if ( act === 'expand' )   setAllNodes( treeEl, true );
-			if ( act === 'collapse' ) setAllNodes( treeEl, false );
-		} );
 
 		function handleAction( e ) {
 			var action = e.target.dataset.action;

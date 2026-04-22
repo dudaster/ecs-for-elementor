@@ -12,10 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
-	const OPTION_PRESETS = 'ecs_drb_presets';
-	const META_BINDINGS  = '_ecs_drb_bindings';
-	const CACHE_PREFIX   = 'ecs_drb_src_';
-	const CACHE_TTL      = 300;
+	const OPTION_PRESETS       = 'ecs_drb_presets';
+	const META_BINDINGS        = '_ecs_drb_bindings';
+	const OPTION_BINDING_INDEX = 'ecs_drb_binding_index'; // element_id:control_key → doc_post_id
+	const CACHE_PREFIX         = 'ecs_drb_src_';
+	const CACHE_TTL            = 300;
 
 	// ── Identity ──────────────────────────────────────────────────────────────
 
@@ -51,14 +52,20 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 			'ecs_drb_break_binding',
 			'ecs_drb_get_bindings',
 			'ecs_drb_get_terms',
+			'ecs_drb_get_acf_repeaters',
 		];
 
 		foreach ( $ajax_actions as $action ) {
 			add_action( "wp_ajax_{$action}", [ $this, 'handle_ajax' ] );
 		}
 
-		// Apply runtime bindings before a widget renders on the frontend.
-		add_action( 'elementor/element/before_render', [ $this, 'apply_runtime_binding' ] );
+		// Intercept _elementor_data reads to inject binding data before Elementor
+		// parses the JSON into element objects — this is the earliest possible point.
+		add_filter( 'get_post_metadata', [ $this, 'filter_elementor_data' ], 10, 4 );
+
+		// Prevent Elementor from using its element-level HTML cache for documents
+		// with bindings — each post must render fresh so our injected data applies.
+		add_filter( 'get_post_metadata', [ $this, 'suppress_element_cache' ], 10, 4 );
 	}
 
 	private function load_dependencies(): void {
@@ -114,7 +121,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 				'apply'          => __( 'Apply', 'ele-custom-skin' ),
 				'preview'        => __( 'Preview', 'ele-custom-skin' ),
 				'loading'        => __( 'Loading…', 'ele-custom-skin' ),
-				'fetchFields'    => __( 'Fetch Available Fields', 'ele-custom-skin' ),
+				'fetchFields'    => __( 'Fill from First Item', 'ele-custom-skin' ),
 				'noFields'       => __( 'Configure source first, then fetch available fields.', 'ele-custom-skin' ),
 				'savePreset'     => __( 'Save as Preset', 'ele-custom-skin' ),
 				'loadPreset'     => __( 'Load', 'ele-custom-skin' ),
@@ -166,8 +173,12 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	private function ajax_get_available_fields(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
 
-		$source_id     = sanitize_key( $_POST['source_type'] ?? '' );
-		$source_config = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$source_id       = sanitize_key( $_POST['source_type'] ?? '' );
+		$source_config   = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$current_post_id = intval( $_POST['current_post_id'] ?? 0 );
+		if ( $current_post_id && empty( $source_config['post_id'] ) ) {
+			$source_config['_current_post_id'] = $current_post_id;
+		}
 
 		$source = ECS_DRB_Sources::instance()->get( $source_id );
 		if ( ! $source ) {
@@ -180,12 +191,16 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	private function ajax_generate(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
 
-		$source_id     = sanitize_key( $_POST['source_type'] ?? '' );
-		$source_config = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
-		$mapping       = json_decode( stripslashes( $_POST['mapping'] ?? '[]' ), true ) ?: [];
-		$field_types   = json_decode( stripslashes( $_POST['field_types'] ?? '{}' ), true ) ?: [];
-		$use_cache     = filter_var( $_POST['use_cache'] ?? true, FILTER_VALIDATE_BOOLEAN );
-		$cache_ttl     = intval( $_POST['cache_ttl'] ?? self::CACHE_TTL );
+		$source_id      = sanitize_key( $_POST['source_type'] ?? '' );
+		$source_config  = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$mapping        = json_decode( stripslashes( $_POST['mapping'] ?? '[]' ), true ) ?: [];
+		$field_types    = json_decode( stripslashes( $_POST['field_types'] ?? '{}' ), true ) ?: [];
+		$use_cache      = filter_var( $_POST['use_cache'] ?? true, FILTER_VALIDATE_BOOLEAN );
+		$cache_ttl      = intval( $_POST['cache_ttl'] ?? self::CACHE_TTL );
+		$current_post_id = intval( $_POST['current_post_id'] ?? 0 );
+		if ( $current_post_id && empty( $source_config['post_id'] ) ) {
+			$source_config['_current_post_id'] = $current_post_id;
+		}
 
 		$source = ECS_DRB_Sources::instance()->get( $source_id );
 		if ( ! $source ) {
@@ -277,6 +292,11 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		];
 		update_post_meta( $post_id, self::META_BINDINGS, $bindings );
 
+		// Update global index: element_key → document post_id.
+		$index         = (array) get_option( self::OPTION_BINDING_INDEX, [] );
+		$index[ $key ] = $post_id;
+		update_option( self::OPTION_BINDING_INDEX, $index, false );
+
 		wp_send_json_success( [ 'binding_key' => $key ] );
 	}
 
@@ -288,8 +308,14 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		$control_key = sanitize_text_field( $_POST['control_key'] ?? '' );
 
 		$bindings = (array) get_post_meta( $post_id, self::META_BINDINGS, true );
-		unset( $bindings[ $element_id . ':' . $control_key ] );
+		$key      = $element_id . ':' . $control_key;
+		unset( $bindings[ $key ] );
 		update_post_meta( $post_id, self::META_BINDINGS, $bindings );
+
+		// Remove from global index.
+		$index = (array) get_option( self::OPTION_BINDING_INDEX, [] );
+		unset( $index[ $key ] );
+		update_option( self::OPTION_BINDING_INDEX, $index, false );
 
 		wp_send_json_success();
 	}
@@ -336,79 +362,183 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		wp_send_json_success( [ 'terms' => $result ] );
 	}
 
+	private function ajax_get_acf_repeaters(): void {
+		check_ajax_referer( 'ecs_drb', 'nonce' );
+		wp_send_json_success( [ 'fields' => ECS_DRB_Source_ACF::get_repeater_field_names() ] );
+	}
+
 	// ── Runtime binding ───────────────────────────────────────────────────────
 
-	public function apply_runtime_binding( $element ): void {
-		if ( ! ( $element instanceof \Elementor\Widget_Base ) ) {
-			return;
+	/**
+	 * Return null for _elementor_element_cache reads on any document that contains
+	 * bound elements. This prevents Elementor from serving a cached container HTML
+	 * that was built for a different post's data.
+	 */
+	public function suppress_element_cache( $value, int $object_id, string $meta_key, bool $single ) {
+		if ( $meta_key !== '_elementor_element_cache' ) {
+			return $value;
+		}
+		if ( is_admin() || wp_doing_ajax() ) {
+			return $value;
+		}
+		$index = (array) get_option( self::OPTION_BINDING_INDEX, [] );
+		if ( empty( $index ) ) {
+			return $value;
+		}
+		foreach ( $index as $doc_post_id ) {
+			if ( (int) $doc_post_id === $object_id ) {
+				// Return empty array — Elementor treats this as "no cache".
+				return $single ? '' : [];
+			}
+		}
+		return $value;
+	}
+
+	/**
+	 * Filter _elementor_data postmeta to inject binding data before Elementor
+	 * parses the JSON. This is earlier than any widget render hook and ensures
+	 * the repeater settings are correct from the moment the element is built.
+	 *
+	 * Only runs on the frontend; skipped in editor and AJAX (except Elementor
+	 * frontend-preview AJAX which also renders on the frontend).
+	 */
+	public function filter_elementor_data( $value, int $object_id, string $meta_key, bool $single ) {
+		if ( $meta_key !== '_elementor_data' ) {
+			return $value;
 		}
 
-		// Never modify widget data in the editor — live preview should show
-		// actual repeater controls so the user can still edit them.
-		if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
-			return;
+		// Only intercept on regular frontend page loads.
+		if ( is_admin() || wp_doing_ajax() ) {
+			return $value;
+		}
+		if ( class_exists( '\Elementor\Plugin' ) && \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
+			return $value;
 		}
 
-		$post_id  = get_the_ID();
-		$bindings = get_post_meta( $post_id, self::META_BINDINGS, true );
-
-		if ( ! is_array( $bindings ) || empty( $bindings ) ) {
-			return;
+		$index = (array) get_option( self::OPTION_BINDING_INDEX, [] );
+		if ( empty( $index ) ) {
+			return $value;
 		}
 
-		$element_id = $element->get_id();
-
-		foreach ( $bindings as $binding ) {
-			if ( ( $binding['element_id'] ?? '' ) !== $element_id ) {
-				continue;
+		// Check if this post_id is a document that contains bound elements.
+		$bound_in_doc = [];
+		foreach ( $index as $index_key => $doc_post_id ) {
+			if ( (int) $doc_post_id === $object_id ) {
+				$bound_in_doc[ $index_key ] = true;
 			}
+		}
+		if ( empty( $bound_in_doc ) ) {
+			return $value;
+		}
 
-			$cfg         = $binding['config'] ?? [];
-			$source_id   = sanitize_key( $cfg['source_type'] ?? '' );
-			$s_config    = $cfg['source_config'] ?? [];
-			$mapping     = $cfg['mapping'] ?? [];
-			$field_types = $cfg['field_types'] ?? [];
-			$apply_mode  = $cfg['apply_mode'] ?? 'replace';
-			$use_cache   = (bool) ( $cfg['use_cache'] ?? true );
-			$cache_ttl   = intval( $cfg['cache_ttl'] ?? self::CACHE_TTL );
-			$control_key = $binding['control_key'] ?? '';
+		// Load the real postmeta value (bypass this filter to avoid recursion).
+		remove_filter( 'get_post_metadata', [ $this, 'filter_elementor_data' ], 10 );
+		$raw = get_post_meta( $object_id, '_elementor_data', true );
+		add_filter( 'get_post_metadata', [ $this, 'filter_elementor_data' ], 10, 4 );
 
-			if ( ! $control_key ) {
-				continue;
-			}
+		$elements = json_decode( $raw, true );
+		if ( ! is_array( $elements ) ) {
+			return $value;
+		}
 
-			$source = ECS_DRB_Sources::instance()->get( $source_id );
-			if ( ! $source ) {
-				continue;
-			}
+		// Load all bindings for this document.
+		$doc_bindings = (array) get_post_meta( $object_id, self::META_BINDINGS, true );
+		if ( empty( $doc_bindings ) ) {
+			return $value;
+		}
 
-			$cache_key   = self::CACHE_PREFIX . md5( $source_id . wp_json_encode( $s_config ) );
-			$source_rows = false;
+		$current_post = get_queried_object_id() ?: get_the_ID();
 
-			if ( $use_cache ) {
-				$source_rows = get_transient( $cache_key );
-			}
+		// Walk the element tree and inject rows where bound.
+		$modified = $this->inject_binding_rows( $elements, $doc_bindings, $current_post );
 
-			if ( false === $source_rows ) {
-				$source_rows = $source->get_rows( $s_config );
-				if ( $use_cache ) {
-					set_transient( $cache_key, $source_rows, max( 60, $cache_ttl ) );
+		// Return as a single-element array (how WP returns $single=true metadata).
+		if ( $single ) {
+			return wp_json_encode( $modified );
+		}
+		return [ wp_json_encode( $modified ) ];
+	}
+
+	/**
+	 * Recursively walk the Elementor element tree and replace repeater settings
+	 * for any element that has a binding configured.
+	 */
+	private function inject_binding_rows( array $elements, array $doc_bindings, int $current_post ): array {
+		foreach ( $elements as &$element ) {
+			$element_id = $element['id'] ?? '';
+
+			// Check if this element has any binding.
+			foreach ( $doc_bindings as $binding ) {
+				if ( ( $binding['element_id'] ?? '' ) !== $element_id ) {
+					continue;
 				}
+
+				$cfg         = $binding['config'] ?? [];
+				$source_id   = sanitize_key( $cfg['source_type'] ?? '' );
+				$s_config    = $cfg['source_config'] ?? [];
+				$mapping     = $cfg['mapping'] ?? [];
+				$field_types = $cfg['field_types'] ?? [];
+				$apply_mode  = $cfg['apply_mode'] ?? 'replace';
+				$use_cache   = (bool) ( $cfg['use_cache'] ?? true );
+				$cache_ttl   = intval( $cfg['cache_ttl'] ?? self::CACHE_TTL );
+				$control_key = $binding['control_key'] ?? '';
+
+				if ( ! $control_key || ! $source_id ) {
+					continue;
+				}
+
+				$source = ECS_DRB_Sources::instance()->get( $source_id );
+				if ( ! $source ) {
+					continue;
+				}
+
+				$runtime_post_id = empty( $s_config['post_id'] ) ? $current_post : 0;
+				$cache_key       = self::CACHE_PREFIX . md5( $source_id . wp_json_encode( $s_config ) . ':' . $runtime_post_id );
+				$source_rows     = false;
+
+				if ( $use_cache ) {
+					$source_rows = get_transient( $cache_key );
+				}
+
+				if ( false === $source_rows ) {
+					if ( empty( $s_config['post_id'] ) && $current_post ) {
+						$s_config['_current_post_id'] = $current_post;
+					}
+					$source_rows = $source->get_rows( $s_config );
+					if ( $use_cache ) {
+						set_transient( $cache_key, $source_rows, max( 60, $cache_ttl ) );
+					}
+				}
+
+				if ( empty( $source_rows ) ) {
+					continue;
+				}
+
+				$new_rows = ECS_DRB_Mapper::resolve( $source_rows, $mapping, $field_types );
+
+				if ( $apply_mode === 'append' ) {
+					$existing = $element['settings'][ $control_key ] ?? [];
+					$new_rows = array_merge( is_array( $existing ) ? $existing : [], $new_rows );
+				}
+
+				// Elementor expects each repeater row to have a unique _id.
+				foreach ( $new_rows as &$row ) {
+					if ( empty( $row['_id'] ) ) {
+						$row['_id'] = substr( md5( uniqid( '', true ) ), 0, 7 );
+					}
+				}
+				unset( $row );
+
+				$element['settings'][ $control_key ] = $new_rows;
 			}
 
-			if ( empty( $source_rows ) ) {
-				// Empty-state: leave existing repeater data intact.
-				continue;
+			// Recurse into child elements.
+			if ( ! empty( $element['elements'] ) ) {
+				$element['elements'] = $this->inject_binding_rows( $element['elements'], $doc_bindings, $current_post );
 			}
-
-			$new_rows = ECS_DRB_Mapper::resolve( $source_rows, $mapping, $field_types );
-
-			if ( $apply_mode === 'append' ) {
-				$existing = $element->get_settings( $control_key );
-				$new_rows = array_merge( is_array( $existing ) ? $existing : [], $new_rows );
-			}
-
-			$element->set_settings( $control_key, $new_rows );
 		}
+		unset( $element );
+
+		return $elements;
 	}
 }
