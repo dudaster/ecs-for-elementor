@@ -37,7 +37,7 @@ final class ECS_Core {
 
 	public function register_widget_category( $elements_manager ): void {
 		$elements_manager->add_category(
-			'ecs-toolkit',
+			'ele-custom-skin',
 			[
 				'title' => __( 'ECS Toolkit', 'ele-custom-skin' ),
 				'icon'  => 'fa fa-plug',
