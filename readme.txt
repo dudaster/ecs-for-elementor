@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 4.1.1
+Stable tag: 4.1.2
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,9 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.1.2 =
+* Fixed: ECS widgets not appearing in Elementor panel — only visible in search.
 
 = 4.1.1 =
 * Fixed: PHP Fatal error on PHP 8.1+ — typed property $current_permalink incompatible with parent Skin_Base.
