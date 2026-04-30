@@ -4,7 +4,7 @@
  *
  * Lets users save / apply / link Style presets per Elementor widget type.
  *
- * Storage:  wp_options key `dte_style_templates_v1`
+ * Storage:  wp_options key `ecs_style_templates_v1`
  * Scope:    Style tab controls only (no Content / Advanced).
  * Link mode: linked widgets merge preset styles at render-time without
  *            permanently rewriting _elementor_data.
@@ -144,21 +144,21 @@ class ECS_Style_Templates_Module extends ECS_Module_Base {
 		] );
 
 		// Hidden metadata stored in widget's _elementor_data.
-		$element->add_control( 'dte_style_template_mode', [
+		$element->add_control( 'ecs_style_template_mode', [
 			'type'    => Controls_Manager::HIDDEN,
 			'default' => 'none',
 		] );
 
-		$element->add_control( 'dte_style_template_name', [
+		$element->add_control( 'ecs_style_template_name', [
 			'type'    => Controls_Manager::HIDDEN,
 			'default' => '',
 		] );
 
 		// The actual UI is rendered by JS into this placeholder.
-		$element->add_control( 'dte_style_templates_ui', [
+		$element->add_control( 'ecs_style_templates_ui', [
 			'type'            => Controls_Manager::RAW_HTML,
 			'raw'             => $this->render_panel_html( $widget_type ),
-			'content_classes' => 'dte-st-raw',
+			'content_classes' => 'ecs-st-raw',
 		] );
 
 		$element->end_controls_section();
@@ -179,49 +179,49 @@ class ECS_Style_Templates_Module extends ECS_Module_Base {
 		$widget        = esc_attr( $widget_type );
 
 		return <<<HTML
-<div class="dte-st-panel" data-widget-type="{$widget}">
+<div class="ecs-st-panel" data-widget-type="{$widget}">
 
 	<!-- Template select -->
-	<div class="elementor-control-input-wrapper dte-st-select-wrap">
-		<select class="dte-st-select">
+	<div class="elementor-control-input-wrapper ecs-st-select-wrap">
+		<select class="ecs-st-select">
 			<option value="">{$select_label}</option>
 		</select>
 	</div>
 
 	<!-- Quick actions -->
-	<div class="dte-st-actions">
-		<button class="dte-st-btn dte-st-btn-apply" data-action="apply">
+	<div class="ecs-st-actions">
+		<button class="ecs-st-btn ecs-st-btn-apply" data-action="apply">
 			<i class="eicon-check"></i><span>{$apply_label}</span>
 		</button>
-		<button class="dte-st-btn dte-st-btn-overwrite" data-action="overwrite">
+		<button class="ecs-st-btn ecs-st-btn-overwrite" data-action="overwrite">
 			<i class="eicon-save"></i><span>{$ow_label}</span>
 		</button>
-		<button class="dte-st-btn dte-st-btn-danger" data-action="delete_tpl" title="{$del_title}">
+		<button class="ecs-st-btn ecs-st-btn-danger" data-action="delete_tpl" title="{$del_title}">
 			<i class="eicon-trash-o"></i>
 		</button>
 	</div>
 
 	<!-- Link switch -->
-	<div class="dte-st-link-row">
-		<span class="dte-st-link-label">
+	<div class="ecs-st-link-row">
+		<span class="ecs-st-link-label">
 			<i class="eicon-link"></i>{$link_label}
 		</span>
-		<label class="elementor-switch elementor-control-unit-2 dte-st-link-switch">
-			<input type="checkbox" class="elementor-switch-input dte-st-link-toggle">
+		<label class="elementor-switch elementor-control-unit-2 ecs-st-link-switch">
+			<input type="checkbox" class="elementor-switch-input ecs-st-link-toggle">
 			<span class="elementor-switch-label" data-on="Yes" data-off="No"></span>
 			<span class="elementor-switch-handle"></span>
 		</label>
 	</div>
 
 	<!-- Status -->
-	<div class="dte-st-status"></div>
+	<div class="ecs-st-status"></div>
 
 	<!-- Save form -->
-	<div class="dte-st-save-form">
+	<div class="ecs-st-save-form">
 		<div class="elementor-control-input-wrapper">
-			<input type="text" class="dte-st-name-input" placeholder="{$ph_label}" />
+			<input type="text" class="ecs-st-name-input" placeholder="{$ph_label}" />
 		</div>
-		<button class="dte-st-btn dte-st-btn-save" data-action="save_new">
+		<button class="ecs-st-btn ecs-st-btn-save" data-action="save_new">
 			<i class="eicon-plus-circle-o"></i><span>{$save_label}</span>
 		</button>
 	</div>
@@ -248,11 +248,11 @@ HTML;
 	public function maybe_merge_preset( $widget ): void {
 		$settings = $widget->get_settings();
 
-		if ( ( $settings['dte_style_template_mode'] ?? 'none' ) !== 'linked' ) {
+		if ( ( $settings['ecs_style_template_mode'] ?? 'none' ) !== 'linked' ) {
 			return;
 		}
 
-		$name = $settings['dte_style_template_name'] ?? '';
+		$name = $settings['ecs_style_template_name'] ?? '';
 		if ( empty( $name ) ) {
 			return;
 		}
@@ -310,7 +310,7 @@ HTML;
 				continue;
 			}
 			// Skip DTE internal controls.
-			if ( str_starts_with( (string) $key, 'dte_' ) ) {
+			if ( str_starts_with( (string) $key, 'ecs_' ) ) {
 				continue;
 			}
 			// Skip responsive variants — they need @media wrappers (not implemented here).
@@ -357,7 +357,7 @@ HTML;
 
 		if ( ! empty( $lines ) ) {
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo '<style id="dte-st-' . esc_attr( $widget_id ) . '">' . implode( ' ', $lines ) . '</style>';
+			echo '<style id="ecs-st-' . esc_attr( $widget_id ) . '">' . implode( ' ', $lines ) . '</style>';
 		}
 	}
 
@@ -497,7 +497,7 @@ HTML;
 			'meta'           => [
 				'widget_type'       => $widget_type,
 				'elementor_version' => ELEMENTOR_VERSION,
-				'dte_version'       => ECS_VERSION,
+				'ecs_version'       => ECS_VERSION,
 			],
 		];
 

@@ -141,8 +141,9 @@ class ECS_Modules_Manager {
 
 			add_action( 'elementor/widgets/register',          [ $module, 'register_widgets' ] );
 			add_action( 'elementor/controls/register',         [ $module, 'register_controls' ] );
-			add_action( 'wp_enqueue_scripts',                  [ $module, 'enqueue_frontend_assets' ] );
-			add_action( 'elementor/editor/after_enqueue_scripts', [ $module, 'enqueue_editor_assets' ] );
+			add_action( 'wp_enqueue_scripts',                       [ $module, 'enqueue_frontend_assets' ] );
+			add_action( 'elementor/preview/enqueue_styles',        [ $module, 'enqueue_frontend_assets' ] );
+			add_action( 'elementor/editor/after_enqueue_scripts',  [ $module, 'enqueue_editor_assets' ] );
 		}
 	}
 

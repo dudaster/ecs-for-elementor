@@ -37,7 +37,7 @@ if ( $manager->is_active( 'style_templates' ) ) {
 	$all[ $widget_type ][ $template_name ] = [
 		'updated_at'     => time(),
 		'style_settings' => $style_data,
-		'meta'           => [ 'widget_type' => $widget_type, 'dte_version' => ECS_VERSION ],
+		'meta'           => [ 'widget_type' => $widget_type, 'ecs_version' => ECS_VERSION ],
 	];
 	update_option( $option_key, $all, false );
 
@@ -150,8 +150,8 @@ if ( $manager->is_active( 'style_templates' ) ) {
 			[
 				'id'       => 'testwidget123',
 				'settings' => [
-					'dte_style_template_mode' => 'linked',
-					'dte_style_template_name' => $template_name,
+					'ecs_style_template_mode' => 'linked',
+					'ecs_style_template_name' => $template_name,
 					'title_color'             => '',
 				],
 			],
@@ -176,8 +176,8 @@ if ( $manager->is_active( 'style_templates' ) ) {
 			[
 				'id'       => 'testwidget456',
 				'settings' => [
-					'dte_style_template_mode' => 'linked',
-					'dte_style_template_name' => '_nonexistent_xyz',
+					'ecs_style_template_mode' => 'linked',
+					'ecs_style_template_name' => '_nonexistent_xyz',
 					'title_color'             => 'original_value',
 				],
 			],
@@ -196,8 +196,8 @@ if ( $manager->is_active( 'style_templates' ) ) {
 			[
 				'id'       => 'testwidget789',
 				'settings' => [
-					'dte_style_template_mode' => 'none',
-					'dte_style_template_name' => $template_name,
+					'ecs_style_template_mode' => 'none',
+					'ecs_style_template_name' => $template_name,
 					'title_color'             => 'untouched',
 				],
 			],

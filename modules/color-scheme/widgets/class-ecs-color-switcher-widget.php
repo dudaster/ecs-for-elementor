@@ -22,7 +22,7 @@ use Elementor\Icons_Manager;
 class ECS_Color_Switcher_Widget extends Widget_Base {
 
 	public function get_name(): string {
-		return 'dte_color_switcher';
+		return 'ecs_color_switcher';
 	}
 
 	public function get_title(): string {
@@ -38,7 +38,11 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 	}
 
 	public function get_keywords(): array {
-		return [ 'dte', 'dark', 'mode', 'switcher', 'toggle', 'theme', 'color', 'scheme' ];
+		return [ 'ecs', 'dark', 'mode', 'switcher', 'toggle', 'theme', 'color', 'scheme' ];
+	}
+
+	public function get_style_depends(): array {
+		return [ 'elementor-icons' ];
 	}
 
 	protected function register_controls(): void {
@@ -147,12 +151,12 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 				'flex-end'   => [ 'title' => esc_html__( 'Right', 'ele-custom-skin' ),  'icon' => 'eicon-text-align-right' ],
 			],
 			'default'   => 'flex-start',
-			'selectors' => [ '{{WRAPPER}} .dte-dms-wrap' => 'justify-content: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-wrap' => 'justify-content: {{VALUE}};' ],
 		] );
 
 		$this->add_group_control( Group_Control_Typography::get_type(), [
 			'name'     => 'btn_typography',
-			'selector' => '{{WRAPPER}} .dte-dms-btn',
+			'selector' => '{{WRAPPER}} .ecs-dms-btn',
 		] );
 
 		$this->add_control( 'btn_icon_size', [
@@ -160,9 +164,10 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'type'       => Controls_Manager::SLIDER,
 			'size_units' => [ 'px', 'em' ],
 			'range'      => [ 'px' => [ 'min' => 8, 'max' => 64 ] ],
+			'default'    => [ 'size' => 16, 'unit' => 'px' ],
 			'selectors'  => [
-				'{{WRAPPER}} .dte-dms-icon'     => 'font-size: {{SIZE}}{{UNIT}};',
-				'{{WRAPPER}} .dte-dms-icon svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+				'{{WRAPPER}} .ecs-dms-icon i'   => 'font-size: {{SIZE}}{{UNIT}};',
+				'{{WRAPPER}} .ecs-dms-icon svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
 			],
 		] );
 
@@ -171,7 +176,7 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'type'       => Controls_Manager::SLIDER,
 			'size_units' => [ 'px' ],
 			'range'      => [ 'px' => [ 'min' => 0, 'max' => 30 ] ],
-			'selectors'  => [ '{{WRAPPER}} .dte-dms-btn' => 'gap: {{SIZE}}{{UNIT}};' ],
+			'selectors'  => [ '{{WRAPPER}} .ecs-dms-btn' => 'gap: {{SIZE}}{{UNIT}};' ],
 		] );
 
 		$this->add_responsive_control( 'btn_padding', [
@@ -179,7 +184,7 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'type'       => Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', 'em', '%' ],
 			'selectors'  => [
-				'{{WRAPPER}} .dte-dms-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				'{{WRAPPER}} .ecs-dms-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 			],
 		] );
 
@@ -188,19 +193,19 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'type'       => Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', '%', 'em' ],
 			'selectors'  => [
-				'{{WRAPPER}} .dte-dms-btn'  => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-				'{{WRAPPER}} .dte-dms-wrap' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				'{{WRAPPER}} .ecs-dms-btn'  => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				'{{WRAPPER}} .ecs-dms-wrap' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 			],
 		] );
 
 		$this->add_group_control( Group_Control_Border::get_type(), [
 			'name'     => 'btn_border',
-			'selector' => '{{WRAPPER}} .dte-dms-btn',
+			'selector' => '{{WRAPPER}} .ecs-dms-btn',
 		] );
 
 		$this->add_group_control( Group_Control_Box_Shadow::get_type(), [
 			'name'     => 'btn_box_shadow',
-			'selector' => '{{WRAPPER}} .dte-dms-btn',
+			'selector' => '{{WRAPPER}} .ecs-dms-btn',
 		] );
 
 		// ── Color tabs ───────────────────────────────────────────────────────
@@ -216,27 +221,27 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'label'     => esc_html__( 'Text / Icon', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
 			'selectors' => [
-				'{{WRAPPER}} .dte-dms-btn'            => 'color: {{VALUE}};',
-				'{{WRAPPER}} .dte-dms-btn svg'        => 'fill: {{VALUE}};',
+				'{{WRAPPER}} .ecs-dms-btn'            => 'color: {{VALUE}};',
+				'{{WRAPPER}} .ecs-dms-btn svg'        => 'fill: {{VALUE}};',
 			],
 		] );
 
 		$this->add_control( 'btn_color_bg_normal', [
 			'label'     => esc_html__( 'Background', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-btn' => 'background-color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-btn' => 'background-color: {{VALUE}};' ],
 		] );
 
 		$this->add_control( 'btn_color_border_normal', [
 			'label'     => esc_html__( 'Border', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-btn' => 'border-color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-btn' => 'border-color: {{VALUE}};' ],
 		] );
 
 		$this->add_control( 'btn_color_bg_hover', [
 			'label'     => esc_html__( 'Background Hover', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-btn:hover:not(.is-active)' => 'background-color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-btn:hover:not(.is-active)' => 'background-color: {{VALUE}};' ],
 		] );
 
 		$this->end_controls_tab();
@@ -250,27 +255,27 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'label'     => esc_html__( 'Text / Icon', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
 			'selectors' => [
-				'{{WRAPPER}} .dte-dms-btn.is-active'     => 'color: {{VALUE}};',
-				'{{WRAPPER}} .dte-dms-btn.is-active svg' => 'fill: {{VALUE}};',
+				'{{WRAPPER}} .ecs-dms-btn.is-active'     => 'color: {{VALUE}};',
+				'{{WRAPPER}} .ecs-dms-btn.is-active svg' => 'fill: {{VALUE}};',
 			],
 		] );
 
 		$this->add_control( 'btn_color_bg_active', [
 			'label'     => esc_html__( 'Background', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-btn.is-active' => 'background-color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-btn.is-active' => 'background-color: {{VALUE}};' ],
 		] );
 
 		$this->add_control( 'btn_color_border_active', [
 			'label'     => esc_html__( 'Border', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-btn.is-active' => 'border-color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-btn.is-active' => 'border-color: {{VALUE}};' ],
 		] );
 
 		$this->add_control( 'btn_color_bg_active_hover', [
 			'label'     => esc_html__( 'Background Hover', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-btn.is-active:hover' => 'background-color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-btn.is-active:hover' => 'background-color: {{VALUE}};' ],
 		] );
 
 		$this->end_controls_tab();
@@ -298,24 +303,24 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 				'flex-end'   => [ 'title' => esc_html__( 'Right', 'ele-custom-skin' ),  'icon' => 'eicon-text-align-right' ],
 			],
 			'default'   => 'flex-start',
-			'selectors' => [ '{{WRAPPER}} .dte-dms-wrap' => 'justify-content: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-wrap' => 'justify-content: {{VALUE}};' ],
 		] );
 
 		$this->add_group_control( Group_Control_Typography::get_type(), [
 			'name'     => 'dd_typography',
-			'selector' => '{{WRAPPER}} .dte-dms-select',
+			'selector' => '{{WRAPPER}} .ecs-dms-select',
 		] );
 
 		$this->add_control( 'dd_color_text', [
 			'label'     => esc_html__( 'Text Color', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-select' => 'color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-select' => 'color: {{VALUE}};' ],
 		] );
 
 		$this->add_control( 'dd_color_bg', [
 			'label'     => esc_html__( 'Background', 'ele-custom-skin' ),
 			'type'      => Controls_Manager::COLOR,
-			'selectors' => [ '{{WRAPPER}} .dte-dms-select' => 'background-color: {{VALUE}};' ],
+			'selectors' => [ '{{WRAPPER}} .ecs-dms-select' => 'background-color: {{VALUE}};' ],
 		] );
 
 		$this->add_responsive_control( 'dd_padding', [
@@ -323,7 +328,7 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'type'       => Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', 'em' ],
 			'selectors'  => [
-				'{{WRAPPER}} .dte-dms-select' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				'{{WRAPPER}} .ecs-dms-select' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 			],
 		] );
 
@@ -332,13 +337,13 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 			'type'       => Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', '%' ],
 			'selectors'  => [
-				'{{WRAPPER}} .dte-dms-select' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				'{{WRAPPER}} .ecs-dms-select' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 			],
 		] );
 
 		$this->add_group_control( Group_Control_Border::get_type(), [
 			'name'     => 'dd_border',
-			'selector' => '{{WRAPPER}} .dte-dms-select',
+			'selector' => '{{WRAPPER}} .ecs-dms-select',
 		] );
 
 		$this->end_controls_section();
@@ -349,9 +354,9 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 	protected function render(): void {
 		$s       = $this->get_settings_for_display();
 		$display = $s['display_type'];
-		$is_dark = ! empty( $_COOKIE['dte_color_scheme'] ) && $_COOKIE['dte_color_scheme'] === 'alt';
+		$is_dark = ! empty( $_COOKIE['ecs_color_scheme'] ) && $_COOKIE['ecs_color_scheme'] === 'alt';
 
-		$wrap_cls = 'dte-dms-wrap dte-dms-type-' . esc_attr( $display );
+		$wrap_cls = 'ecs-dms-wrap ecs-dms-type-' . esc_attr( $display );
 		if ( $is_dark ) {
 			$wrap_cls .= ' is-alt';
 		}
@@ -372,13 +377,13 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 
 	private function render_toggle( array $s, bool $is_dark ): void {
 		?>
-		<button class="dte-dms-btn<?php echo $is_dark ? ' is-active' : ''; ?>"
+		<button class="ecs-dms-btn<?php echo $is_dark ? ' is-active' : ''; ?>"
 		        type="button"
 		        aria-label="<?php esc_attr_e( 'Toggle colour scheme', 'ele-custom-skin' ); ?>">
-			<span class="dte-dms-state dte-dms-state-light">
+			<span class="ecs-dms-state ecs-dms-state-light">
 				<?php $this->render_btn_content( $s, 'light' ); ?>
 			</span>
-			<span class="dte-dms-state dte-dms-state-dark">
+			<span class="ecs-dms-state ecs-dms-state-dark">
 				<?php $this->render_btn_content( $s, 'dark' ); ?>
 			</span>
 		</button>
@@ -387,12 +392,12 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 
 	private function render_dual( array $s, bool $is_dark ): void {
 		?>
-		<button class="dte-dms-btn dte-dms-btn-light<?php echo ! $is_dark ? ' is-active' : ''; ?>"
+		<button class="ecs-dms-btn ecs-dms-btn-light<?php echo ! $is_dark ? ' is-active' : ''; ?>"
 		        type="button" data-scheme="default"
 		        aria-pressed="<?php echo ! $is_dark ? 'true' : 'false'; ?>">
 			<?php $this->render_btn_content( $s, 'light' ); ?>
 		</button>
-		<button class="dte-dms-btn dte-dms-btn-dark<?php echo $is_dark ? ' is-active' : ''; ?>"
+		<button class="ecs-dms-btn ecs-dms-btn-dark<?php echo $is_dark ? ' is-active' : ''; ?>"
 		        type="button" data-scheme="alt"
 		        aria-pressed="<?php echo $is_dark ? 'true' : 'false'; ?>">
 			<?php $this->render_btn_content( $s, 'dark' ); ?>
@@ -402,7 +407,7 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 
 	private function render_dropdown( array $s, bool $is_dark ): void {
 		?>
-		<select class="dte-dms-select" aria-label="<?php esc_attr_e( 'Colour scheme', 'ele-custom-skin' ); ?>">
+		<select class="ecs-dms-select" aria-label="<?php esc_attr_e( 'Colour scheme', 'ele-custom-skin' ); ?>">
 			<option value="default"<?php selected( ! $is_dark ); ?>>
 				<?php echo esc_html( $s['label_light'] ); ?>
 			</option>
@@ -426,7 +431,7 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 		$icon_html = '';
 		if ( $has_icon ) {
 			ob_start();
-			echo '<span class="dte-dms-icon">';
+			echo '<span class="ecs-dms-icon">';
 			Icons_Manager::render_icon( $icon, [ 'aria-hidden' => 'true' ] );
 			echo '</span>';
 			$icon_html = ob_get_clean();
@@ -434,13 +439,13 @@ class ECS_Color_Switcher_Widget extends Widget_Base {
 
 		if ( 'after' === $icon_pos ) {
 			if ( $has_label ) {
-				echo '<span class="dte-dms-label">' . $label . '</span>'; // phpcs:ignore
+				echo '<span class="ecs-dms-label">' . $label . '</span>'; // phpcs:ignore
 			}
 			echo $icon_html; // phpcs:ignore
 		} else {
 			echo $icon_html; // phpcs:ignore
 			if ( $has_label ) {
-				echo '<span class="dte-dms-label">' . $label . '</span>'; // phpcs:ignore
+				echo '<span class="ecs-dms-label">' . $label . '</span>'; // phpcs:ignore
 			}
 		}
 	}

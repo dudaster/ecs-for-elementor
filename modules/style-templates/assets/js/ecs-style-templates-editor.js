@@ -1,8 +1,8 @@
 /**
- * DTE Style Templates — Editor JS
+ * ECS Style Templates — Editor JS
  *
  * Responsibilities:
- *  - Detect when a widget panel opens and find .dte-st-panel
+ *  - Detect when a widget panel opens and find .ecs-st-panel
  *  - Load templates list for the widget type (AJAX)
  *  - Handle Save New / Overwrite / Apply / Link / Unlink / Delete
  *  - Extract style-tab settings from the Elementor container model
@@ -19,7 +19,7 @@
 	var SKIP_TYPES = [ 'section', 'tabs', 'tab', 'popover_toggle', 'raw_html', 'button', 'divider', 'heading' ];
 
 	// Our own control keys — never included in saved style settings.
-	var DTE_KEYS = [ 'dte_style_template_mode', 'dte_style_template_name', 'dte_style_templates_ui' ];
+	var ECS_KEYS = [ 'ecs_style_template_mode', 'ecs_style_template_name', 'ecs_style_templates_ui' ];
 
 	// ── Group-activator helper ────────────────────────────────────────────────
 
@@ -107,7 +107,7 @@
 
 	/**
 	 * Collect all Style-tab control values from the container model,
-	 * excluding structural controls and our own DTE meta keys.
+	 * excluding structural controls and our own ECS meta keys.
 	 *
 	 * Also captures __globals__ entries for style keys so that Global Color /
 	 * Global Font references are preserved exactly — mirroring Elementor's own
@@ -129,7 +129,7 @@
 			var ctrl = entry[ 1 ];
 
 			if ( ( ctrl.tab || '' ) !== 'style' ) { return; }
-			if ( DTE_KEYS.indexOf( key ) !== -1 )  { return; }
+			if ( ECS_KEYS.indexOf( key ) !== -1 )  { return; }
 
 			// Preserve global refs (e.g. typography_typography → Global Font) BEFORE
 			// the SKIP_TYPES guard — popover_toggle carries the ref but has no CSS value.
@@ -176,19 +176,19 @@
 	 * apply settings manually via `document/elements/settings` +
 	 * `document/globals/settings`.
 	 *
-	 * DTE meta keys (`dte_style_template_mode`, etc.) are applied separately
+	 * ECS meta keys (`ecs_style_template_mode`, etc.) are applied separately
 	 * because `paste-style` correctly filters them out as non-style controls.
 	 */
 	function applySettings( container, settingsMap ) {
 		var controls        = getControls();
 		var templateGlobals = settingsMap.__globals__ || {};
 
-		// ── Separate DTE meta keys from real style settings ───────────────
+		// ── Separate ECS meta keys from real style settings ───────────────
 		var metaSettings  = {};
 		var styleSettings = {};
 		Object.keys( settingsMap ).forEach( function ( k ) {
 			if ( k === '__globals__' ) { return; }
-			if ( DTE_KEYS.indexOf( k ) !== -1 ) {
+			if ( ECS_KEYS.indexOf( k ) !== -1 ) {
 				metaSettings[ k ] = settingsMap[ k ];
 			} else {
 				styleSettings[ k ] = settingsMap[ k ];
@@ -236,7 +236,7 @@
 
 		// ── Fallback: manual apply (Elementor < 3.x or paste-style failed) ─
 		if ( ! pasteStyleOk ) {
-			// Keys being written (already excludes DTE meta).
+			// Keys being written (already excludes ECS meta).
 			var appliedKeys = Object.keys( styleSettings );
 
 			// Read current globals; clear refs for applied keys so local values win.
@@ -279,7 +279,7 @@
 			}
 		}
 
-		// ── DTE meta keys (mode / name) — always applied separately ──────────
+		// ── ECS meta keys (mode / name) — always applied separately ──────────
 		if ( Object.keys( metaSettings ).length ) {
 			$e.run( 'document/elements/settings', {
 				containers : [ container ],
@@ -330,11 +330,11 @@
 				}
 
 				function scrollToDteSection() {
-					var sectionControl = panel.querySelector( '.elementor-control-dte_style_templates' );
+					var sectionControl = panel.querySelector( '.elementor-control-ecs_style_templates' );
 					if ( ! sectionControl ) { return; }
 
-					var dtePanel   = panel.querySelector( '.dte-st-panel' );
-					var collapsed  = ! dtePanel || dtePanel.offsetHeight === 0;
+					var ecsPanel   = panel.querySelector( '.ecs-st-panel' );
+					var collapsed  = ! ecsPanel || ecsPanel.offsetHeight === 0;
 
 					if ( collapsed ) {
 						var heading = sectionControl.querySelector( 'h3' ) || sectionControl;
@@ -357,7 +357,7 @@
 					var style = findStyleTab();
 					if ( style ) {
 						style.click();
-						// After Style tab renders, expand DTE section and scroll to it.
+						// After Style tab renders, expand ECS section and scroll to it.
 						setTimeout( scrollToDteSection, 200 );
 					}
 				}, 100 );
@@ -385,17 +385,17 @@
 	function loadTemplates( panelEl, widgetType, selectValue ) {
 		// Capture the prev value before the AJAX call (from the live element).
 		var prevValue = selectValue !== undefined ? selectValue
-			: ( panelEl.querySelector( '.dte-st-select' ) || {} ).value || '';
+			: ( panelEl.querySelector( '.ecs-st-select' ) || {} ).value || '';
 
 		ajax( 'ecs_style_templates_list', { widget_type: widgetType } )
 			.done( function ( resp ) {
 				if ( ! resp.success ) { return; }
 
 				// Re-query the panel in case Elementor replaced its DOM nodes.
-				var livePanel = document.querySelector( '.dte-st-panel[data-widget-type="' + widgetType + '"]' );
+				var livePanel = document.querySelector( '.ecs-st-panel[data-widget-type="' + widgetType + '"]' );
 				if ( ! livePanel ) { return; }
 
-				var select = livePanel.querySelector( '.dte-st-select' );
+				var select = livePanel.querySelector( '.ecs-st-select' );
 				if ( ! select ) { return; }
 
 				select.innerHTML = '<option value="">\u2014 Select template \u2014</option>';
@@ -412,10 +412,10 @@
 
 	/** Refresh the status line and link switch from the container's current settings. */
 	function updateStatus( panelEl, container ) {
-		var mode       = container.settings.get( 'dte_style_template_mode' ) || 'none';
-		var name       = container.settings.get( 'dte_style_template_name' ) || '';
-		var statusEl   = panelEl.querySelector( '.dte-st-status' );
-		var linkToggle = panelEl.querySelector( '.dte-st-link-toggle' );
+		var mode       = container.settings.get( 'ecs_style_template_mode' ) || 'none';
+		var name       = container.settings.get( 'ecs_style_template_name' ) || '';
+		var statusEl   = panelEl.querySelector( '.ecs-st-status' );
+		var linkToggle = panelEl.querySelector( '.ecs-st-link-toggle' );
 
 		if ( linkToggle ) {
 			linkToggle.checked = ( mode === 'linked' );
@@ -423,17 +423,17 @@
 
 		if ( mode === 'linked' ) {
 			statusEl.textContent = ( i18n.linkedTo || 'Linked to: ' ) + name;
-			statusEl.className   = 'dte-st-status dte-st-is-linked';
+			statusEl.className   = 'ecs-st-status ecs-st-is-linked';
 			if ( name ) {
-				var select = panelEl.querySelector( '.dte-st-select' );
+				var select = panelEl.querySelector( '.ecs-st-select' );
 				if ( select ) { select.value = name; }
 			}
 		} else if ( mode === 'applied' ) {
 			statusEl.textContent = i18n.applied || 'Template applied (not linked)';
-			statusEl.className   = 'dte-st-status dte-st-is-applied';
+			statusEl.className   = 'ecs-st-status ecs-st-is-applied';
 		} else {
 			statusEl.textContent = '';
-			statusEl.className   = 'dte-st-status';
+			statusEl.className   = 'ecs-st-status';
 		}
 	}
 
@@ -443,14 +443,14 @@
 
 		// Skip internal Elementor base widgets (common, common-optimized, global-widget, etc.).
 		if ( ! widgetType || widgetType.startsWith( 'common' ) || widgetType === 'global-widget' ) {
-			panelEl.setAttribute( 'data-dte-init', 'skip' );
+			panelEl.setAttribute( 'data-ecs-init', 'skip' );
 			return;
 		}
 
-		panelEl.setAttribute( 'data-dte-init', '1' );
+		panelEl.setAttribute( 'data-ecs-init', '1' );
 
 		var container = getContainer();
-		var savedName = container ? ( container.settings.get( 'dte_style_template_name' ) || '' ) : '';
+		var savedName = container ? ( container.settings.get( 'ecs_style_template_name' ) || '' ) : '';
 
 		loadTemplates( panelEl, widgetType, savedName );
 
@@ -459,7 +459,7 @@
 		}
 
 		// Link switch — toggle triggers link/unlink.
-		var linkToggle = panelEl.querySelector( '.dte-st-link-toggle' );
+		var linkToggle = panelEl.querySelector( '.ecs-st-link-toggle' );
 		if ( linkToggle ) {
 			linkToggle.addEventListener( 'change', function () {
 				var c = getContainer();
@@ -496,7 +496,7 @@
 	// ── Action handlers ───────────────────────────────────────────────────────
 
 	function handleSaveNew( panelEl, widgetType, container ) {
-		var nameInput = panelEl.querySelector( '.dte-st-name-input' );
+		var nameInput = panelEl.querySelector( '.ecs-st-name-input' );
 		var name      = nameInput.value.trim();
 
 		if ( ! name ) {
@@ -527,7 +527,7 @@
 	}
 
 	function handleOverwrite( panelEl, widgetType, container ) {
-		var name = panelEl.querySelector( '.dte-st-select' ).value;
+		var name = panelEl.querySelector( '.ecs-st-select' ).value;
 		if ( ! name ) {
 			alert( i18n.selectTemplate || 'Please select a template.' );
 			return;
@@ -557,7 +557,7 @@
 	}
 
 	function handleApply( panelEl, widgetType, container ) {
-		var name = panelEl.querySelector( '.dte-st-select' ).value;
+		var name = panelEl.querySelector( '.ecs-st-select' ).value;
 		if ( ! name ) {
 			alert( i18n.selectTemplate || 'Please select a template.' );
 			return;
@@ -573,8 +573,8 @@
 			}
 
 			var merged = Object.assign( {}, resp.data, {
-				dte_style_template_mode : 'applied',
-				dte_style_template_name : name,
+				ecs_style_template_mode : 'applied',
+				ecs_style_template_name : name,
 			} );
 
 			applySettings( container, merged );
@@ -583,11 +583,11 @@
 	}
 
 	function handleLink( panelEl, widgetType, container ) {
-		var name = panelEl.querySelector( '.dte-st-select' ).value;
+		var name = panelEl.querySelector( '.ecs-st-select' ).value;
 		if ( ! name ) {
 			alert( i18n.selectTemplate || 'Please select a template.' );
 			// Revert switch — link didn't happen.
-			var tog = panelEl.querySelector( '.dte-st-link-toggle' );
+			var tog = panelEl.querySelector( '.ecs-st-link-toggle' );
 			if ( tog ) { tog.checked = false; }
 			return;
 		}
@@ -597,8 +597,8 @@
 		// unlinking reverts it cleanly. Visual override is handled by CSS
 		// injection (editor preview) and PHP output_preset_css (frontend).
 		applySettings( container, {
-			dte_style_template_mode : 'linked',
-			dte_style_template_name : name,
+			ecs_style_template_mode : 'linked',
+			ecs_style_template_name : name,
 		} );
 		updateStatus( panelEl, container );
 
@@ -612,8 +612,8 @@
 		// Clear link metadata only — the widget's own styles were never
 		// overwritten, so it naturally reverts to its original appearance.
 		applySettings( container, {
-			dte_style_template_mode : 'none',
-			dte_style_template_name : '',
+			ecs_style_template_mode : 'none',
+			ecs_style_template_name : '',
 		} );
 		updateStatus( panelEl, container );
 		// Force CSS removal immediately — don't rely on command:after firing.
@@ -621,7 +621,7 @@
 	}
 
 	function handleDelete( panelEl, widgetType ) {
-		var name   = panelEl.querySelector( '.dte-st-select' ).value;
+		var name   = panelEl.querySelector( '.ecs-st-select' ).value;
 		if ( ! name ) {
 			alert( i18n.selectTemplate || 'Please select a template.' );
 			return;
@@ -646,11 +646,11 @@
 	// ── Initialization ────────────────────────────────────────────────────────
 
 	/**
-	 * Find any un-initialized .dte-st-panel in the panel DOM and init it.
+	 * Find any un-initialized .ecs-st-panel in the panel DOM and init it.
 	 * Called by MutationObserver and by the widget-panel-open hook.
 	 */
 	function checkForPanel() {
-		var panelEl = document.querySelector( '.dte-st-panel:not([data-dte-init])' );
+		var panelEl = document.querySelector( '.ecs-st-panel:not([data-ecs-init])' );
 		if ( panelEl ) {
 			initPanel( panelEl );
 		}
@@ -658,7 +658,7 @@
 
 	/**
 	 * Re-init after a widget panel opens (the panel DOM is replaced,
-	 * so data-dte-init from the previous widget is gone automatically).
+	 * so data-ecs-init from the previous widget is gone automatically).
 	 * We add a small delay so Elementor finishes rendering the controls.
 	 */
 	function onWidgetPanelOpen() {
@@ -694,13 +694,13 @@
 } )( jQuery );
 
 /**
- * DTE Style Templates — Editor Preview CSS
+ * ECS Style Templates — Editor Preview CSS
  *
  * In the Elementor editor, widgets are rendered by JavaScript (Backbone),
  * not by PHP. So our PHP `output_preset_css()` hook never fires in the editor.
  *
  * This section runs in the parent editor frame, iterates every widget in the
- * preview iframe, and for linked widgets injects <style id="dte-st-{id}">
+ * preview iframe, and for linked widgets injects <style id="ecs-st-{id}">
  * into the iframe's <head>. These tags survive Backbone re-renders and use
  * !important to override Elementor's own per-widget elementor-style-{id} tags.
  *
@@ -784,7 +784,7 @@
 		} );
 
 		keys.forEach( function ( key ) {
-			if ( key.indexOf( 'dte_' ) === 0 ) { return; }
+			if ( key.indexOf( 'ecs_' ) === 0 ) { return; }
 			// Skip responsive variants — they need @media wrappers (not implemented here).
 			if ( /_(?:tablet|mobile|widescreen|laptop)$/.test( key ) ) { return; }
 
@@ -860,7 +860,7 @@
 	function injectStyleTag( widgetId, css ) {
 		if ( ! iframeDoc ) { return; }
 
-		var id       = 'dte-st-' + widgetId;
+		var id       = 'ecs-st-' + widgetId;
 		var existing = iframeDoc.getElementById( id );
 		if ( existing ) { existing.remove(); }
 		if ( ! css ) { return; }
@@ -878,13 +878,13 @@
 		try { container = window.elementor.getContainer( widgetId ); } catch ( _e ) {}
 		if ( ! container || ! container.settings ) { return; }
 
-		var mode = container.settings.get( 'dte_style_template_mode' );
+		var mode = container.settings.get( 'ecs_style_template_mode' );
 		if ( mode !== 'linked' ) {
 			injectStyleTag( widgetId, '' ); // remove any existing override
 			return;
 		}
 
-		var tplName    = container.settings.get( 'dte_style_template_name' );
+		var tplName    = container.settings.get( 'ecs_style_template_name' );
 		var widgetType = container.model && container.model.get( 'widgetType' );
 		if ( ! tplName || ! widgetType ) { return; }
 

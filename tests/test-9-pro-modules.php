@@ -84,7 +84,7 @@ if ( ! empty( $wp_filter[ $hook_cr ] ) ) {
 }
 ecs_ok( $found_cr, "Hook '$hook_cr' → ECS_Container_Responsive_Module callback" );
 
-ecs_section( 'container_responsive — control dte_container_type injectat pe container' );
+ecs_section( 'container_responsive — control ecs_container_type injectat pe container' );
 
 // Citim sursa o singură dată — folosită în mai multe secțiuni.
 $src_cr = file_get_contents( ELECSP_DIR . 'modules/container-responsive/class-ecs-container-responsive-module.php' );
@@ -93,7 +93,7 @@ $src_cr = file_get_contents( ELECSP_DIR . 'modules/container-responsive/class-ec
 $container_type = \Elementor\Plugin::$instance->elements_manager->get_element_types( 'container' );
 if ( $container_type ) {
 	$controls_before = array_keys( $container_type->get_controls() );
-	$has_before      = in_array( 'dte_container_type', $controls_before, true );
+	$has_before      = in_array( 'ecs_container_type', $controls_before, true );
 
 	// Boot-ul a înregistrat hook-ul; dacă elementul nu a pornit cu hook-ul activ,
 	// injectăm controlul direct prin metoda publică.
@@ -103,32 +103,32 @@ if ( $container_type ) {
 
 	$controls_after = $container_type->get_controls();
 
-	ecs_ok( isset( $controls_after['dte_container_type'] ),
-		'Control dte_container_type injectat pe elementul container' );
+	ecs_ok( isset( $controls_after['ecs_container_type'] ),
+		'Control ecs_container_type injectat pe elementul container' );
 
-	$ctrl = $controls_after['dte_container_type'] ?? null;
+	$ctrl = $controls_after['ecs_container_type'] ?? null;
 	if ( $ctrl ) {
-		ecs_ok( ( $ctrl['type'] ?? '' ) === 'select',          'dte_container_type este SELECT' );
+		ecs_ok( ( $ctrl['type'] ?? '' ) === 'select',          'ecs_container_type este SELECT' );
 		ecs_ok( ( $ctrl['default'] ?? '' ) === 'flex',         'default = flex' );
-		// Elementor normalizează 'e-dte%s-' → 'e-dte-' (variant desktop) în get_controls()
-		// Verificăm că format-ul sprintf e definit în sursă, și că desktop-ul e 'e-dte-'
-		ecs_ok( ( $ctrl['prefix_class'] ?? '' ) === 'e-dte-', "prefix_class desktop = 'e-dte-' (Elementor normalizat)" );
-		ecs_ok( strpos( $src_cr, "'e-dte%s-'" ) !== false,    "prefix_class sprintf 'e-dte%s-' definit în sursă" );
+		// Elementor normalizează 'e-ecs%s-' → 'e-ecs-' (variant desktop) în get_controls()
+		// Verificăm că format-ul sprintf e definit în sursă, și că desktop-ul e 'e-ecs-'
+		ecs_ok( ( $ctrl['prefix_class'] ?? '' ) === 'e-ecs-', "prefix_class desktop = 'e-ecs-' (Elementor normalizat)" );
+		ecs_ok( strpos( $src_cr, "'e-ecs%s-'" ) !== false,    "prefix_class sprintf 'e-ecs%s-' definit în sursă" );
 		ecs_ok( ( $ctrl['frontend_available'] ?? false ) === true, 'frontend_available = true' );
 
 		// Opțiunile sunt strippate de Elementor la get_controls(); verificăm în sursă.
 		foreach ( [ "'flex'", "'grid'", "'slider'", "'custom'", "''" ] as $opt ) {
-			ecs_ok( strpos( $src_cr, $opt ) !== false, "dte_container_type: opțiunea $opt definită în sursă" );
+			ecs_ok( strpos( $src_cr, $opt ) !== false, "ecs_container_type: opțiunea $opt definită în sursă" );
 		}
 
 		// Responsive: trebuie să existe variante tablet/mobile
-		ecs_ok( isset( $controls_after['dte_container_type_tablet'] ),
-			'Control responsiv dte_container_type_tablet există' );
-		ecs_ok( isset( $controls_after['dte_container_type_mobile'] ),
-			'Control responsiv dte_container_type_mobile există' );
-		ecs_ok( ( $controls_after['dte_container_type_tablet']['default'] ?? 'x' ) === '',
+		ecs_ok( isset( $controls_after['ecs_container_type_tablet'] ),
+			'Control responsiv ecs_container_type_tablet există' );
+		ecs_ok( isset( $controls_after['ecs_container_type_mobile'] ),
+			'Control responsiv ecs_container_type_mobile există' );
+		ecs_ok( ( $controls_after['ecs_container_type_tablet']['default'] ?? 'x' ) === '',
 			'tablet_default = "" (Inherit)' );
-		ecs_ok( ( $controls_after['dte_container_type_mobile']['default'] ?? 'x' ) === '',
+		ecs_ok( ( $controls_after['ecs_container_type_mobile']['default'] ?? 'x' ) === '',
 			'mobile_default = "" (Inherit)' );
 	}
 
@@ -188,11 +188,11 @@ ecs_section( 'color_schemes — widget și storage CRUD' );
 
 // Widget
 $widgets_manager = \Elementor\Plugin::$instance->widgets_manager;
-$cs_widget = $widgets_manager->get_widget_types( 'dte_color_scheme_selector' );
-ecs_ok( $cs_widget !== null, 'Widget dte_color_scheme_selector înregistrat în Elementor' );
+$cs_widget = $widgets_manager->get_widget_types( 'ecs_color_scheme_selector' );
+ecs_ok( $cs_widget !== null, 'Widget ecs_color_scheme_selector înregistrat în Elementor' );
 
 // Storage CRUD
-$opt_cs   = 'dte_pro_color_schemes';
+$opt_cs   = 'ecs_pro_color_schemes';
 $orig_cs  = get_option( $opt_cs, [] );
 
 $test_schemes = [
@@ -238,10 +238,10 @@ ecs_ok( has_action( 'wp_ajax_ecs_pro_get_font_globals'  ), 'AJAX ecs_pro_get_fon
 
 ecs_section( 'font_schemes — widget și storage CRUD' );
 
-$fs_widget = $widgets_manager->get_widget_types( 'dte_font_scheme_selector' );
-ecs_ok( $fs_widget !== null, 'Widget dte_font_scheme_selector înregistrat în Elementor' );
+$fs_widget = $widgets_manager->get_widget_types( 'ecs_font_scheme_selector' );
+ecs_ok( $fs_widget !== null, 'Widget ecs_font_scheme_selector înregistrat în Elementor' );
 
-$opt_fs  = 'dte_pro_font_schemes';
+$opt_fs  = 'ecs_pro_font_schemes';
 $orig_fs = get_option( $opt_fs, [] );
 
 $test_font_schemes = [
@@ -284,7 +284,7 @@ ecs_ok( has_action( 'wp_ajax_ecs_pro_save_alt_logos' ), 'AJAX ecs_pro_save_alt_l
 
 ecs_section( 'alt_logos — storage CRUD și validare' );
 
-$opt_al  = 'dte_pro_alt_logos';
+$opt_al  = 'ecs_pro_alt_logos';
 $orig_al = get_option( $opt_al, [] );
 
 // Test validare: intrările fără id sau label trebuie filtrate
@@ -345,7 +345,7 @@ ecs_ok( has_action( 'wp_ajax_ecs_pro_get_look_assets'   ), 'AJAX ecs_pro_get_loo
 
 ecs_section( 'custom_look_feel — storage CSS snippets CRUD' );
 
-$opt_css  = 'dte_pro_custom_css';
+$opt_css  = 'ecs_pro_custom_css';
 $orig_css = get_option( $opt_css, [] );
 
 $test_css_snippets = [
@@ -364,7 +364,7 @@ ecs_ok( get_option( $opt_css, [] ) === $orig_css, 'custom_css storage restaurat'
 
 ecs_section( 'custom_look_feel — storage Looks CRUD + apply_matching_looks()' );
 
-$opt_looks  = 'dte_pro_custom_looks';
+$opt_looks  = 'ecs_pro_custom_looks';
 $orig_looks = get_option( $opt_looks, [] );
 
 // Salvăm un look de test (disabled — nu va fi aplicat pe frontend)
@@ -417,12 +417,12 @@ ecs_section( 'custom_look_feel — CSS selector specificitate în sursă' );
 
 $src_clf = file_get_contents( ELECSP_DIR . 'modules/custom-look-feel/class-ecs-custom-look-feel-module.php' );
 ecs_ok(
-	strpos( $src_clf, 'html[data-dte-look] body.elementor-kit-' ) !== false,
-	'CSS selector: html[data-dte-look] body.elementor-kit-{id} (spec 0,2,1 — bate kit 0,1,1 și dark mode 0,2,0)'
+	strpos( $src_clf, 'html[data-ecs-look] body.elementor-kit-' ) !== false,
+	'CSS selector: html[data-ecs-look] body.elementor-kit-{id} (spec 0,2,1 — bate kit 0,1,1 și dark mode 0,2,0)'
 );
 ecs_ok(
-	strpos( $src_clf, 'data-dte-look' ) !== false,
-	'Atribut data-dte-look folosit pentru activarea look-ului'
+	strpos( $src_clf, 'data-ecs-look' ) !== false,
+	'Atribut data-ecs-look folosit pentru activarea look-ului'
 );
 
 // ════════════════════════════════════════════════════════════════════════════════

@@ -62,8 +62,8 @@ if ( $manager->is_active( 'mobile_menu' ) ) {
 			'Control layout responsive (layout_tablet sau layout_mobile) prezent pe nav-menu'
 		);
 
-		// dte_force_breakpoint confirmat prezent
-		ecs_ok( isset( $controls['dte_force_breakpoint'] ), 'Control dte_force_breakpoint adăugat' );
+		// ecs_force_breakpoint confirmat prezent
+		ecs_ok( isset( $controls['ecs_force_breakpoint'] ), 'Control ecs_force_breakpoint adăugat' );
 
 		// Verificăm tipul controlului layout (Elementor strippează 'options' din get_controls())
 		$layout_ctrl = $controls['layout'] ?? null;
@@ -80,8 +80,8 @@ if ( $manager->is_active( 'mobile_menu' ) ) {
 		if ( $layout_ctrl ) {
 			$selectors_dict = $layout_ctrl['selectors_dictionary'] ?? [];
 			ecs_ok(
-				strpos( $selectors_dict['dropdown'] ?? '', '--dte-nav-toggle-display:flex' ) !== false,
-				"layout dropdown selector setează --dte-nav-toggle-display:flex"
+				strpos( $selectors_dict['dropdown'] ?? '', '--ecs-nav-toggle-display:flex' ) !== false,
+				"layout dropdown selector setează --ecs-nav-toggle-display:flex"
 			);
 		}
 
@@ -105,8 +105,8 @@ if ( $manager->is_active( 'mobile_menu' ) ) {
 	if ( file_exists( $css_file ) ) {
 		$css = file_get_contents( $css_file );
 		ecs_ok( ! empty( $css ),                                           'CSS mobile-menu nu este gol' );
-		ecs_ok( strpos( $css, '--dte-nav-' ) !== false,                    'CSS conține variabile --dte-nav-*' );
-		ecs_ok( strpos( $css, 'dte-nav-layout-dropdown' ) !== false,       'CSS are stiluri pentru dte-nav-layout-dropdown' );
+		ecs_ok( strpos( $css, '--ecs-nav-' ) !== false,                    'CSS conține variabile --ecs-nav-*' );
+		ecs_ok( strpos( $css, 'ecs-nav-layout-dropdown' ) !== false,       'CSS are stiluri pentru ecs-nav-layout-dropdown' );
 	}
 
 	$js_file = ECS_PATH . 'modules/mobile-menu/assets/js/ecs-mobile-menu-editor.js';

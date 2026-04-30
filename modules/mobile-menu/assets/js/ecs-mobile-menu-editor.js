@@ -1,10 +1,10 @@
 /**
- * DTE Mobile Menu — Editor CSS-Variable Fix + widgetsCache patch
+ * ECS Mobile Menu — Editor CSS-Variable Fix + widgetsCache patch
  *
  * (1) CSS-Variable Fix
  * Elementor's JS CSS generator does not handle multi-declaration CSS-variable
  * values from selectors_dictionary (e.g. "--a:1;--b:2;--c:3"), so the
- * --dte-nav-main-display / --dte-nav-main-dir / --dte-nav-toggle-display
+ * --ecs-nav-main-display / --ecs-nav-main-dir / --ecs-nav-toggle-display
  * variables are never written into the editor's inline <style> tag.
  *
  * This script runs in the parent editor frame, reads the effective `layout`
@@ -68,12 +68,12 @@
 		} );
 
 		// Add prefix_class to toggle_align so Elementor's editor JS generates
-		// the dte-toggle-align-{value} class on the widget wrapper element.
+		// the ecs-toggle-align-{value} class on the widget wrapper element.
 		// PHP add_control() sets prefix_class but widgetsCache is built from
 		// serialized data before our hook runs, so we must patch it here.
 		var toggleAlign = cache.controls[ 'toggle_align' ];
 		if ( toggleAlign ) {
-			toggleAlign.prefix_class = 'dte-toggle-align-';
+			toggleAlign.prefix_class = 'ecs-toggle-align-';
 		}
 	}
 
@@ -156,7 +156,7 @@
 			var layout = getSettingForDevice( container.settings, 'layout', device );
 
 			// Force Breakpoint: override layout to dropdown at the Elementor breakpoint.
-			var forceBreakpoint = container.settings.get( 'dte_force_breakpoint' ) === 'force-breakpoint';
+			var forceBreakpoint = container.settings.get( 'ecs_force_breakpoint' ) === 'force-breakpoint';
 			if ( forceBreakpoint ) {
 				var bp = container.settings.get( 'dropdown' ) || 'none';
 				var atBreakpoint = ( bp === 'mobile' && device === 'mobile' ) ||
@@ -168,9 +168,9 @@
 
 			var vars = VAR_MAP[ layout ] || VAR_MAP.horizontal;
 
-			el.style.setProperty( '--dte-nav-main-display',   vars.display );
-			el.style.setProperty( '--dte-nav-main-dir',       vars.dir     );
-			el.style.setProperty( '--dte-nav-toggle-display', vars.toggle  );
+			el.style.setProperty( '--ecs-nav-main-display',   vars.display );
+			el.style.setProperty( '--ecs-nav-main-dir',       vars.dir     );
+			el.style.setProperty( '--ecs-nav-toggle-display', vars.toggle  );
 		} catch ( e ) {
 			// widget may not be in the Elementor model yet (e.g. during initial render)
 		}

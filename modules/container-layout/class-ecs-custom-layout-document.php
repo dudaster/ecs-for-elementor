@@ -107,7 +107,7 @@ class ECS_Custom_Layout_Document extends ECS_Custom_Layout_Document_Base {
 	public function get_initial_config(): array {
 		$config = parent::get_initial_config();
 
-		$config['panel']['widgets_settings']['dte_container_placeholder'] = [
+		$config['panel']['widgets_settings']['ecs_container_placeholder'] = [
 			'categories'    => [ 'recommended' ],
 			'show_in_panel' => true,
 		];
@@ -119,7 +119,7 @@ class ECS_Custom_Layout_Document extends ECS_Custom_Layout_Document_Base {
 		parent::register_controls();
 
 		$this->start_controls_section(
-			'dte_layout_settings',
+			'ecs_layout_settings',
 			[
 				'label' => esc_html__( 'ECS Layout Settings', 'ele-custom-skin' ),
 				'tab'   => Controls_Manager::TAB_SETTINGS,
@@ -127,12 +127,12 @@ class ECS_Custom_Layout_Document extends ECS_Custom_Layout_Document_Base {
 		);
 
 		$this->add_control(
-			'dte_child_wrapper_class',
+			'ecs_child_wrapper_class',
 			[
 				'label'       => esc_html__( 'Child Wrapper Class', 'ele-custom-skin' ),
 				'type'        => Controls_Manager::TEXT,
-				'default'     => 'dte-layout-item',
-				'placeholder' => 'dte-layout-item',
+				'default'     => 'ecs-layout-item',
+				'placeholder' => 'ecs-layout-item',
 				'description' => esc_html__( 'CSS class applied to the <div> wrapping each injected child.', 'ele-custom-skin' ),
 			]
 		);

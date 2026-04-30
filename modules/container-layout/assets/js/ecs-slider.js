@@ -6,13 +6,10 @@
 
 	// ── Live mode (PHP generated Swiper HTML) ─────────────────────────────────
 
-	function initLiveSlider( el ) {
-		if ( el.hasAttribute( 'data-dte-swiper-init' ) ) {
-			return;
-		}
-		el.setAttribute( 'data-dte-swiper-init', '1' );
+	function doInitLiveSlider( el ) {
+		el.setAttribute( 'data-ecs-swiper-init', '1' );
 
-		var settings = JSON.parse( el.getAttribute( 'data-dte-slider-settings' ) || '{}' );
+		var settings = JSON.parse( el.getAttribute( 'data-ecs-slider-settings' ) || '{}' );
 
 		if ( settings.navigation ) {
 			settings.navigation = {
@@ -27,15 +24,38 @@
 		new Swiper( el, settings ); // eslint-disable-line no-undef
 	}
 
+	function initLiveSlider( el ) {
+		if ( el.hasAttribute( 'data-ecs-swiper-init' ) ) {
+			return;
+		}
+
+		// Defer init if hidden (e.g. inside display:none responsive-version on desktop).
+		// ResizeObserver fires when CSS shows the element — media query triggered by viewport change.
+		if ( el.offsetWidth === 0 && typeof ResizeObserver !== 'undefined' ) {
+			el.setAttribute( 'data-ecs-swiper-init', 'pending' );
+			var ro = new ResizeObserver( function ( entries ) {
+				if ( entries[ 0 ].contentRect.width > 0 ) {
+					ro.disconnect();
+					el.removeAttribute( 'data-ecs-swiper-init' );
+					doInitLiveSlider( el );
+				}
+			} );
+			ro.observe( el );
+			return;
+		}
+
+		doInitLiveSlider( el );
+	}
+
 	function initAllLiveSliders() {
-		document.querySelectorAll( '.dte-swiper:not([data-dte-swiper-init])' ).forEach( initLiveSlider );
+		document.querySelectorAll( '.ecs-swiper:not([data-ecs-swiper-init])' ).forEach( initLiveSlider );
 	}
 
 	// ── Editor mode (JS builds Swiper from existing DOM) ──────────────────────
 
 	/**
 	 * Read slider control values from the parent editor's Backbone model.
-	 * This is the same pattern used in dte-editor-preview.js.
+	 * This is the same pattern used in ecs-editor-preview.js.
 	 */
 	function getEditorSettings( containerId ) {
 		try {
@@ -46,21 +66,21 @@
 	}
 
 	function buildSwiperConfig( s ) {
-		var navigation = s.dte_navigation || 'arrows';
+		var navigation = s.ecs_navigation || 'arrows';
 		var showArrows = navigation === 'arrows' || navigation === 'both';
 		var showDots   = navigation === 'dots'   || navigation === 'both';
 
-		var colsDesktop = parseInt( s.dte_slider_columns, 10 ) || 1;
-		var colsTablet  = parseInt( s.dte_slider_columns_tablet, 10 ) || colsDesktop;
-		var colsMobile  = parseInt( s.dte_slider_columns_mobile, 10 ) || colsTablet;
-		var layoutTablet = s.dte_layout_tablet || '';
-		var layoutMobile = s.dte_layout_mobile || '';
+		var colsDesktop = parseInt( s.ecs_slider_columns, 10 ) || 1;
+		var colsTablet  = parseInt( s.ecs_slider_columns_tablet, 10 ) || colsDesktop;
+		var colsMobile  = parseInt( s.ecs_slider_columns_mobile, 10 ) || colsTablet;
+		var layoutTablet = s.ecs_layout_tablet || '';
+		var layoutMobile = s.ecs_layout_mobile || '';
 
 		var config = {
 			slidesPerView: colsDesktop,
-			loop:          s.dte_loop === 'yes',
-			speed:         parseInt( s.dte_speed, 10 ) || 500,
-			spaceBetween:  parseInt( s.dte_space_between, 10 ) || 0,
+			loop:          s.ecs_loop === 'yes',
+			speed:         parseInt( s.ecs_speed, 10 ) || 500,
+			spaceBetween:  parseInt( s.ecs_space_between, 10 ) || 0,
 			breakpoints: {
 				0: {
 					slidesPerView: colsMobile,
@@ -77,10 +97,10 @@
 			},
 		};
 
-		if ( s.dte_autoplay === 'yes' ) {
+		if ( s.ecs_autoplay === 'yes' ) {
 			config.autoplay = {
-				delay:                parseInt( s.dte_autoplay_speed, 10 ) || 3000,
-				pauseOnMouseEnter:    s.dte_pause_on_hover === 'yes',
+				delay:                parseInt( s.ecs_autoplay_speed, 10 ) || 3000,
+				pauseOnMouseEnter:    s.ecs_pause_on_hover === 'yes',
 				disableOnInteraction: false,
 			};
 		}
@@ -93,7 +113,7 @@
 	 * Using real elements (not clones) keeps Backbone model-binding intact and allows editing.
 	 */
 	function destroyEditorSlider( containerEl ) {
-		var existing = containerEl.querySelector( ':scope > .dte-editor-swiper' );
+		var existing = containerEl.querySelector( ':scope > .ecs-editor-swiper' );
 		if ( existing ) {
 			var inner = containerEl.querySelector( ':scope > .e-con-inner' );
 			var scope = inner || containerEl;
@@ -111,9 +131,9 @@
 			}
 			existing.remove();
 		}
-		containerEl.classList.remove( 'dte-editor-slider-active' );
-		containerEl.removeAttribute( 'data-dte-slider-key' );
-		containerEl.removeAttribute( 'data-dte-rebuild-key' );
+		containerEl.classList.remove( 'ecs-editor-slider-active' );
+		containerEl.removeAttribute( 'data-ecs-slider-key' );
+		containerEl.removeAttribute( 'data-ecs-rebuild-key' );
 	}
 
 	/** Cache key based on child IDs only (structural changes). */
@@ -153,7 +173,7 @@
 		built.config.loop = false; // disable loop in editor — avoids duplicate [data-id] nodes
 
 		var swiperEl   = document.createElement( 'div' );
-		swiperEl.className = 'swiper dte-swiper dte-editor-swiper';
+		swiperEl.className = 'swiper ecs-swiper ecs-editor-swiper';
 
 		var wrapperEl  = document.createElement( 'div' );
 		wrapperEl.className = 'swiper-wrapper';
@@ -187,10 +207,10 @@
 		}
 
 		// CSS class hides empty .e-con-inner (children were moved out into swiper slides)
-		containerEl.classList.add( 'dte-editor-slider-active' );
+		containerEl.classList.add( 'ecs-editor-slider-active' );
 		containerEl.appendChild( swiperEl );
-		containerEl.setAttribute( 'data-dte-slider-key', sliderKey( children ) );
-		containerEl.setAttribute( 'data-dte-rebuild-key', rebuildKey( built ) );
+		containerEl.setAttribute( 'data-ecs-slider-key', sliderKey( children ) );
+		containerEl.setAttribute( 'data-ecs-rebuild-key', rebuildKey( built ) );
 
 		if ( typeof Swiper !== 'undefined' ) { // eslint-disable-line no-undef
 			new Swiper( swiperEl, built.config ); // eslint-disable-line no-undef
@@ -198,16 +218,16 @@
 	}
 
 	function syncEditorSlider( containerEl ) {
-		// Backbone re-render may have removed .dte-editor-swiper while leaving
-		// dte-editor-slider-active class — reset so we fall through to rebuild.
+		// Backbone re-render may have removed .ecs-editor-swiper while leaving
+		// ecs-editor-slider-active class — reset so we fall through to rebuild.
 		if (
-			containerEl.classList.contains( 'dte-editor-slider-active' ) &&
-			! containerEl.querySelector( ':scope > .dte-editor-swiper' )
+			containerEl.classList.contains( 'ecs-editor-slider-active' ) &&
+			! containerEl.querySelector( ':scope > .ecs-editor-swiper' )
 		) {
 			destroyEditorSlider( containerEl );
 		}
 
-		var swiperEl = containerEl.querySelector( ':scope > .dte-editor-swiper' );
+		var swiperEl = containerEl.querySelector( ':scope > .ecs-editor-swiper' );
 		var inner    = containerEl.querySelector( ':scope > .e-con-inner' );
 		var scope    = inner || containerEl;
 
@@ -233,7 +253,7 @@
 			} );
 		}
 
-		var cached = containerEl.getAttribute( 'data-dte-slider-key' );
+		var cached = containerEl.getAttribute( 'data-ecs-slider-key' );
 		if ( cached !== null && cached === sliderKey( children ) ) {
 			return; // structure unchanged
 		}
@@ -245,9 +265,9 @@
 	}
 
 	function syncAllEditorSliders() {
-		// Cleanup: container changed type away from dte-slider but swiper is still there
-		document.querySelectorAll( '.dte-editor-slider-active:not(.e-dte-slider)' ).forEach( destroyEditorSlider );
-		document.querySelectorAll( '.e-con.e-dte-slider' ).forEach( syncEditorSlider );
+		// Cleanup: container changed type away from ecs-slider but swiper is still there
+		document.querySelectorAll( '.ecs-editor-slider-active:not(.e-ecs-slider)' ).forEach( destroyEditorSlider );
+		document.querySelectorAll( '.e-con.e-ecs-slider' ).forEach( syncEditorSlider );
 	}
 
 	/**
@@ -257,7 +277,7 @@
 	 * (navigation type or loop — these require different DOM elements).
 	 */
 	function updateEditorSliderParams( containerEl ) {
-		var swiperEl = containerEl.querySelector( ':scope > .dte-editor-swiper' );
+		var swiperEl = containerEl.querySelector( ':scope > .ecs-editor-swiper' );
 		if ( ! swiperEl || ! swiperEl.swiper ) {
 			syncEditorSlider( containerEl ); // swiper missing — full rebuild
 			return;
@@ -270,7 +290,7 @@
 
 		// Navigation type or loop change requires HTML rebuild (different DOM structure)
 		var currRebuildKey = rebuildKey( built );
-		var prevRebuildKey = containerEl.getAttribute( 'data-dte-rebuild-key' );
+		var prevRebuildKey = containerEl.getAttribute( 'data-ecs-rebuild-key' );
 		if ( prevRebuildKey !== null && prevRebuildKey !== currRebuildKey ) {
 			syncEditorSlider( containerEl );
 			return;
@@ -296,7 +316,7 @@
 	}
 
 	function updateAllEditorSliderParams() {
-		document.querySelectorAll( '.e-con.e-dte-slider' ).forEach( updateEditorSliderParams );
+		document.querySelectorAll( '.e-con.e-ecs-slider' ).forEach( updateEditorSliderParams );
 	}
 
 	// ── Entry point ───────────────────────────────────────────────────────────
@@ -319,7 +339,7 @@
 				var t = m.target;
 				// Skip mutations caused by our own swiper structure
 				if ( t && t.classList && (
-					t.classList.contains( 'dte-editor-swiper' ) ||
+					t.classList.contains( 'ecs-editor-swiper' ) ||
 					t.classList.contains( 'swiper-wrapper' ) ||
 					t.classList.contains( 'swiper-slide' )
 				) ) {
@@ -388,8 +408,8 @@
 						var node = added[ j ];
 						if ( node.nodeType !== 1 ) { continue; }
 						if (
-							( node.classList && node.classList.contains( 'dte-swiper' ) ) ||
-							( node.querySelector && node.querySelector( '.dte-swiper:not([data-dte-swiper-init])' ) )
+							( node.classList && node.classList.contains( 'ecs-swiper' ) ) ||
+							( node.querySelector && node.querySelector( '.ecs-swiper:not([data-ecs-swiper-init])' ) )
 						) {
 							found = true;
 							break;

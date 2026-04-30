@@ -1,5 +1,5 @@
 /**
- * DTE Colour Editor — Default Colours tab UI
+ * ECS Colour Editor — Default Colours tab UI
  *
  * Implements the Default / Dark Mode tab switcher inside the
  * "Default Colours" kit section in Elementor Site Settings.
@@ -24,13 +24,13 @@
 	// ── Constants ──────────────────────────────────────────────────────────
 
 	var SECTION_SELECTOR   = '.elementor-control-section_global_colors';
-	var MODE_CTRL_SELECTOR = '.elementor-control-dte_view_mode';
-	var INPUT_SELECTOR     = 'input[name*="elementor-choose-dte_view_mode"]';
+	var MODE_CTRL_SELECTOR = '.elementor-control-ecs_view_mode';
+	var INPUT_SELECTOR     = 'input[name*="elementor-choose-ecs_view_mode"]';
 
 	var REPEATERS = [ 'system_colors', 'custom_colors' ];
 
-	var CLASS_MODE_DEFAULT = 'dte-mode-default';
-	var CLASS_MODE_DARK    = 'dte-mode-dark';
+	var CLASS_MODE_DEFAULT = 'ecs-mode-default';
+	var CLASS_MODE_DARK    = 'ecs-mode-dark';
 
 	// ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -88,18 +88,18 @@
 				// If dark_color has no value, mark row as "will fallback"
 				var darkVal = $darkEl.find( 'input[type="text"]' ).val() || '';
 
-				$darkEl.toggleClass( 'dte-dark-fallback', ! darkVal && !! defaultVal );
+				$darkEl.toggleClass( 'ecs-dark-fallback', ! darkVal && !! defaultVal );
 
 				if ( ! darkVal && defaultVal ) {
 					// Update (or create) the reference swatch
-					var $swatch = $darkEl.find( '.dte-fallback-swatch' );
+					var $swatch = $darkEl.find( '.ecs-fallback-swatch' );
 					if ( ! $swatch.length ) {
-						$swatch = $( '<span class="dte-fallback-swatch"></span>' );
+						$swatch = $( '<span class="ecs-fallback-swatch"></span>' );
 						$darkEl.find( '.elementor-control-field' ).append( $swatch );
 					}
 					$swatch.css( 'background-color', defaultVal ).attr( 'title', 'Fallback: ' + defaultVal );
 				} else {
-					$darkEl.find( '.dte-fallback-swatch' ).remove();
+					$darkEl.find( '.ecs-fallback-swatch' ).remove();
 				}
 			} );
 		} );

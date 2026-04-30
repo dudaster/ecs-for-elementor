@@ -1,24 +1,24 @@
 /**
- * DTE Editor Preview — Container Custom Layout
+ * ECS Editor Preview — Container Custom Layout
  *
  * Runs in the Elementor editor parent frame (not the preview iframe).
  *
  * Approach:
  *  1. Wait for Elementor editor to initialise.
- *  2. When the preview iframe loads, find every .e-con.e-dte-custom container
- *     and ask the PHP AJAX handler to render the selected DTE Custom Layout
+ *  2. When the preview iframe loads, find every .e-con.e-ecs-custom container
+ *     and ask the PHP AJAX handler to render the selected ECS Custom Layout
  *     template with placeholder HTML so we know WHERE children go.
  *  3. Parse the AJAX response, strip Elementor model attributes from template
  *     elements, then MOVE the live child DOM elements (real Elementor widgets)
  *     into their corresponding template slots.  The children stay editable.
  *  4. On every Elementor command (settings change, add/remove/move element),
  *     schedule a debounced re-injection (400 ms).
- *  5. If a container leaves dte-custom mode, restore children to .e-con-inner
+ *  5. If a container leaves ecs-custom mode, restore children to .e-con-inner
  *     and remove the injected template structure.
  *
  * State tracking:
- *  container.dataset.dteState       — djb2 hash of (layoutId + children HTML)
- *  container.dataset.dteChildOrder  — comma-separated ordered child IDs
+ *  container.dataset.ecsState       — djb2 hash of (layoutId + children HTML)
+ *  container.dataset.ecsChildOrder  — comma-separated ordered child IDs
  */
 
 /* global ecsEditorPreview, elementor */
@@ -85,7 +85,7 @@
 
 	/**
 	 * Watch for elements being inserted directly into .e-con-inner of any
-	 * dte-custom container.  Elementor renders new widgets asynchronously
+	 * ecs-custom container.  Elementor renders new widgets asynchronously
 	 * (Backbone view), so command:after fires before the DOM is updated.
 	 * The observer catches the insertion and schedules a re-injection.
 	 */
@@ -105,9 +105,9 @@
 				if ( mutation.type !== 'childList' || ! mutation.addedNodes.length ) {
 					return;
 				}
-				// Only care about nodes added inside a .e-dte-custom container.
+				// Only care about nodes added inside a .e-ecs-custom container.
 				var target = mutation.target;
-				var inCustom = target.closest && target.closest( '.e-dte-custom' );
+				var inCustom = target.closest && target.closest( '.e-ecs-custom' );
 				if ( ! inCustom ) {
 					return;
 				}
@@ -141,14 +141,14 @@
 			return;
 		}
 
-		// Restore containers that have left dte-custom mode.
-		iframeDoc.querySelectorAll( '.dte-preview-active' ).forEach( function ( el ) {
-			if ( ! el.classList.contains( 'e-dte-custom' ) ) {
+		// Restore containers that have left ecs-custom mode.
+		iframeDoc.querySelectorAll( '.ecs-preview-active' ).forEach( function ( el ) {
+			if ( ! el.classList.contains( 'e-ecs-custom' ) ) {
 				cleanupContainer( el );
 			}
 		} );
 
-		iframeDoc.querySelectorAll( '.e-con.e-dte-custom' ).forEach( injectContainer );
+		iframeDoc.querySelectorAll( '.e-con.e-ecs-custom' ).forEach( injectContainer );
 	}
 
 	// ── Per-container injection ────────────────────────────────────────────────
@@ -156,7 +156,7 @@
 	function injectContainer( container ) {
 		var layoutId = getLayoutId( container );
 		if ( ! layoutId ) {
-			if ( container.classList.contains( 'dte-preview-active' ) ) {
+			if ( container.classList.contains( 'ecs-preview-active' ) ) {
 				cleanupContainer( container );
 			}
 			return;
@@ -168,17 +168,17 @@
 
 		// Skip if nothing changed since last injection.
 		// Also include direct inner children IDs so newly added widgets
-		// (not yet in dteChildOrder) always trigger a re-injection.
+		// (not yet in ecsChildOrder) always trigger a re-injection.
 		var innerIds  = Array.from( inner.querySelectorAll( ':scope > [data-id]' ) )
 			.map( function ( el ) { return el.dataset.id; } ).join( ',' );
 		var stateKey = layoutId + ':' + djb2( htmls.join( '' ) + '|' + innerIds );
-		if ( container.dataset.dteState === stateKey ) {
+		if ( container.dataset.ecsState === stateKey ) {
 			return;
 		}
-		container.dataset.dteState = stateKey;
+		container.dataset.ecsState = stateKey;
 
 		// Restore children to inner before re-injecting.
-		if ( container.classList.contains( 'dte-preview-active' ) ) {
+		if ( container.classList.contains( 'ecs-preview-active' ) ) {
 			restoreToInner( container, inner );
 		}
 
@@ -199,7 +199,7 @@
 			.then( function ( r ) { return r.json(); } )
 			.then( function ( resp ) {
 				// Guard: another update may have arrived while this was in-flight.
-				if ( container.dataset.dteState !== stateKey ) {
+				if ( container.dataset.ecsState !== stateKey ) {
 					return;
 				}
 				if ( ! resp.success ) {
@@ -251,7 +251,7 @@
 				// Step 4 — mark every top-level template element for cleanup.
 				//           With cycling there may be multiple template instances.
 				Array.from( tempDiv.children ).forEach( function ( child ) {
-					child.classList.add( 'dte-injected-structure' );
+					child.classList.add( 'ecs-injected-structure' );
 				} );
 
 				// Step 5 — insert template structure at the start of inner.
@@ -263,8 +263,8 @@
 				}
 
 				// Persist child order and mark the container as active.
-				container.dataset.dteChildOrder = childIds.join( ',' );
-				container.classList.add( 'dte-preview-active' );
+				container.dataset.ecsChildOrder = childIds.join( ',' );
+				container.classList.add( 'ecs-preview-active' );
 
 				// Re-enable observer after microtasks flush so MutationObserver
 				// callbacks for our own DOM changes are already dispatched.
@@ -274,8 +274,8 @@
 			} )
 			.catch( function () {
 				// On network error, clear state so the next refresh retries.
-				if ( container.dataset.dteState === stateKey ) {
-					delete container.dataset.dteState;
+				if ( container.dataset.ecsState === stateKey ) {
+					delete container.dataset.ecsState;
 				}
 			} );
 	}
@@ -286,11 +286,11 @@
 	 * Return the live child elements of a container.
 	 *
 	 * If children have already been moved into a template structure
-	 * (dteChildOrder is set), locate them anywhere inside the container.
+	 * (ecsChildOrder is set), locate them anywhere inside the container.
 	 * Otherwise return the direct [data-id] children of inner.
 	 */
 	function getChildEls( container, inner ) {
-		var order = container.dataset.dteChildOrder;
+		var order = container.dataset.ecsChildOrder;
 		if ( order ) {
 			return order.split( ',' ).filter( Boolean ).map( function ( id ) {
 				return container.querySelector( '[data-id="' + id + '"]' );
@@ -303,13 +303,13 @@
 	 * Move live children back to direct children of inner, then remove
 	 * the injected template structure.
 	 *
-	 * Elements that are direct children of inner but NOT in dteChildOrder are
+	 * Elements that are direct children of inner but NOT in ecsChildOrder are
 	 * newly added widgets (Elementor appended them directly to inner while the
 	 * template structure was in place).  They are re-appended at the END so
 	 * the final child order is: [known children…, new children…].
 	 */
 	function restoreToInner( container, inner ) {
-		var order = container.dataset.dteChildOrder;
+		var order = container.dataset.ecsChildOrder;
 		if ( ! order ) {
 			return;
 		}
@@ -319,7 +319,7 @@
 			knownIds[ id ] = true;
 		} );
 
-		// Collect newly added elements (direct inner children not in dteChildOrder)
+		// Collect newly added elements (direct inner children not in ecsChildOrder)
 		// before we start moving things around.
 		var unknownEls = Array.from( inner.querySelectorAll( ':scope > [data-id]' ) )
 			.filter( function ( el ) { return ! knownIds[ el.dataset.id ]; } );
@@ -333,7 +333,7 @@
 		} );
 
 		// Remove all injected template structures (one per cycling pass).
-		inner.querySelectorAll( '.dte-injected-structure' ).forEach( function ( el ) {
+		inner.querySelectorAll( '.ecs-injected-structure' ).forEach( function ( el ) {
 			el.remove();
 		} );
 
@@ -346,13 +346,13 @@
 	function cleanupContainer( container ) {
 		var inner = container.querySelector( ':scope > .e-con-inner' ) || container;
 		restoreToInner( container, inner );
-		container.classList.remove( 'dte-preview-active' );
-		delete container.dataset.dteState;
-		delete container.dataset.dteChildOrder;
+		container.classList.remove( 'ecs-preview-active' );
+		delete container.dataset.ecsState;
+		delete container.dataset.ecsChildOrder;
 	}
 
 	/**
-	 * Return the dte_custom_layout_id setting of a container element by
+	 * Return the ecs_custom_layout_id setting of a container element by
 	 * querying Elementor's in-memory model via elementor.getContainer().
 	 */
 	function getLayoutId( container ) {
@@ -364,7 +364,7 @@
 			var eContainer = window.elementor.getContainer( elementId );
 			var val = eContainer &&
 			          eContainer.settings &&
-			          eContainer.settings.get( 'dte_custom_layout_id' );
+			          eContainer.settings.get( 'ecs_custom_layout_id' );
 			return val ? ( parseInt( val, 10 ) || 0 ) : 0;
 		} catch ( e ) {
 			return 0;

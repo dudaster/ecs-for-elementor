@@ -1,9 +1,9 @@
 /**
- * DTE Dark Mode Switcher
+ * ECS Dark Mode Switcher
  *
  * Handles three display modes (toggle, dual, dropdown) for the
- * DTE Dark Mode Switcher widget.  Persists the user's choice via
- * a cookie so PHP can add data-dte-scheme="alt" to <html> before
+ * ECS Dark Mode Switcher widget.  Persists the user's choice via
+ * a cookie so PHP can add data-ecs-scheme="alt" to <html> before
  * first paint — cache-safe.
  *
  * No dependencies — vanilla JS, loaded in the footer.
@@ -11,18 +11,18 @@
 (function () {
 	'use strict';
 
-	// Guard against double-init when both DTE and ECS plugins are active simultaneously.
-	if ( window.__dteDmsReady ) { return; }
-	window.__dteDmsReady = true;
+	// Guard against double-init when loaded more than once.
+	if ( window.__ecsDmsReady ) { return; }
+	window.__ecsDmsReady = true;
 
-	var COOKIE_NAME = 'dte_color_scheme';
+	var COOKIE_NAME = 'ecs_color_scheme';
 	var ALT_VALUE   = 'alt';
 
 	/**
 	 * Get the current active scheme ('alt' or null).
 	 */
 	function getCurrentScheme() {
-		return document.documentElement.getAttribute('data-dte-scheme');
+		return document.documentElement.getAttribute('data-ecs-scheme');
 	}
 
 	/**
@@ -30,9 +30,9 @@
 	 */
 	function applyScheme(scheme) {
 		if (scheme === ALT_VALUE) {
-			document.documentElement.setAttribute('data-dte-scheme', ALT_VALUE);
+			document.documentElement.setAttribute('data-ecs-scheme', ALT_VALUE);
 		} else {
-			document.documentElement.removeAttribute('data-dte-scheme');
+			document.documentElement.removeAttribute('data-ecs-scheme');
 		}
 	}
 
@@ -52,7 +52,7 @@
 	 * Return true if the user has a manually stored scheme preference.
 	 */
 	function hasCookie() {
-		return /(?:^|;\s*)dte_color_scheme=/.test( document.cookie );
+		return /(?:^|;\s*)ecs_color_scheme=/.test( document.cookie );
 	}
 
 	/**
@@ -62,27 +62,27 @@
 	function syncAllWidgets() {
 		var isAlt = getCurrentScheme() === ALT_VALUE;
 
-		document.querySelectorAll('.dte-dms-wrap').forEach(function (wrap) {
+		document.querySelectorAll('.ecs-dms-wrap').forEach(function (wrap) {
 			// Wrapper gets .is-alt for CSS toggle state switching
 			wrap.classList.toggle('is-alt', isAlt);
 
 			var display = wrap.dataset.display;
 
 			if (display === 'toggle') {
-				var btn = wrap.querySelector('.dte-dms-btn');
+				var btn = wrap.querySelector('.ecs-dms-btn');
 				if (btn) {
 					btn.classList.toggle('is-active', isAlt);
 				}
 
 			} else if (display === 'dual') {
-				wrap.querySelectorAll('.dte-dms-btn').forEach(function (btn) {
+				wrap.querySelectorAll('.ecs-dms-btn').forEach(function (btn) {
 					var isActive = btn.dataset.scheme === ALT_VALUE ? isAlt : !isAlt;
 					btn.classList.toggle('is-active', isActive);
 					btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
 				});
 
 			} else if (display === 'dropdown') {
-				var select = wrap.querySelector('.dte-dms-select');
+				var select = wrap.querySelector('.ecs-dms-select');
 				if (select) {
 					select.value = isAlt ? ALT_VALUE : 'default';
 				}
@@ -94,10 +94,10 @@
 	 * Click handler — handles toggle and dual buttons.
 	 */
 	function handleClick(event) {
-		var btn = event.target.closest('.dte-dms-btn');
+		var btn = event.target.closest('.ecs-dms-btn');
 		if (!btn) { return; }
 
-		var wrap = btn.closest('.dte-dms-wrap');
+		var wrap = btn.closest('.ecs-dms-wrap');
 		if (!wrap) { return; }
 
 		var newScheme;
@@ -120,7 +120,7 @@
 	 */
 	function handleDropdownChange(event) {
 		var select = event.target;
-		if (!select.classList.contains('dte-dms-select')) { return; }
+		if (!select.classList.contains('ecs-dms-select')) { return; }
 
 		applyScheme(select.value);
 		persistScheme(select.value);
@@ -135,7 +135,7 @@
 
 		// System Auto: if enabled and no manual preference stored,
 		// follow live OS theme changes.
-		var cfg = window.dteSchemeConfig || {};
+		var cfg = window.ecsSchemeConfig || {};
 		if ( cfg.systemAuto ) {
 			var mq = window.matchMedia && window.matchMedia( '(prefers-color-scheme: dark)' );
 			if ( mq ) {

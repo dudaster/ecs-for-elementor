@@ -16,10 +16,10 @@ ecs_section( 'editorial_text — widget înregistrat' );
 if ( $manager->is_active( 'editorial_text' ) ) {
 
 	$widgets_manager = \Elementor\Plugin::$instance->widgets_manager;
-	$widget = $widgets_manager->get_widget_types( 'dte_editorial_text' );
+	$widget = $widgets_manager->get_widget_types( 'ecs_editorial_text' );
 
-	ecs_ok( $widget !== null,                                                         'Widget dte_editorial_text găsit în Elementor' );
-	ecs_ok( $widget && $widget->get_name()  === 'dte_editorial_text',                 'get_name() = dte_editorial_text' );
+	ecs_ok( $widget !== null,                                                         'Widget ecs_editorial_text găsit în Elementor' );
+	ecs_ok( $widget && $widget->get_name()  === 'ecs_editorial_text',                 'get_name() = ecs_editorial_text' );
 	ecs_ok( $widget && $widget->get_title() === 'ECS Editorial Text',                 'get_title() = ECS Editorial Text' );
 	ecs_ok( $widget && in_array( 'ele-custom-skin', $widget->get_categories(), true ), 'Widget în categoria ele-custom-skin' );
 
@@ -41,19 +41,19 @@ if ( $manager->is_active( 'editorial_text' ) ) {
 	ecs_ok( file_exists( $widget_class_file ), 'Widget class file există' );
 
 	$widgets_manager = \Elementor\Plugin::$instance->widgets_manager;
-	$widget = $widgets_manager->get_widget_types( 'dte_editorial_text' );
+	$widget = $widgets_manager->get_widget_types( 'ecs_editorial_text' );
 
 	if ( $widget ) {
 		$controls = $widget->get_controls();
 
-		ecs_ok( isset( $controls['dte_et_text'] ),       'Control dte_et_text (WYSIWYG) înregistrat' );
-		ecs_ok( isset( $controls['dte_et_image'] ),      'Control dte_et_image (MEDIA) înregistrat' );
-		ecs_ok( isset( $controls['dte_et_image_flow'] ), 'Control dte_et_image_flow (SELECT) înregistrat' );
+		ecs_ok( isset( $controls['ecs_et_text'] ),       'Control ecs_et_text (WYSIWYG) înregistrat' );
+		ecs_ok( isset( $controls['ecs_et_image'] ),      'Control ecs_et_image (MEDIA) înregistrat' );
+		ecs_ok( isset( $controls['ecs_et_image_flow'] ), 'Control ecs_et_image_flow (SELECT) înregistrat' );
 
 		// Verificăm tipul și default-ul pentru image flow
 		// Notă: Elementor nu returnează 'options' prin get_controls() (sunt stripped pentru perf)
 		// — verificăm tipul și default-ul ca dovadă de configurare corectă.
-		$flow_control = $controls['dte_et_image_flow'] ?? null;
+		$flow_control = $controls['ecs_et_image_flow'] ?? null;
 		if ( $flow_control ) {
 			ecs_ok( ( $flow_control['type'] ?? '' ) === 'select',      'image_flow este control de tip select' );
 			ecs_ok( ( $flow_control['default'] ?? '' ) === 'float_left', 'image_flow default = float_left' );
@@ -64,7 +64,7 @@ if ( $manager->is_active( 'editorial_text' ) ) {
 				ecs_ok( strpos( $widget_src, $opt ) !== false, "image_flow: opțiunea $opt definită în sursă" );
 			}
 		} else {
-			ecs_ok( false, 'Control dte_et_image_flow nu a putut fi obținut' );
+			ecs_ok( false, 'Control ecs_et_image_flow nu a putut fi obținut' );
 			for ( $i = 0; $i < 6; $i++ ) { ecs_ok( true, 'skip' ); }
 		}
 	}
@@ -116,9 +116,9 @@ if ( $manager->is_active( 'editorial_text' ) ) {
 			[
 				'id'       => 'test_et_001',
 				'settings' => [
-					'dte_et_text'       => '<p>Hello test editorial</p>',
-					'dte_et_image'      => [ 'url' => '' ],
-					'dte_et_image_flow' => 'none',
+					'ecs_et_text'       => '<p>Hello test editorial</p>',
+					'ecs_et_image'      => [ 'url' => '' ],
+					'ecs_et_image_flow' => 'none',
 				],
 			],
 			[]
@@ -151,8 +151,8 @@ if ( $manager->is_active( 'editorial_text' ) ) {
 	if ( file_exists( $css_file ) ) {
 		$css_content = file_get_contents( $css_file );
 		ecs_ok( ! empty( $css_content ),                                     'CSS file nu este gol' );
-		ecs_ok( strpos( $css_content, 'dte-et' ) !== false || strpos( $css_content, 'editorial' ) !== false,
-			'CSS conține stiluri pentru editorial text (prefix dte-et sau editorial)' );
+		ecs_ok( strpos( $css_content, 'ecs-et' ) !== false || strpos( $css_content, 'editorial' ) !== false,
+			'CSS conține stiluri pentru editorial text (prefix ecs-et sau editorial)' );
 	}
 
 } else {

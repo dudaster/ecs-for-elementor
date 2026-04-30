@@ -5,7 +5,7 @@
  * Replaces Elementor's "Global Colors" tab.
  * Identical structure (System Colours + Custom Colours repeater) with
  * one addition: each colour entry has a "Dark Mode" colour picker that
- * overrides the same CSS variable under [data-dte-scheme="alt"].
+ * overrides the same CSS variable under [data-ecs-scheme="alt"].
  *
  * Registered with the original 'global-colors' key so the kit data
  * (system_colors / custom_colors) is fully backward-compatible.
@@ -42,7 +42,7 @@ class ECS_Default_Colours_Tab extends Global_Colors {
 
 		// ── System Auto: follow OS dark/light preference ─────────────
 		$this->add_control(
-			'dte_system_auto',
+			'ecs_system_auto',
 			[
 				'label'       => esc_html__( 'Follow System Preference', 'ele-custom-skin' ),
 				'type'        => Controls_Manager::SWITCHER,
@@ -55,7 +55,7 @@ class ECS_Default_Colours_Tab extends Global_Colors {
 
 		// ── Mode selector (rendered as tabs by editor JS) ────────────
 		$this->add_control(
-			'dte_view_mode',
+			'ecs_view_mode',
 			[
 				'type'         => Controls_Manager::CHOOSE,
 				'label'        => esc_html__( 'Preview Mode', 'ele-custom-skin' ),

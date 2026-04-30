@@ -41,7 +41,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		// Add layout controls to every Container element.
 		// We use TWO hooks:
-		//  - after_section_start (priority 5) → fallback simple dte_container_type control,
+		//  - after_section_start (priority 5) → fallback simple ecs_container_type control,
 		//    active ONLY when the Responsive Container Layout module is not enabled.
 		//    When that module IS active, it registers the responsive version at priority 10
 		//    and this callback does nothing.
@@ -122,7 +122,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 	/**
 	 * Fallback container type control — used only when the Responsive Container Layout
-	 * module is NOT active.  Adds a simple (non-responsive) dte_container_type SELECT
+	 * module is NOT active.  Adds a simple (non-responsive) ecs_container_type SELECT
 	 * so Slider and Custom Layout modes can still be selected at the desktop level.
 	 *
 	 * When the Responsive Container Layout module IS active it registers the full
@@ -131,13 +131,13 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	 */
 	public function maybe_add_fallback_type_control( $element, $args ): void {
 		if ( ECS_Core::instance()->modules()->is_active( 'container_responsive' ) ) {
-			return; // Responsive module handles dte_container_type.
+			return; // Responsive module handles ecs_container_type.
 		}
 
-		$element->update_control( 'container_type', [ 'classes' => 'dte-hidden-control' ] );
+		$element->update_control( 'container_type', [ 'classes' => 'ecs-hidden-control' ] );
 
 		$element->add_control(
-			'dte_container_type',
+			'ecs_container_type',
 			[
 				'label'              => esc_html__( 'Container Layout', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SELECT,
@@ -148,7 +148,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'slider' => esc_html__( 'Slider', 'ele-custom-skin' ),
 					'custom' => esc_html__( 'Custom Layout', 'ele-custom-skin' ),
 				],
-				'prefix_class'       => 'e-dte-',
+				'prefix_class'       => 'e-ecs-',
 				'frontend_available' => true,
 			]
 		);
@@ -165,9 +165,9 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		$or = [
 			'relation' => 'or',
 			'terms'    => [
-				[ 'name' => 'dte_container_type',        'operator' => '==', 'value' => 'slider' ],
-				[ 'name' => 'dte_container_type_tablet', 'operator' => '==', 'value' => 'slider' ],
-				[ 'name' => 'dte_container_type_mobile', 'operator' => '==', 'value' => 'slider' ],
+				[ 'name' => 'ecs_container_type',        'operator' => '==', 'value' => 'slider' ],
+				[ 'name' => 'ecs_container_type_tablet', 'operator' => '==', 'value' => 'slider' ],
+				[ 'name' => 'ecs_container_type_mobile', 'operator' => '==', 'value' => 'slider' ],
 			],
 		];
 		if ( empty( $and_extra ) ) { return $or; }
@@ -178,21 +178,21 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		return [
 			'relation' => 'or',
 			'terms'    => [
-				[ 'name' => 'dte_container_type',        'operator' => '==', 'value' => 'custom' ],
-				[ 'name' => 'dte_container_type_tablet', 'operator' => '==', 'value' => 'custom' ],
-				[ 'name' => 'dte_container_type_mobile', 'operator' => '==', 'value' => 'custom' ],
+				[ 'name' => 'ecs_container_type',        'operator' => '==', 'value' => 'custom' ],
+				[ 'name' => 'ecs_container_type_tablet', 'operator' => '==', 'value' => 'custom' ],
+				[ 'name' => 'ecs_container_type_mobile', 'operator' => '==', 'value' => 'custom' ],
 			],
 		];
 	}
 
 	public function add_container_type_control( $element, $args ): void {
-		// Hide the built-in Container Layout control — replaced by our responsive dte_container_type.
-		// prefix_class uses sprintf() format: desktop → 'e-dte-', tablet → 'e-dte-tablet-', mobile → 'e-dte-mobile-'
+		// Hide the built-in Container Layout control — replaced by our responsive ecs_container_type.
+		// prefix_class uses sprintf() format: desktop → 'e-ecs-', tablet → 'e-ecs-tablet-', mobile → 'e-ecs-mobile-'
 		// This generates the same CSS classes the stylesheet already uses.
-		$element->update_control( 'container_type', [ 'classes' => 'dte-hidden-control' ] );
+		$element->update_control( 'container_type', [ 'classes' => 'ecs-hidden-control' ] );
 
 		$element->add_responsive_control(
-			'dte_container_type',
+			'ecs_container_type',
 			[
 				'label'              => esc_html__( 'Container Layout', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SELECT,
@@ -206,7 +206,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'slider' => esc_html__( 'Slider', 'ele-custom-skin' ),
 					'custom' => esc_html__( 'Custom Layout', 'ele-custom-skin' ),
 				],
-				'prefix_class'       => 'e-dte%s-',
+				'prefix_class'       => 'e-ecs%s-',
 				'frontend_available' => true,
 			]
 		);
@@ -216,7 +216,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		// ── Slider settings ───────────────────────────────────────────────────
 		$element->add_responsive_control(
-			'dte_slider_columns',
+			'ecs_slider_columns',
 			[
 				'label'              => esc_html__( 'Slides Visible', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SELECT,
@@ -230,9 +230,9 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'3' => '3',
 					'4' => '4',
 				],
-				'condition'          => [ 'dte_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_container_type' => 'slider' ],
 				'selectors'          => [
-					'{{WRAPPER}}' => '--dte-slider-columns: {{VALUE}};',
+					'{{WRAPPER}}' => '--ecs-slider-columns: {{VALUE}};',
 				],
 				'separator'          => 'before',
 				'frontend_available' => true,
@@ -241,73 +241,73 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		// ── Slider behavior ───────────────────────────────────────────────────
 		$element->add_control(
-			'dte_loop',
+			'ecs_loop',
 			[
 				'label'              => esc_html__( 'Infinite Loop', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SWITCHER,
 				'default'            => 'yes',
-				'condition'          => [ 'dte_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_container_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
 
 		$element->add_control(
-			'dte_autoplay',
+			'ecs_autoplay',
 			[
 				'label'              => esc_html__( 'Autoplay', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SWITCHER,
 				'default'            => '',
-				'condition'          => [ 'dte_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_container_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
 
 		$element->add_control(
-			'dte_autoplay_speed',
+			'ecs_autoplay_speed',
 			[
 				'label'              => esc_html__( 'Autoplay Speed (ms)', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::NUMBER,
 				'default'            => 3000,
-				'condition'          => [ 'dte_container_type' => 'slider', 'dte_autoplay' => 'yes' ],
+				'condition'          => [ 'ecs_container_type' => 'slider', 'ecs_autoplay' => 'yes' ],
 				'frontend_available' => true,
 			]
 		);
 
 		$element->add_control(
-			'dte_pause_on_hover',
+			'ecs_pause_on_hover',
 			[
 				'label'              => esc_html__( 'Pause on Hover', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SWITCHER,
 				'default'            => 'yes',
-				'condition'          => [ 'dte_container_type' => 'slider', 'dte_autoplay' => 'yes' ],
+				'condition'          => [ 'ecs_container_type' => 'slider', 'ecs_autoplay' => 'yes' ],
 				'frontend_available' => true,
 			]
 		);
 
 		$element->add_control(
-			'dte_speed',
+			'ecs_speed',
 			[
 				'label'              => esc_html__( 'Transition Speed (ms)', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::NUMBER,
 				'default'            => 500,
-				'condition'          => [ 'dte_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_container_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
 
 		$element->add_control(
-			'dte_space_between',
+			'ecs_space_between',
 			[
 				'label'              => esc_html__( 'Space Between (px)', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::NUMBER,
 				'default'            => 0,
-				'condition'          => [ 'dte_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_container_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
 
 		$element->add_control(
-			'dte_navigation',
+			'ecs_navigation',
 			[
 				'label'              => esc_html__( 'Navigation', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SELECT,
@@ -318,7 +318,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'dots'   => esc_html__( 'Dots', 'ele-custom-skin' ),
 					'both'   => esc_html__( 'Arrows & Dots', 'ele-custom-skin' ),
 				],
-				'condition'          => [ 'dte_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_container_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
@@ -330,25 +330,25 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'     => esc_html__( 'Custom Layout Template', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::SELECT2,
 				'options'   => $this->get_custom_layout_templates(),
-				'condition' => [ 'dte_container_type' => 'custom' ],
+				'condition' => [ 'ecs_container_type' => 'custom' ],
 				'separator' => 'before',
 			]
 		);
 
 		$element->add_control(
-			'dte_hide_empty_slots',
+			'ecs_hide_empty_slots',
 			[
 				'label'        => esc_html__( 'Hide empty slots', 'ele-custom-skin' ),
 				'type'         => \Elementor\Controls_Manager::SWITCHER,
 				'return_value' => 'hide-empty-slots',
 				'default'      => '',
-				'prefix_class' => 'e-dte-',
-				'condition'    => [ 'dte_container_type' => 'custom' ],
+				'prefix_class' => 'e-ecs-',
+				'condition'    => [ 'ecs_container_type' => 'custom' ],
 			]
 		);
 
 		$element->add_control(
-			'dte_direction',
+			'ecs_direction',
 			[
 				'label'   => esc_html__( 'Direction', 'ele-custom-skin' ),
 				'type'    => \Elementor\Controls_Manager::CHOOSE,
@@ -359,9 +359,9 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'column-reverse' => [ 'title' => esc_html__( 'Column - Reverse', 'ele-custom-skin' ), 'icon' => 'eicon-arrow-up'  ],
 				],
 				'default'   => 'row',
-				'condition' => [ 'dte_container_type' => 'custom' ],
+				'condition' => [ 'ecs_container_type' => 'custom' ],
 				// In editor mode the original container element still exists and
-				// .dte-injected-structure elements are flex children of it (via
+				// .ecs-injected-structure elements are flex children of it (via
 				// display:contents on .e-con-inner). In live mode the container is
 				// replaced by .ecs-custom-layout-wrap which carries the direction
 				// as an inline style set by after_container_render().
@@ -381,10 +381,10 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		$cond_arrows = [
 			'relation' => 'and',
 			'terms'    => [
-				[ 'name' => 'dte_container_type', 'operator' => '==', 'value' => 'slider' ],
+				[ 'name' => 'ecs_container_type', 'operator' => '==', 'value' => 'slider' ],
 				[ 'relation' => 'or', 'terms' => [
-					[ 'name' => 'dte_navigation', 'operator' => '==', 'value' => 'arrows' ],
-					[ 'name' => 'dte_navigation', 'operator' => '==', 'value' => 'both' ],
+					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'arrows' ],
+					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'both' ],
 				]],
 			],
 		];
@@ -392,26 +392,26 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		$cond_dots = [
 			'relation' => 'and',
 			'terms'    => [
-				[ 'name' => 'dte_container_type', 'operator' => '==', 'value' => 'slider' ],
+				[ 'name' => 'ecs_container_type', 'operator' => '==', 'value' => 'slider' ],
 				[ 'relation' => 'or', 'terms' => [
-					[ 'name' => 'dte_navigation', 'operator' => '==', 'value' => 'dots' ],
-					[ 'name' => 'dte_navigation', 'operator' => '==', 'value' => 'both' ],
+					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'dots' ],
+					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'both' ],
 				]],
 			],
 		];
 
 		$element->start_controls_section(
-			'section_dte_slider_navigation',
+			'section_ecs_slider_navigation',
 			[
 				'label'     => esc_html__( 'Slider Navigation', 'ele-custom-skin' ),
 				'tab'       => \Elementor\Controls_Manager::TAB_STYLE,
-				'condition' => [ 'dte_container_type' => 'slider' ],
+				'condition' => [ 'ecs_container_type' => 'slider' ],
 			]
 		);
 
 		// ── Arrows ────────────────────────────────────────────────────────────
 		$element->add_control(
-			'dte_arrows_heading',
+			'ecs_arrows_heading',
 			[
 				'label'     => esc_html__( 'Arrows', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::HEADING,
@@ -420,7 +420,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->add_control(
-			'dte_arrows_position',
+			'ecs_arrows_position',
 			[
 				'label'        => esc_html__( 'Position', 'ele-custom-skin' ),
 				'type'         => \Elementor\Controls_Manager::SELECT,
@@ -435,7 +435,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->add_responsive_control(
-			'dte_arrows_size',
+			'ecs_arrows_size',
 			[
 				'label'      => esc_html__( 'Size', 'ele-custom-skin' ),
 				'type'       => \Elementor\Controls_Manager::SLIDER,
@@ -449,19 +449,19 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->start_controls_tabs(
-			'dte_arrows_colors',
+			'ecs_arrows_colors',
 			[
 				'conditions' => $cond_arrows,
 			]
 		);
 
 		$element->start_controls_tab(
-			'dte_arrows_normal',
+			'ecs_arrows_normal',
 			[ 'label' => esc_html__( 'Normal', 'ele-custom-skin' ) ]
 		);
 
 		$element->add_control(
-			'dte_arrows_color',
+			'ecs_arrows_color',
 			[
 				'label'     => esc_html__( 'Color', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
@@ -474,12 +474,12 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		$element->end_controls_tab();
 
 		$element->start_controls_tab(
-			'dte_arrows_hover',
+			'ecs_arrows_hover',
 			[ 'label' => esc_html__( 'Hover', 'ele-custom-skin' ) ]
 		);
 
 		$element->add_control(
-			'dte_arrows_hover_color',
+			'ecs_arrows_hover_color',
 			[
 				'label'     => esc_html__( 'Color', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
@@ -494,7 +494,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		// ── Dots ──────────────────────────────────────────────────────────────
 		$element->add_control(
-			'dte_dots_heading',
+			'ecs_dots_heading',
 			[
 				'label'     => esc_html__( 'Dots', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::HEADING,
@@ -504,7 +504,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->add_control(
-			'dte_dots_position',
+			'ecs_dots_position',
 			[
 				'label'        => esc_html__( 'Position', 'ele-custom-skin' ),
 				'type'         => \Elementor\Controls_Manager::SELECT,
@@ -519,7 +519,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->add_responsive_control(
-			'dte_dots_size',
+			'ecs_dots_size',
 			[
 				'label'      => esc_html__( 'Size', 'ele-custom-skin' ),
 				'type'       => \Elementor\Controls_Manager::SLIDER,
@@ -533,7 +533,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->add_responsive_control(
-			'dte_dots_gap',
+			'ecs_dots_gap',
 			[
 				'label'      => esc_html__( 'Gap', 'ele-custom-skin' ),
 				'type'       => \Elementor\Controls_Manager::SLIDER,
@@ -547,7 +547,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->add_control(
-			'dte_dots_color',
+			'ecs_dots_color',
 			[
 				'label'     => esc_html__( 'Color', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
@@ -559,7 +559,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		$element->add_control(
-			'dte_dots_active_color',
+			'ecs_dots_active_color',
 			[
 				'label'     => esc_html__( 'Active Color', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
@@ -609,18 +609,18 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	 */
 	public function before_container_render( $element ): void {
 		// Read DTE layout type; fall back to mapping from legacy container_type for backwards compat.
-		$dte_type = $element->get_settings( 'dte_container_type' ) ?: '';
-		if ( ! $dte_type || 'flex' === $dte_type ) {
+		$ecs_type = $element->get_settings( 'ecs_container_type' ) ?: '';
+		if ( ! $ecs_type || 'flex' === $ecs_type ) {
 			$old_type = $element->get_settings( 'container_type' ) ?: 'flex';
 			if ( 'ecs-slider' === $old_type ) {
-				$dte_type = 'slider';
-			} elseif ( 'dte-custom' === $old_type ) {
-				$dte_type = 'custom';
+				$ecs_type = 'slider';
+			} elseif ( 'ecs-custom' === $old_type ) {
+				$ecs_type = 'custom';
 			} else {
-				$dte_type = $dte_type ?: 'flex';
+				$ecs_type = $ecs_type ?: 'flex';
 			}
 		}
-		$mode = $dte_type;
+		$mode = $ecs_type;
 		$layout_id = absint( $element->get_settings( 'ecs_custom_layout_id' ) );
 
 		$frame = [
@@ -632,7 +632,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		];
 
 		if ( 'slider' === $mode ) {
-			// Skip buffering in the editor — JS handles preview there (like dte-custom).
+			// Skip buffering in the editor — JS handles preview there (like ecs-custom).
 			$is_edit = \Elementor\Plugin::$instance->editor->is_edit_mode();
 			if ( ! $is_edit ) {
 				$frame['filter_removed'] = has_filter( 'elementor/element/should_render_shortcode', '__return_true' );
@@ -703,75 +703,69 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 			return;
 		}
 
+		// Preserve outer container opening tag — keeps all Elementor + ECS responsive classes.
+		preg_match( '/<div\b[^>]*>/i', $container_html, $outer_m );
+		$outer_tag = $outer_m[0] ?? '<div>';
+		echo $outer_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
 		// Split children HTML into individual top-level elements.
 		$inner_html    = $this->extract_container_children( $container_html );
 		$children_list = $this->split_children( $inner_html );
 
-		// Set recursion guard.
+		// Responsive overrides — used to decide whether to emit a second HTML version.
+		$tablet_type    = $element->get_settings( 'ecs_container_type_tablet' ) ?: '';
+		$mobile_type    = $element->get_settings( 'ecs_container_type_mobile' ) ?: '';
+		$has_responsive = $tablet_type || $mobile_type;
+
+		// ── Desktop version: template with children injected into slots ───────────
+
 		ECS_Container_Placeholder_Widget::mark_rendering( $container_id );
 
-		// Inline the template CSS once — before any template render.
-		// Elementor's $with_css=true doesn't always inject the <style> in the live
-		// request context (CSS manager state may differ from CLI).
+		// Inline template CSS before first render.
 		$css_path = WP_CONTENT_DIR . '/uploads/elementor/css/post-' . $layout_id . '.css';
 		if ( file_exists( $css_path ) ) {
 			echo '<style id="elementor-post-' . esc_attr( $layout_id ) . '-css">' . file_get_contents( $css_path ) . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped,WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		}
 
-		// Distribute children into the template.
-		// When children_count > placeholders_count, the template re-renders with the
-		// remaining (overflow) children until all children have been placed — cycling
-		// back to the first placeholder on each new pass.
-		// When children_count < placeholders_count, extra placeholders stay empty.
-		$hide_empty = ( 'hide-empty-slots' === $element->get_settings( 'dte_hide_empty_slots' ) );
-		$direction  = $element->get_settings( 'dte_direction' ) ?: 'row';
-
+		$hide_empty = ( 'hide-empty-slots' === $element->get_settings( 'ecs_hide_empty_slots' ) );
+		$direction  = $element->get_settings( 'ecs_direction' ) ?: 'row';
 		$batch      = $children_list;
 		$first_pass = true;
 
-		/*
-		 * While Elementor is building a parent document's cache, the filter
-		 * 'elementor/element/should_render_shortcode' is set to __return_true.
-		 * The placeholder widget has is_dynamic_content() = true, so with the
-		 * filter active, print_element() would re-emit an [elementor-element]
-		 * shortcode instead of calling render() — breaking child injection when
-		 * template 438 loads from its own cache (CACHE EXISTS path).
-		 * Remove the filter for the duration of our template rendering and restore
-		 * it afterward so the parent document's remaining elements behave normally.
-		 */
 		$filter_was_active = has_filter( 'elementor/element/should_render_shortcode', '__return_true' );
 		if ( $filter_was_active ) {
 			remove_filter( 'elementor/element/should_render_shortcode', '__return_true' );
 		}
 
-		// Wrapper div: flex container for all cycling template instances.
-		// - flex-direction driven by the dte_direction control
-		// - e-dte-hide-empty-slots class enables CSS rule that hides empty slot containers
-		$wrapper_classes = 'ecs-custom-layout-wrap' . ( $hide_empty ? ' e-dte-hide-empty-slots' : '' );
+		// When responsive overrides exist, wrap the desktop version so CSS can hide it.
+		if ( $has_responsive ) {
+			echo '<div class="ecs-custom-version">';
+		}
+
+		$wrapper_classes = 'ecs-custom-layout-wrap' . ( $hide_empty ? ' e-ecs-hide-empty-slots' : '' );
 		echo '<div class="' . esc_attr( $wrapper_classes ) . '" style="display:flex;flex-direction:' . esc_attr( $direction ) . ';">';
 
 		do {
 			ECS_Container_Placeholder_Widget::set_pending_children( $batch );
-
 			$output = \Elementor\Plugin::$instance->frontend->get_builder_content_for_display( $layout_id, true );
-
 			echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 			if ( $first_pass && ! ECS_Container_Placeholder_Widget::any_consumed() && ! empty( $children_list ) ) {
-				// Template has no DTE Placeholder widget at all — show error fallback.
 				ECS_Container_Placeholder_Widget::reset_pending_children();
-				$fallback = implode( '', $children_list );
-				echo '<div class="dte-missing-placeholder">' . $fallback . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo '<div class="ecs-missing-placeholder">' . implode( '', $children_list ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				break;
 			}
 
 			$batch      = ECS_Container_Placeholder_Widget::get_overflow_children();
 			$first_pass = false;
 			ECS_Container_Placeholder_Widget::reset_pending_children();
-
 		} while ( ! empty( $batch ) );
 
 		echo '</div>'; // .ecs-custom-layout-wrap
+
+		if ( $has_responsive ) {
+			echo '</div>'; // .ecs-custom-version
+		}
 
 		if ( $filter_was_active ) {
 			add_filter( 'elementor/element/should_render_shortcode', '__return_true' );
@@ -779,8 +773,87 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		ECS_Container_Placeholder_Widget::unmark_rendering( $container_id );
 
-		// Restore the filter we removed at buffer start so Elementor's cache-build
-		// pass continues normally for elements after this container.
+		// ── Responsive version: children directly as grid or slider ───────────────
+
+		if ( $has_responsive && ! empty( $children_list ) ) {
+			$needs_slider = in_array( 'slider', [ $tablet_type, $mobile_type ], true );
+
+			echo '<div class="ecs-responsive-version">';
+
+			if ( $needs_slider ) {
+				// Build Swiper — breakpoints enable/disable slider per device.
+				$cols_desktop = (int) ( $element->get_settings( 'ecs_slider_columns' ) ?: 1 );
+				$cols_tablet  = (int) $element->get_settings( 'ecs_slider_columns_tablet' ) ?: $cols_desktop;
+				$cols_mobile  = (int) $element->get_settings( 'ecs_slider_columns_mobile' ) ?: $cols_tablet;
+				$navigation   = $element->get_settings( 'ecs_navigation' ) ?: 'arrows';
+				$show_arrows  = in_array( $navigation, [ 'arrows', 'both' ], true );
+				$show_dots    = in_array( $navigation, [ 'dots',   'both' ], true );
+
+				$swiper_cfg = [
+					'slidesPerView' => $cols_desktop,
+					'loop'          => 'yes' === $element->get_settings( 'ecs_loop' ),
+					'speed'         => (int) ( $element->get_settings( 'ecs_speed' ) ?: 500 ),
+					'spaceBetween'  => (int) $element->get_settings( 'ecs_space_between' ),
+					'breakpoints'   => [
+						0    => [
+							'slidesPerView' => $cols_mobile,
+							'enabled'       => 'slider' === $mobile_type,
+						],
+						768  => [
+							'slidesPerView' => $cols_tablet,
+							'enabled'       => 'slider' === $tablet_type,
+						],
+						1025 => [ 'enabled' => false ], // desktop uses custom-version
+					],
+				];
+
+				if ( $show_arrows ) { $swiper_cfg['navigation'] = true; }
+				if ( $show_dots )   { $swiper_cfg['pagination'] = [ 'clickable' => true ]; }
+
+				if ( 'yes' === $element->get_settings( 'ecs_autoplay' ) ) {
+					$swiper_cfg['autoplay'] = [
+						'delay'                => (int) ( $element->get_settings( 'ecs_autoplay_speed' ) ?: 3000 ),
+						'pauseOnMouseEnter'    => 'yes' === $element->get_settings( 'ecs_pause_on_hover' ),
+						'disableOnInteraction' => false,
+					];
+				}
+
+				echo '<div class="swiper ecs-swiper" data-ecs-slider-settings="' . esc_attr( wp_json_encode( $swiper_cfg ) ) . '">';
+				echo '<div class="swiper-wrapper">';
+				foreach ( $children_list as $child ) {
+					echo '<div class="swiper-slide">' . $child . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				echo '</div>'; // .swiper-wrapper
+
+				if ( $show_arrows ) {
+					echo '<div class="elementor-swiper-button elementor-swiper-button-prev" role="button" tabindex="0">'
+						. '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25"><path d="M15.5 5 8.5 12.5 15.5 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+						. '</div>';
+					echo '<div class="elementor-swiper-button elementor-swiper-button-next" role="button" tabindex="0">'
+						. '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25"><path d="M9.5 5 16.5 12.5 9.5 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+						. '</div>';
+				}
+				if ( $show_dots ) {
+					echo '<div class="swiper-pagination"></div>';
+				}
+
+				echo '</div>'; // .ecs-swiper
+
+			} else {
+				// Grid or flex — plain children container; CSS applies layout.
+				echo '<div class="ecs-resp-children">';
+				foreach ( $children_list as $child ) {
+					echo $child; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				echo '</div>'; // .ecs-resp-children
+			}
+
+			echo '</div>'; // .ecs-responsive-version
+		}
+
+		echo '</div>'; // outer .e-con
+
+		// Restore the filter removed at buffer start.
 		if ( ! empty( $frame['filter_removed'] ) ) {
 			add_filter( 'elementor/element/should_render_shortcode', '__return_true' );
 		}
@@ -791,7 +864,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	 *
 	 * Preserves the outer container div (with all Elementor classes), wraps
 	 * each direct child in a .swiper-slide, and appends navigation elements.
-	 * Swiper is initialised by dte-slider.js on the frontend.
+	 * Swiper is initialised by ecs-slider.js on the frontend.
 	 */
 	private function render_slider( $element, string $container_html, array $frame ): void {
 		// Restore filter removed during buffering.
@@ -808,27 +881,27 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		$children_list = $this->split_children( $inner_html );
 
 		// 3. Build Swiper settings from element controls.
-		$navigation  = $element->get_settings( 'dte_navigation' ) ?: 'arrows';
+		$navigation  = $element->get_settings( 'ecs_navigation' ) ?: 'arrows';
 		$show_arrows = in_array( $navigation, [ 'arrows', 'both' ], true );
 		$show_dots   = in_array( $navigation, [ 'dots', 'both' ], true );
-		$autoplay_on = 'yes' === $element->get_settings( 'dte_autoplay' );
+		$autoplay_on = 'yes' === $element->get_settings( 'ecs_autoplay' );
 
 		// Responsive columns ('' = inherit from larger breakpoint).
-		$cols_desktop = (int) ( $element->get_settings( 'dte_slider_columns' ) ?: 1 );
-		$cols_tablet  = (int) $element->get_settings( 'dte_slider_columns_tablet' );
-		$cols_mobile  = (int) $element->get_settings( 'dte_slider_columns_mobile' );
+		$cols_desktop = (int) ( $element->get_settings( 'ecs_slider_columns' ) ?: 1 );
+		$cols_tablet  = (int) $element->get_settings( 'ecs_slider_columns_tablet' );
+		$cols_mobile  = (int) $element->get_settings( 'ecs_slider_columns_mobile' );
 		$cols_tablet  = $cols_tablet ?: $cols_desktop;
 		$cols_mobile  = $cols_mobile ?: $cols_tablet;
 
 		// Layout overrides ('' = inherit; 'flex'|'grid' = disable Swiper at that breakpoint).
-		$layout_tablet = $element->get_settings( 'dte_container_type_tablet' ) ?: '';
-		$layout_mobile = $element->get_settings( 'dte_container_type_mobile' ) ?: '';
+		$layout_tablet = $element->get_settings( 'ecs_container_type_tablet' ) ?: '';
+		$layout_mobile = $element->get_settings( 'ecs_container_type_mobile' ) ?: '';
 
 		$swiper_settings = [
 			'slidesPerView' => $cols_desktop,
-			'loop'          => 'yes' === $element->get_settings( 'dte_loop' ),
-			'speed'         => (int) ( $element->get_settings( 'dte_speed' ) ?: 500 ),
-			'spaceBetween'  => (int) $element->get_settings( 'dte_space_between' ),
+			'loop'          => 'yes' === $element->get_settings( 'ecs_loop' ),
+			'speed'         => (int) ( $element->get_settings( 'ecs_speed' ) ?: 500 ),
+			'spaceBetween'  => (int) $element->get_settings( 'ecs_space_between' ),
 			'breakpoints'   => [
 				0    => [
 					'slidesPerView' => $cols_mobile,
@@ -847,8 +920,8 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		if ( $autoplay_on ) {
 			$swiper_settings['autoplay'] = [
-				'delay'                => (int) ( $element->get_settings( 'dte_autoplay_speed' ) ?: 3000 ),
-				'pauseOnMouseEnter'    => 'yes' === $element->get_settings( 'dte_pause_on_hover' ),
+				'delay'                => (int) ( $element->get_settings( 'ecs_autoplay_speed' ) ?: 3000 ),
+				'pauseOnMouseEnter'    => 'yes' === $element->get_settings( 'ecs_pause_on_hover' ),
 				'disableOnInteraction' => false,
 			];
 		}
@@ -863,7 +936,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		// 4. Output HTML.
 		echo $outer_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<div class="swiper dte-swiper" data-dte-slider-settings="' . esc_attr( wp_json_encode( $swiper_settings ) ) . '">';
+		echo '<div class="swiper ecs-swiper" data-ecs-slider-settings="' . esc_attr( wp_json_encode( $swiper_settings ) ) . '">';
 		echo '<div class="swiper-wrapper">';
 
 		foreach ( $children_list as $child ) {
@@ -1090,7 +1163,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 			if ( $first_pass && ! ECS_Container_Placeholder_Widget::any_consumed() && ! empty( $children ) ) {
 				// Template has no DTE Placeholder widget — send error fallback HTML.
 				ECS_Container_Placeholder_Widget::reset_pending_children();
-				$output = '<div class="dte-missing-placeholder">' . implode( '', $children ) . '</div>';
+				$output = '<div class="ecs-missing-placeholder">' . implode( '', $children ) . '</div>';
 				break;
 			}
 
@@ -1156,7 +1229,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 
 		// When the Responsive Container Layout module is NOT active this module
-		// registers a simple (non-responsive) dte_container_type control in
+		// registers a simple (non-responsive) ecs_container_type control in
 		// maybe_add_fallback_type_control().  We need to hide the native control and
 		// wire a simple grid-sync here as well.
 		if ( ! ECS_Core::instance()->modules()->is_active( 'container_responsive' ) ) {
@@ -1165,7 +1238,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'.elementor-control-container_type { display: none !important; }'
 			);
 
-			// Minimal sync: keeps native container_type in step with dte_container_type
+			// Minimal sync: keeps native container_type in step with ecs_container_type
 			// so Elementor shows its grid controls when the user picks Grid.
 			wp_add_inline_script( 'ecs-editor-preview', '
 ( function () {
@@ -1174,12 +1247,12 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		var settings = model && model.get && model.get( "settings" );
 		if ( ! settings ) { return; }
 		function syncNative() {
-			var dteCt = settings.get( "dte_container_type" ) || "flex";
+			var dteCt = settings.get( "ecs_container_type" ) || "flex";
 			var nat   = ( "grid" === dteCt ) ? "grid" : "flex";
 			if ( settings.get( "container_type" ) !== nat ) { settings.set( "container_type", nat ); }
 		}
 		syncNative();
-		settings.on( "change:dte_container_type", syncNative );
+		settings.on( "change:ecs_container_type", syncNative );
 	} );
 } )();
 ' );

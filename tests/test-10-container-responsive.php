@@ -4,12 +4,12 @@
  *
  * Verifică:
  *  - Toate 5 opțiuni (flex/grid/slider/custom/inherit) pe desktop, tablet, mobile
- *    generează clasele CSS corecte prin prefix_class 'e-dte%s-'
+ *    generează clasele CSS corecte prin prefix_class 'e-ecs%s-'
  *  - Comportamentul Inherit (""): nu adaugă clasă pentru breakpoint-ul respectiv
  *  - Combinații mixte: desktop=flex/tablet=grid/mobile=inherit etc.
  *  - Settings stocate corect per breakpoint (get_settings)
  *  - Logica resolveType cascade (desktop→tablet→mobile) verificată prin PHP
- *  - Clasele e-dte-tablet-* și e-dte-mobile-* sunt distincte de desktop
+ *  - Clasele e-ecs-tablet-* și e-ecs-mobile-* sunt distincte de desktop
  */
 
 $manager    = ECS_Core::instance()->modules();
@@ -33,7 +33,7 @@ $container_proto = \Elementor\Plugin::$instance->elements_manager->get_element_t
 $controls        = $container_proto->get_controls();
 
 // Adaugă controalele dacă nu există deja (prima rulare sau modul nou activat)
-if ( ! isset( $controls['dte_container_type'] ) ) {
+if ( ! isset( $controls['ecs_container_type'] ) ) {
 	$cr_module->add_container_type_control( $container_proto, [] );
 	$controls = $container_proto->get_controls();
 }
@@ -42,31 +42,31 @@ if ( ! isset( $controls['dte_container_type'] ) ) {
 
 ecs_section( 'container_responsive — controale responsive și prefix_class' );
 
-ecs_ok( isset( $controls['dte_container_type'] ),        'Control dte_container_type (desktop) înregistrat' );
-ecs_ok( isset( $controls['dte_container_type_tablet'] ), 'Control dte_container_type_tablet înregistrat' );
-ecs_ok( isset( $controls['dte_container_type_mobile'] ), 'Control dte_container_type_mobile înregistrat' );
+ecs_ok( isset( $controls['ecs_container_type'] ),        'Control ecs_container_type (desktop) înregistrat' );
+ecs_ok( isset( $controls['ecs_container_type_tablet'] ), 'Control ecs_container_type_tablet înregistrat' );
+ecs_ok( isset( $controls['ecs_container_type_mobile'] ), 'Control ecs_container_type_mobile înregistrat' );
 
 ecs_ok(
-	( $controls['dte_container_type']['prefix_class'] ?? '' ) === 'e-dte-',
-	"prefix_class desktop = 'e-dte-'"
+	( $controls['ecs_container_type']['prefix_class'] ?? '' ) === 'e-ecs-',
+	"prefix_class desktop = 'e-ecs-'"
 );
 ecs_ok(
-	( $controls['dte_container_type_tablet']['prefix_class'] ?? '' ) === 'e-dte-tablet-',
-	"prefix_class tablet = 'e-dte-tablet-'"
+	( $controls['ecs_container_type_tablet']['prefix_class'] ?? '' ) === 'e-ecs-tablet-',
+	"prefix_class tablet = 'e-ecs-tablet-'"
 );
 ecs_ok(
-	( $controls['dte_container_type_mobile']['prefix_class'] ?? '' ) === 'e-dte-mobile-',
-	"prefix_class mobile = 'e-dte-mobile-'"
+	( $controls['ecs_container_type_mobile']['prefix_class'] ?? '' ) === 'e-ecs-mobile-',
+	"prefix_class mobile = 'e-ecs-mobile-'"
 );
 
-// ── Helper: randează container și extrage clasele e-dte-* ─────────────────────
+// ── Helper: randează container și extrage clasele e-ecs-* ─────────────────────
 
 $container_class = get_class( $container_proto );
 
 /**
- * Randează un container cu setările date și returnează clasele e-dte-* prezente.
+ * Randează un container cu setările date și returnează clasele e-ecs-* prezente.
  */
-function ecs_render_dte_classes( string $container_class, array $settings ): array {
+function ecs_render_ecs_classes( string $container_class, array $settings ): array {
 	static $idx = 0;
 	$idx++;
 	$inst = new $container_class(
@@ -78,7 +78,7 @@ function ecs_render_dte_classes( string $container_class, array $settings ): arr
 	$html = ob_get_clean();
 	preg_match( '/class="([^"]+)"/', $html, $m );
 	$all = explode( ' ', $m[1] ?? '' );
-	return array_values( array_filter( $all, fn( $c ) => str_starts_with( $c, 'e-dte-' ) ) );
+	return array_values( array_filter( $all, fn( $c ) => str_starts_with( $c, 'e-ecs-' ) ) );
 }
 
 // ── Test: toate 5 opțiuni pe DESKTOP ─────────────────────────────────────────
@@ -86,21 +86,21 @@ function ecs_render_dte_classes( string $container_class, array $settings ): arr
 ecs_section( 'container_responsive — desktop: toate 5 opțiuni' );
 
 $desktop_cases = [
-	'flex'   => 'e-dte-flex',
-	'grid'   => 'e-dte-grid',
-	'slider' => 'e-dte-slider',
-	'custom' => 'e-dte-custom',
+	'flex'   => 'e-ecs-flex',
+	'grid'   => 'e-ecs-grid',
+	'slider' => 'e-ecs-slider',
+	'custom' => 'e-ecs-custom',
 	''       => null,  // Inherit → fără clasă
 ];
 
 foreach ( $desktop_cases as $value => $expected_class ) {
-	$classes = ecs_render_dte_classes( $container_class, [ 'dte_container_type' => $value ] );
+	$classes = ecs_render_ecs_classes( $container_class, [ 'ecs_container_type' => $value ] );
 	$desktop_dte = array_values( array_filter( $classes, fn( $c ) => ! str_contains( $c, 'tablet' ) && ! str_contains( $c, 'mobile' ) ) );
 
 	if ( $expected_class === null ) {
 		ecs_ok(
 			empty( $desktop_dte ),
-			"desktop=''" . " (Inherit) → nicio clasă e-dte- desktop adăugată"
+			"desktop=''" . " (Inherit) → nicio clasă e-ecs- desktop adăugată"
 		);
 	} else {
 		ecs_ok(
@@ -115,24 +115,24 @@ foreach ( $desktop_cases as $value => $expected_class ) {
 ecs_section( 'container_responsive — tablet: toate 5 opțiuni' );
 
 $tablet_cases = [
-	'flex'   => 'e-dte-tablet-flex',
-	'grid'   => 'e-dte-tablet-grid',
-	'slider' => 'e-dte-tablet-slider',
-	'custom' => 'e-dte-tablet-custom',
+	'flex'   => 'e-ecs-tablet-flex',
+	'grid'   => 'e-ecs-tablet-grid',
+	'slider' => 'e-ecs-tablet-slider',
+	'custom' => 'e-ecs-tablet-custom',
 	''       => null,
 ];
 
 foreach ( $tablet_cases as $value => $expected_class ) {
-	$classes = ecs_render_dte_classes( $container_class, [
-		'dte_container_type'        => 'flex',  // desktop fixat la flex
-		'dte_container_type_tablet' => $value,
+	$classes = ecs_render_ecs_classes( $container_class, [
+		'ecs_container_type'        => 'flex',  // desktop fixat la flex
+		'ecs_container_type_tablet' => $value,
 	] );
 	$tablet_dte = array_values( array_filter( $classes, fn( $c ) => str_contains( $c, 'tablet' ) ) );
 
 	if ( $expected_class === null ) {
 		ecs_ok(
 			empty( $tablet_dte ),
-			"tablet='' (Inherit) → nicio clasă e-dte-tablet- adăugată"
+			"tablet='' (Inherit) → nicio clasă e-ecs-tablet- adăugată"
 		);
 	} else {
 		ecs_ok(
@@ -147,25 +147,25 @@ foreach ( $tablet_cases as $value => $expected_class ) {
 ecs_section( 'container_responsive — mobile: toate 5 opțiuni' );
 
 $mobile_cases = [
-	'flex'   => 'e-dte-mobile-flex',
-	'grid'   => 'e-dte-mobile-grid',
-	'slider' => 'e-dte-mobile-slider',
-	'custom' => 'e-dte-mobile-custom',
+	'flex'   => 'e-ecs-mobile-flex',
+	'grid'   => 'e-ecs-mobile-grid',
+	'slider' => 'e-ecs-mobile-slider',
+	'custom' => 'e-ecs-mobile-custom',
 	''       => null,
 ];
 
 foreach ( $mobile_cases as $value => $expected_class ) {
-	$classes = ecs_render_dte_classes( $container_class, [
-		'dte_container_type'        => 'flex',   // desktop fixat
-		'dte_container_type_tablet' => 'grid',   // tablet fixat
-		'dte_container_type_mobile' => $value,
+	$classes = ecs_render_ecs_classes( $container_class, [
+		'ecs_container_type'        => 'flex',   // desktop fixat
+		'ecs_container_type_tablet' => 'grid',   // tablet fixat
+		'ecs_container_type_mobile' => $value,
 	] );
 	$mobile_dte = array_values( array_filter( $classes, fn( $c ) => str_contains( $c, 'mobile' ) ) );
 
 	if ( $expected_class === null ) {
 		ecs_ok(
 			empty( $mobile_dte ),
-			"mobile='' (Inherit) → nicio clasă e-dte-mobile- adăugată"
+			"mobile='' (Inherit) → nicio clasă e-ecs-mobile- adăugată"
 		);
 	} else {
 		ecs_ok(
@@ -181,19 +181,19 @@ ecs_section( 'container_responsive — combinații mixte' );
 
 $mixed_cases = [
 	// [ desktop, tablet, mobile, expected_classes ]
-	[ 'flex',   'grid',   'slider', [ 'e-dte-flex', 'e-dte-tablet-grid',   'e-dte-mobile-slider' ] ],
-	[ 'grid',   'custom', 'flex',   [ 'e-dte-grid', 'e-dte-tablet-custom', 'e-dte-mobile-flex'   ] ],
-	[ 'slider', '',       'custom', [ 'e-dte-slider',                       'e-dte-mobile-custom' ] ],  // tablet inherit
-	[ 'custom', 'flex',   '',       [ 'e-dte-custom', 'e-dte-tablet-flex'                         ] ],  // mobile inherit
-	[ 'flex',   '',       '',       [ 'e-dte-flex'                                                 ] ],  // tablet+mobile inherit
-	[ 'grid',   'grid',   'grid',   [ 'e-dte-grid', 'e-dte-tablet-grid',   'e-dte-mobile-grid'   ] ],  // toate identice
+	[ 'flex',   'grid',   'slider', [ 'e-ecs-flex', 'e-ecs-tablet-grid',   'e-ecs-mobile-slider' ] ],
+	[ 'grid',   'custom', 'flex',   [ 'e-ecs-grid', 'e-ecs-tablet-custom', 'e-ecs-mobile-flex'   ] ],
+	[ 'slider', '',       'custom', [ 'e-ecs-slider',                       'e-ecs-mobile-custom' ] ],  // tablet inherit
+	[ 'custom', 'flex',   '',       [ 'e-ecs-custom', 'e-ecs-tablet-flex'                         ] ],  // mobile inherit
+	[ 'flex',   '',       '',       [ 'e-ecs-flex'                                                 ] ],  // tablet+mobile inherit
+	[ 'grid',   'grid',   'grid',   [ 'e-ecs-grid', 'e-ecs-tablet-grid',   'e-ecs-mobile-grid'   ] ],  // toate identice
 ];
 
 foreach ( $mixed_cases as [ $dt, $tb, $mb, $expected ] ) {
-	$classes = ecs_render_dte_classes( $container_class, [
-		'dte_container_type'        => $dt,
-		'dte_container_type_tablet' => $tb,
-		'dte_container_type_mobile' => $mb,
+	$classes = ecs_render_ecs_classes( $container_class, [
+		'ecs_container_type'        => $dt,
+		'ecs_container_type_tablet' => $tb,
+		'ecs_container_type_mobile' => $mb,
 	] );
 
 	$label = "desktop=$dt, tablet=" . ( $tb ?: 'inherit' ) . ", mobile=" . ( $mb ?: 'inherit' );
@@ -222,17 +222,17 @@ $inst_settings = new $container_class(
 	[
 		'id'       => 'cr_settings_test',
 		'settings' => [
-			'dte_container_type'        => 'slider',
-			'dte_container_type_tablet' => 'grid',
-			'dte_container_type_mobile' => 'flex',
+			'ecs_container_type'        => 'slider',
+			'ecs_container_type_tablet' => 'grid',
+			'ecs_container_type_mobile' => 'flex',
 		],
 	],
 	null
 );
 
-ecs_ok( $inst_settings->get_settings( 'dte_container_type' )        === 'slider', 'settings desktop = slider' );
-ecs_ok( $inst_settings->get_settings( 'dte_container_type_tablet' ) === 'grid',   'settings tablet = grid' );
-ecs_ok( $inst_settings->get_settings( 'dte_container_type_mobile' ) === 'flex',   'settings mobile = flex' );
+ecs_ok( $inst_settings->get_settings( 'ecs_container_type' )        === 'slider', 'settings desktop = slider' );
+ecs_ok( $inst_settings->get_settings( 'ecs_container_type_tablet' ) === 'grid',   'settings tablet = grid' );
+ecs_ok( $inst_settings->get_settings( 'ecs_container_type_mobile' ) === 'flex',   'settings mobile = flex' );
 
 // ── Test: logica resolveType cascade (reimplementare PHP a logicii JS) ─────────
 
@@ -248,9 +248,9 @@ ecs_section( 'container_responsive — resolveType cascade (JS logic verificată
  * '' (empty) = Inherit = sare la breakpoint-ul superior
  */
 function ecs_resolve_type( array $settings, string $device ): string {
-	$desktop = $settings['dte_container_type']        ?? '';
-	$tablet  = $settings['dte_container_type_tablet'] ?? '';
-	$mobile  = $settings['dte_container_type_mobile'] ?? '';
+	$desktop = $settings['ecs_container_type']        ?? '';
+	$tablet  = $settings['ecs_container_type_tablet'] ?? '';
+	$mobile  = $settings['ecs_container_type_mobile'] ?? '';
 
 	switch ( $device ) {
 		case 'desktop':
@@ -294,9 +294,9 @@ $cascade_cases = [
 
 foreach ( $cascade_cases as [ $vals, $device, $expected ] ) {
 	$settings = [
-		'dte_container_type'        => $vals[0],
-		'dte_container_type_tablet' => $vals[1],
-		'dte_container_type_mobile' => $vals[2],
+		'ecs_container_type'        => $vals[0],
+		'ecs_container_type_tablet' => $vals[1],
+		'ecs_container_type_mobile' => $vals[2],
 	];
 	$result = ecs_resolve_type( $settings, $device );
 	$label  = "desktop={$vals[0]}, tablet=" . ( $vals[1] ?: 'inherit' ) . ", mobile=" . ( $vals[2] ?: 'inherit' ) . " @ $device";
@@ -324,8 +324,8 @@ ecs_ok(
 	"update_control('container_type', ...) apelat în add_container_type_control()"
 );
 ecs_ok(
-	strpos( $src_cr_local, 'dte-hidden-control' ) !== false,
-	"Clasa 'dte-hidden-control' folosită pentru ascunderea container_type"
+	strpos( $src_cr_local, 'ecs-hidden-control' ) !== false,
+	"Clasa 'ecs-hidden-control' folosită pentru ascunderea container_type"
 );
 ecs_ok(
 	strpos( $src_cr_local, '.elementor-control-container_type' ) !== false &&

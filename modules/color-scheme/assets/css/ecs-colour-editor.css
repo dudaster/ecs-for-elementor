@@ -1,21 +1,21 @@
 /* ============================================================
-   DTE Default Colours — Editor Panel Styles
+   ECS Default Colours — Editor Panel Styles
    ============================================================
    Applied inside Elementor's Site Settings panel only.
    ============================================================ */
 
 /* ── Mode selector: style the CHOOSE control as tabs ─────── */
 
-.elementor-control-dte_view_mode {
+.elementor-control-ecs_view_mode {
 	margin-bottom: 12px !important;
 }
 
-.elementor-control-dte_view_mode .elementor-control-title {
+.elementor-control-ecs_view_mode .elementor-control-title {
 	display: none; /* hide "Preview Mode" label — the icons speak for themselves */
 }
 
 /* Make the tab text visible (Elementor hides it in .elementor-screen-only by default) */
-.elementor-control-dte_view_mode .elementor-screen-only {
+.elementor-control-ecs_view_mode .elementor-screen-only {
 	position: static !important;
 	clip: unset !important;
 	white-space: normal !important;
@@ -24,12 +24,12 @@
 	overflow: visible !important;
 }
 
-.elementor-control-dte_view_mode .elementor-control-field,
-.elementor-control-dte_view_mode .elementor-control-input-wrapper {
+.elementor-control-ecs_view_mode .elementor-control-field,
+.elementor-control-ecs_view_mode .elementor-control-input-wrapper {
 	width: 100% !important;
 }
 
-.elementor-control-dte_view_mode .elementor-choices {
+.elementor-control-ecs_view_mode .elementor-choices {
 	display: flex;
 	width: 100%;
 	border: 1px solid #d5d8dc;
@@ -37,7 +37,7 @@
 	overflow: hidden;
 }
 
-.elementor-control-dte_view_mode .elementor-choices label {
+.elementor-control-ecs_view_mode .elementor-choices label {
 	flex: 1;
 	width: auto !important;       /* override elementor-control-unit-1 fixed width */
 	overflow: visible !important; /* override elementor's overflow:hidden */
@@ -55,18 +55,18 @@
 	white-space: nowrap;
 }
 
-.elementor-control-dte_view_mode .elementor-choices label:last-child {
+.elementor-control-ecs_view_mode .elementor-choices label:last-child {
 	border-right: none;
 }
 
-.elementor-control-dte_view_mode .elementor-choices input:checked + label,
-.elementor-control-dte_view_mode .elementor-choices label:has(input:checked) {
+.elementor-control-ecs_view_mode .elementor-choices input:checked + label,
+.elementor-control-ecs_view_mode .elementor-choices label:has(input:checked) {
 	background: #2271b1;
 	color: #fff;
 }
 
 /* Fallback for browsers without :has() */
-.elementor-control-dte_view_mode .elementor-choices label.elementor-active {
+.elementor-control-ecs_view_mode .elementor-choices label.elementor-active {
 	background: #2271b1;
 	color: #fff;
 }
@@ -84,25 +84,25 @@
 
 /* Default mode: show "Default" colour, hide "Dark Mode" colour */
 /* Targets the controls-stack ancestor (controls are siblings of the section in DOM) */
-.dte-mode-default .elementor-control-system_colors .elementor-control-dark_color,
-.dte-mode-default .elementor-control-custom_colors .elementor-control-dark_color {
+.ecs-mode-default .elementor-control-system_colors .elementor-control-dark_color,
+.ecs-mode-default .elementor-control-custom_colors .elementor-control-dark_color {
 	display: none !important;
 }
 
 /* Dark mode: show "Dark Mode" colour, hide "Default" colour */
-.dte-mode-dark .elementor-control-system_colors .elementor-control-color,
-.dte-mode-dark .elementor-control-custom_colors .elementor-control-color {
+.ecs-mode-dark .elementor-control-system_colors .elementor-control-color,
+.ecs-mode-dark .elementor-control-custom_colors .elementor-control-color {
 	display: none !important;
 }
 
 /* ── Dark mode fallback indicator ───────────────────────── */
 
 /* Row that has no dark colour set — subtle warning outline */
-.dte-mode-dark .dte-dark-fallback {
+.ecs-mode-dark .ecs-dark-fallback {
 	position: relative;
 }
 
-.dte-mode-dark .dte-dark-fallback .elementor-control-field::before {
+.ecs-mode-dark .ecs-dark-fallback .elementor-control-field::before {
 	content: 'Falls back to default';
 	display: block;
 	font-size: 10px;
@@ -112,7 +112,7 @@
 }
 
 /* Reference swatch showing the default colour as fallback preview */
-.dte-fallback-swatch {
+.ecs-fallback-swatch {
 	display: inline-block;
 	width: 16px;
 	height: 16px;

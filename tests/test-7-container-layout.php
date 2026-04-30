@@ -103,7 +103,7 @@ if ( $manager->is_active( 'container_layout' ) ) {
 	if ( class_exists( 'ECS_Container_Placeholder_Widget', false ) ) {
 		$placeholder = new ECS_Container_Placeholder_Widget( [], [] );
 
-		ecs_ok( $placeholder->get_name() === 'dte_container_placeholder', "get_name() = 'dte_container_placeholder'" );
+		ecs_ok( $placeholder->get_name() === 'ecs_container_placeholder', "get_name() = 'ecs_container_placeholder'" );
 		ecs_ok( ! empty( $placeholder->get_title() ),                      'get_title() nu este gol' );
 
 		// Test get_next_child() — fără copii setați returnează null
@@ -119,8 +119,8 @@ if ( $manager->is_active( 'container_layout' ) ) {
 
 		// Verificăm că widget-ul este înregistrat în Elementor
 		$widgets_manager = \Elementor\Plugin::$instance->widgets_manager;
-		$registered      = $widgets_manager->get_widget_types( 'dte_container_placeholder' );
-		ecs_ok( $registered !== null, 'Widget dte_container_placeholder înregistrat în Elementor' );
+		$registered      = $widgets_manager->get_widget_types( 'ecs_container_placeholder' );
+		ecs_ok( $registered !== null, 'Widget ecs_container_placeholder înregistrat în Elementor' );
 	}
 
 } else {
@@ -175,7 +175,7 @@ if ( $manager->is_active( 'container_layout' ) ) {
 	if ( file_exists( $js_file ) ) {
 		$js = file_get_contents( $js_file );
 		ecs_ok( strpos( $js, 'ecs_preview_layout' ) !== false, 'JS conține referință la ecs_preview_layout AJAX action' );
-		ecs_ok( strpos( $js, 'e-dte-custom' ) !== false,       'JS detectează containerele cu clasa e-dte-custom' );
+		ecs_ok( strpos( $js, 'e-ecs-custom' ) !== false,       'JS detectează containerele cu clasa e-ecs-custom' );
 	}
 
 	// Verificăm că CSS-ul conține stiluri pentru injecție

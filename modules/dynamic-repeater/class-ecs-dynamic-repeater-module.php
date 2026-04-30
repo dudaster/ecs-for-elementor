@@ -374,7 +374,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	 * bound elements. This prevents Elementor from serving a cached container HTML
 	 * that was built for a different post's data.
 	 */
-	public function suppress_element_cache( $value, int $object_id, string $meta_key, bool $single ) {
+	public function suppress_element_cache( $value, $object_id, $meta_key, $single = null ) {
 		if ( $meta_key !== '_elementor_element_cache' ) {
 			return $value;
 		}
@@ -402,7 +402,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	 * Only runs on the frontend; skipped in editor and AJAX (except Elementor
 	 * frontend-preview AJAX which also renders on the frontend).
 	 */
-	public function filter_elementor_data( $value, int $object_id, string $meta_key, bool $single ) {
+	public function filter_elementor_data( $value, $object_id, $meta_key, $single = null ) {
 		if ( $meta_key !== '_elementor_data' ) {
 			return $value;
 		}

@@ -1,28 +1,28 @@
 /* ============================================================
-   DTE Container Layout Module
+   ECS Container Layout Module
    ============================================================ */
 
-/* ── Fix --display for DTE modes ─────────────────────────── */
+/* ── Fix --display for ECS modes ─────────────────────────── */
 /*
- * dte_container_type responsive control uses prefix_class 'e-dte%s-'.
- * Desktop: e-dte-slider, e-dte-custom, e-dte-flex, e-dte-grid
- * Tablet:  e-dte-tablet-flex, e-dte-tablet-grid, etc.
- * Mobile:  e-dte-mobile-flex, e-dte-mobile-grid, etc.
+ * ecs_container_type responsive control uses prefix_class 'e-ecs%s-'.
+ * Desktop: e-ecs-slider, e-ecs-custom, e-ecs-flex, e-ecs-grid
+ * Tablet:  e-ecs-tablet-flex, e-ecs-tablet-grid, etc.
+ * Mobile:  e-ecs-mobile-flex, e-ecs-mobile-grid, etc.
  *
- * Elementor's --display CSS var must be overridden for DTE modes.
+ * Elementor's --display CSS var must be overridden for ECS modes.
  * Two-class specificity (0-0-2-0) beats Elementor's single-class rule.
  */
-.e-con.e-dte-slider,
-.e-con.e-dte-custom {
+.e-con.e-ecs-slider,
+.e-con.e-ecs-custom {
 	--display: flex;
 }
 
 /* Desktop flex/grid classes from our responsive control */
-.e-con.e-dte-flex {
+.e-con.e-ecs-flex {
 	--display: flex;
 	display: flex;
 }
-.e-con.e-dte-grid {
+.e-con.e-ecs-grid {
 	--display: grid;
 	display: grid;
 }
@@ -30,15 +30,19 @@
 /* ── Slider mode (Swiper) ─────────────────────────────────── */
 
 /*
- * Editor preview: buffering is disabled in edit mode, so children are
- * rendered directly inside the container (no Swiper wrapper).
- * A simple horizontal scroll gives a basic visual indication.
+ * Prevents the outer container from wrapping slides horizontally.
+ * On editor (before JS runs), overflow-x:auto gives a scrollable preview.
+ * On live, .ecs-swiper clips slides with overflow:hidden — the container
+ * itself stays visible so absolutely-positioned arrows/dots are not clipped.
  */
-.e-con.e-dte-slider {
-	overflow-x: auto;
+.e-con.e-ecs-slider {
+	overflow: visible;
 	flex-wrap: nowrap !important;
 }
-.e-con.e-dte-slider > .e-con-inner {
+
+/* Editor: children still inside .e-con-inner before JS moves them */
+.e-con.e-ecs-slider > .e-con-inner {
+	overflow-x: auto;
 	flex-wrap: nowrap !important;
 }
 
@@ -48,20 +52,11 @@
  * Elementor's "drag widget here" placeholder.
  * Full Width containers have no .e-con-inner — no rule needed.
  */
-.dte-editor-slider-active > .e-con-inner {
+.ecs-editor-slider-active > .e-con-inner {
 	display: none !important;
 }
 
-/*
- * Live mode: outer container allows overflow so arrow buttons that are
- * positioned outside the swiper are visible.
- * The .dte-swiper wrapper clips the slides.
- */
-.e-con.e-dte-slider {
-	overflow: visible;
-}
-
-.dte-swiper {
+.ecs-swiper {
 	width: 100%;
 	overflow: hidden;
 	position: relative;
@@ -69,13 +64,13 @@
 
 /* ── Custom Layout mode ───────────────────────────────────── */
 
-.e-con.e-dte-custom > .e-con-inner {
+.e-con.e-ecs-custom > .e-con-inner {
 	display: contents;
 }
 
 /*
  * Live mode: wrapper emitted by after_container_render() around all cycling
- * template instances. flex-direction is set inline from the dte_direction
+ * template instances. flex-direction is set inline from the ecs_direction
  * control; width:100% + flex-wrap:wrap ensure correct block behaviour.
  */
 .ecs-custom-layout-wrap {
@@ -83,14 +78,122 @@
 	flex-wrap: wrap;
 }
 
+/* ── Dual-render show/hide ────────────────────────────────────
+ * When responsive overrides exist, PHP emits two versions:
+ *   .ecs-custom-version    — desktop: template with children in slots
+ *   .ecs-responsive-version — tablet/mobile: children as grid or slider
+ * CSS shows one at a time based on active breakpoint.
+ * ──────────────────────────────────────────────────────────── */
+
+.ecs-custom-version,
+.ecs-responsive-version {
+	width: 100%;
+}
+
+/* Desktop: show template version, hide responsive */
+.ecs-responsive-version {
+	display: none;
+}
+
+/* Tablet: swap when any tablet override is active (768px–1024px only) */
+@media (min-width: 768px) and (max-width: 1024px) {
+	.e-con.e-ecs-custom.e-ecs-tablet-flex > .ecs-custom-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-grid > .ecs-custom-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-slider > .ecs-custom-version {
+		display: none;
+	}
+	.e-con.e-ecs-custom.e-ecs-tablet-flex > .ecs-responsive-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-grid > .ecs-responsive-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-slider > .ecs-responsive-version {
+		display: block;
+	}
+
+	/* tablet=grid: CSS grid on the swiper-wrapper */
+	.e-con.e-ecs-custom.e-ecs-tablet-grid > .ecs-responsive-version > .ecs-swiper > .swiper-wrapper {
+		display: grid !important;
+		grid-template-columns: repeat(2, 1fr) !important;
+		transform: none !important;
+		transition: none !important;
+		width: 100%;
+	}
+	.e-con.e-ecs-custom.e-ecs-tablet-grid > .ecs-responsive-version > .ecs-swiper > .swiper-slide {
+		width: auto !important;
+		height: auto !important;
+		margin-right: 0 !important;
+	}
+	.e-con.e-ecs-custom.e-ecs-tablet-grid > .ecs-responsive-version > .ecs-swiper > .elementor-swiper-button,
+	.e-con.e-ecs-custom.e-ecs-tablet-grid > .ecs-responsive-version > .ecs-swiper > .swiper-pagination {
+		display: none !important;
+	}
+
+	/* tablet=flex: column stack */
+	.e-con.e-ecs-custom.e-ecs-tablet-flex > .ecs-responsive-version > .ecs-resp-children {
+		display: flex;
+		flex-direction: column;
+	}
+	.e-con.e-ecs-custom.e-ecs-tablet-flex > .ecs-responsive-version > .ecs-resp-children > * {
+		width: 100% !important;
+	}
+}
+
+/* Tablet show/hide also at mobile when no mobile override (fallback) */
+@media (max-width: 767px) {
+	.e-con.e-ecs-custom.e-ecs-tablet-flex:not(.e-ecs-mobile-flex):not(.e-ecs-mobile-grid):not(.e-ecs-mobile-slider) > .ecs-custom-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-grid:not(.e-ecs-mobile-flex):not(.e-ecs-mobile-grid):not(.e-ecs-mobile-slider) > .ecs-custom-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-slider:not(.e-ecs-mobile-flex):not(.e-ecs-mobile-grid):not(.e-ecs-mobile-slider) > .ecs-custom-version {
+		display: none;
+	}
+	.e-con.e-ecs-custom.e-ecs-tablet-flex:not(.e-ecs-mobile-flex):not(.e-ecs-mobile-grid):not(.e-ecs-mobile-slider) > .ecs-responsive-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-grid:not(.e-ecs-mobile-flex):not(.e-ecs-mobile-grid):not(.e-ecs-mobile-slider) > .ecs-responsive-version,
+	.e-con.e-ecs-custom.e-ecs-tablet-slider:not(.e-ecs-mobile-flex):not(.e-ecs-mobile-grid):not(.e-ecs-mobile-slider) > .ecs-responsive-version {
+		display: block;
+	}
+}
+
+/* Mobile: swap when any mobile override is active */
+@media (max-width: 767px) {
+	.e-con.e-ecs-custom.e-ecs-mobile-flex > .ecs-custom-version,
+	.e-con.e-ecs-custom.e-ecs-mobile-grid > .ecs-custom-version,
+	.e-con.e-ecs-custom.e-ecs-mobile-slider > .ecs-custom-version {
+		display: none;
+	}
+	.e-con.e-ecs-custom.e-ecs-mobile-flex > .ecs-responsive-version,
+	.e-con.e-ecs-custom.e-ecs-mobile-grid > .ecs-responsive-version,
+	.e-con.e-ecs-custom.e-ecs-mobile-slider > .ecs-responsive-version {
+		display: block;
+	}
+
+	/* mobile=grid */
+	.e-con.e-ecs-custom.e-ecs-mobile-grid > .ecs-responsive-version > .ecs-swiper > .swiper-wrapper {
+		display: grid !important;
+		grid-template-columns: repeat(2, 1fr) !important;
+		transform: none !important;
+		transition: none !important;
+		width: 100%;
+	}
+	.e-con.e-ecs-custom.e-ecs-mobile-grid > .ecs-responsive-version > .ecs-swiper > .elementor-swiper-button,
+	.e-con.e-ecs-custom.e-ecs-mobile-grid > .ecs-responsive-version > .ecs-swiper > .swiper-pagination {
+		display: none !important;
+	}
+
+	/* mobile=flex */
+	.e-con.e-ecs-custom.e-ecs-mobile-flex > .ecs-responsive-version > .ecs-resp-children {
+		display: flex;
+		flex-direction: column;
+	}
+	.e-con.e-ecs-custom.e-ecs-mobile-flex > .ecs-responsive-version > .ecs-resp-children > * {
+		width: 100% !important;
+	}
+}
+
 /* ── Missing placeholder fallback ────────────────────────── */
 
-.dte-missing-placeholder {
+.ecs-missing-placeholder {
 	outline: 2px dashed #d63638;
 }
 
-.dte-missing-placeholder::after {
-	content: 'DTE: missing placeholder';
+.ecs-missing-placeholder::after {
+	content: 'ECS: missing placeholder';
 	display: block;
 	background: #d63638;
 	color: #fff;
@@ -101,7 +204,7 @@
 
 /* ── Editor: Placeholder hint ────────────────────────────── */
 
-.dte-placeholder-editor-hint {
+.ecs-placeholder-editor-hint {
 	min-height: 60px;
 	display: flex;
 	align-items: center;
@@ -110,27 +213,27 @@
 
 /* ── Hide empty slot containers ──────────────────────────── */
 /*
- * .e-dte-hide-empty-slots appears in two contexts:
+ * .e-ecs-hide-empty-slots appears in two contexts:
  *  - Editor: on the .e-con container itself (Elementor applies prefix_class)
  *  - Live:   on a display:contents wrapper div emitted by after_container_render
  * Both cases work with this selector (no .e-con requirement on the ancestor).
  */
 
 /* Boxed mode: slot container wraps e-con-inner > widget */
-.e-dte-hide-empty-slots .e-con:has(
+.e-ecs-hide-empty-slots .e-con:has(
 	> .e-con-inner
-	> .elementor-widget-dte_container_placeholder
+	> .elementor-widget-ecs_container_placeholder
 	> .elementor-widget-container
-	> .dte-slot-empty
+	> .ecs-slot-empty
 ) {
 	display: none;
 }
 
 /* Full Width mode: slot container wraps widget directly */
-.e-dte-hide-empty-slots .e-con:has(
-	> .elementor-widget-dte_container_placeholder
+.e-ecs-hide-empty-slots .e-con:has(
+	> .elementor-widget-ecs_container_placeholder
 	> .elementor-widget-container
-	> .dte-slot-empty
+	> .ecs-slot-empty
 ) {
 	display: none;
 }
@@ -142,15 +245,15 @@
  * live child elements that have been moved into its slots.
  * width: 100% + min-width: 0 ensure it fills a flex parent correctly.
  */
-.dte-injected-structure {
+.ecs-injected-structure {
 	width: 100%;
 	min-width: 0;
 }
 
 /* ── Responsive Layout Override ──────────────────────────── */
 /*
- * When dte_layout_tablet / dte_layout_mobile is set to 'flex' or 'grid',
- * the container gets e-dte-tablet-{value} / e-dte-mobile-{value} classes.
+ * When ecs_layout_tablet / ecs_layout_mobile is set to 'flex' or 'grid',
+ * the container gets e-ecs-tablet-{value} / e-ecs-mobile-{value} classes.
  * Swiper has enabled:false at those breakpoints via JS breakpoints config.
  * CSS resets the Swiper wrapper so slides behave as normal block elements.
  */
@@ -160,77 +263,77 @@
 @media (max-width: 1024px) {
 
 	/* Flexbox/Grid → Slider on tablet (desktop is NOT slider) */
-	.e-con.e-dte-tablet-slider {
+	.e-con.e-ecs-tablet-slider {
 		overflow-x: auto;
 		flex-wrap: nowrap !important;
 	}
-	.e-con.e-dte-tablet-slider > .e-con-inner {
+	.e-con.e-ecs-tablet-slider > .e-con-inner {
 		flex-wrap: nowrap !important;
 	}
 
 	/* Slider → Flexbox on tablet */
-	.e-con.e-dte-slider.e-dte-tablet-flex {
+	.e-con.e-ecs-slider.e-ecs-tablet-flex {
 		overflow: visible;
 	}
-	.e-con.e-dte-slider.e-dte-tablet-flex > .dte-swiper {
+	.e-con.e-ecs-slider.e-ecs-tablet-flex > .ecs-swiper {
 		overflow: visible;
 	}
-	.e-con.e-dte-slider.e-dte-tablet-flex > .dte-swiper > .swiper-wrapper {
+	.e-con.e-ecs-slider.e-ecs-tablet-flex > .ecs-swiper > .swiper-wrapper {
 		flex-wrap: wrap;
 		transform: none !important;
 		transition: none !important;
 		width: 100%;
 	}
-	.e-con.e-dte-slider.e-dte-tablet-flex > .dte-swiper > .swiper-wrapper > .swiper-slide {
+	.e-con.e-ecs-slider.e-ecs-tablet-flex > .ecs-swiper > .swiper-wrapper > .swiper-slide {
 		width: 100% !important;
 		height: auto !important;
 		margin-right: 0 !important;
 	}
-	.e-con.e-dte-tablet-flex > .dte-swiper > .elementor-swiper-button,
-	.e-con.e-dte-tablet-flex > .dte-swiper > .swiper-pagination {
+	.e-con.e-ecs-tablet-flex > .ecs-swiper > .elementor-swiper-button,
+	.e-con.e-ecs-tablet-flex > .ecs-swiper > .swiper-pagination {
 		display: none !important;
 	}
 
 	/* Slider → Grid on tablet */
-	.e-con.e-dte-slider.e-dte-tablet-grid > .dte-swiper {
+	.e-con.e-ecs-slider.e-ecs-tablet-grid > .ecs-swiper {
 		overflow: visible;
 	}
-	.e-con.e-dte-slider.e-dte-tablet-grid > .dte-swiper > .swiper-wrapper {
+	.e-con.e-ecs-slider.e-ecs-tablet-grid > .ecs-swiper > .swiper-wrapper {
 		display: grid !important;
-		grid-template-columns: repeat(var(--dte-slider-columns, 2), 1fr) !important;
+		grid-template-columns: repeat(var(--ecs-slider-columns, 2), 1fr) !important;
 		transform: none !important;
 		transition: none !important;
 		width: 100%;
 	}
-	.e-con.e-dte-slider.e-dte-tablet-grid > .dte-swiper > .swiper-wrapper > .swiper-slide {
+	.e-con.e-ecs-slider.e-ecs-tablet-grid > .ecs-swiper > .swiper-wrapper > .swiper-slide {
 		width: auto !important;
 		height: auto !important;
 		margin-right: 0 !important;
 	}
-	.e-con.e-dte-tablet-grid > .dte-swiper > .elementor-swiper-button,
-	.e-con.e-dte-tablet-grid > .dte-swiper > .swiper-pagination {
+	.e-con.e-ecs-tablet-grid > .ecs-swiper > .elementor-swiper-button,
+	.e-con.e-ecs-tablet-grid > .ecs-swiper > .swiper-pagination {
 		display: none !important;
 	}
 
 	/* Custom Layout → Flexbox on tablet */
-	.e-con.e-dte-custom.e-dte-tablet-flex .dte-injected-structure {
+	.e-con.e-ecs-custom.e-ecs-tablet-flex .ecs-injected-structure {
 		display: flex !important;
 		flex-direction: column !important;
 		width: 100%;
 	}
-	.e-con.e-dte-custom.e-dte-tablet-flex .dte-injected-structure > * {
+	.e-con.e-ecs-custom.e-ecs-tablet-flex .ecs-injected-structure > * {
 		width: 100% !important;
 		position: static !important;
 		grid-area: unset !important;
 	}
 
 	/* Custom Layout → Grid on tablet */
-	.e-con.e-dte-custom.e-dte-tablet-grid .dte-injected-structure {
+	.e-con.e-ecs-custom.e-ecs-tablet-grid .ecs-injected-structure {
 		display: grid !important;
 		grid-template-columns: repeat(2, 1fr) !important;
 		width: 100%;
 	}
-	.e-con.e-dte-custom.e-dte-tablet-grid .dte-injected-structure > * {
+	.e-con.e-ecs-custom.e-ecs-tablet-grid .ecs-injected-structure > * {
 		width: 100% !important;
 		position: static !important;
 		grid-area: unset !important;
@@ -242,77 +345,77 @@
 @media (max-width: 767px) {
 
 	/* Flexbox/Grid → Slider on mobile (desktop is NOT slider) */
-	.e-con.e-dte-mobile-slider {
+	.e-con.e-ecs-mobile-slider {
 		overflow-x: auto;
 		flex-wrap: nowrap !important;
 	}
-	.e-con.e-dte-mobile-slider > .e-con-inner {
+	.e-con.e-ecs-mobile-slider > .e-con-inner {
 		flex-wrap: nowrap !important;
 	}
 
 	/* Slider → Flexbox on mobile */
-	.e-con.e-dte-slider.e-dte-mobile-flex {
+	.e-con.e-ecs-slider.e-ecs-mobile-flex {
 		overflow: visible;
 	}
-	.e-con.e-dte-slider.e-dte-mobile-flex > .dte-swiper {
+	.e-con.e-ecs-slider.e-ecs-mobile-flex > .ecs-swiper {
 		overflow: visible;
 	}
-	.e-con.e-dte-slider.e-dte-mobile-flex > .dte-swiper > .swiper-wrapper {
+	.e-con.e-ecs-slider.e-ecs-mobile-flex > .ecs-swiper > .swiper-wrapper {
 		flex-wrap: wrap;
 		transform: none !important;
 		transition: none !important;
 		width: 100%;
 	}
-	.e-con.e-dte-slider.e-dte-mobile-flex > .dte-swiper > .swiper-wrapper > .swiper-slide {
+	.e-con.e-ecs-slider.e-ecs-mobile-flex > .ecs-swiper > .swiper-wrapper > .swiper-slide {
 		width: 100% !important;
 		height: auto !important;
 		margin-right: 0 !important;
 	}
-	.e-con.e-dte-mobile-flex > .dte-swiper > .elementor-swiper-button,
-	.e-con.e-dte-mobile-flex > .dte-swiper > .swiper-pagination {
+	.e-con.e-ecs-mobile-flex > .ecs-swiper > .elementor-swiper-button,
+	.e-con.e-ecs-mobile-flex > .ecs-swiper > .swiper-pagination {
 		display: none !important;
 	}
 
 	/* Slider → Grid on mobile */
-	.e-con.e-dte-slider.e-dte-mobile-grid > .dte-swiper {
+	.e-con.e-ecs-slider.e-ecs-mobile-grid > .ecs-swiper {
 		overflow: visible;
 	}
-	.e-con.e-dte-slider.e-dte-mobile-grid > .dte-swiper > .swiper-wrapper {
+	.e-con.e-ecs-slider.e-ecs-mobile-grid > .ecs-swiper > .swiper-wrapper {
 		display: grid !important;
-		grid-template-columns: repeat(var(--dte-slider-columns, 2), 1fr) !important;
+		grid-template-columns: repeat(var(--ecs-slider-columns, 2), 1fr) !important;
 		transform: none !important;
 		transition: none !important;
 		width: 100%;
 	}
-	.e-con.e-dte-slider.e-dte-mobile-grid > .dte-swiper > .swiper-wrapper > .swiper-slide {
+	.e-con.e-ecs-slider.e-ecs-mobile-grid > .ecs-swiper > .swiper-wrapper > .swiper-slide {
 		width: auto !important;
 		height: auto !important;
 		margin-right: 0 !important;
 	}
-	.e-con.e-dte-mobile-grid > .dte-swiper > .elementor-swiper-button,
-	.e-con.e-dte-mobile-grid > .dte-swiper > .swiper-pagination {
+	.e-con.e-ecs-mobile-grid > .ecs-swiper > .elementor-swiper-button,
+	.e-con.e-ecs-mobile-grid > .ecs-swiper > .swiper-pagination {
 		display: none !important;
 	}
 
 	/* Custom Layout → Flexbox on mobile */
-	.e-con.e-dte-custom.e-dte-mobile-flex .dte-injected-structure {
+	.e-con.e-ecs-custom.e-ecs-mobile-flex .ecs-injected-structure {
 		display: flex !important;
 		flex-direction: column !important;
 		width: 100%;
 	}
-	.e-con.e-dte-custom.e-dte-mobile-flex .dte-injected-structure > * {
+	.e-con.e-ecs-custom.e-ecs-mobile-flex .ecs-injected-structure > * {
 		width: 100% !important;
 		position: static !important;
 		grid-area: unset !important;
 	}
 
 	/* Custom Layout → Grid on mobile */
-	.e-con.e-dte-custom.e-dte-mobile-grid .dte-injected-structure {
+	.e-con.e-ecs-custom.e-ecs-mobile-grid .ecs-injected-structure {
 		display: grid !important;
 		grid-template-columns: repeat(2, 1fr) !important;
 		width: 100%;
 	}
-	.e-con.e-dte-custom.e-dte-mobile-grid .dte-injected-structure > * {
+	.e-con.e-ecs-custom.e-ecs-mobile-grid .ecs-injected-structure > * {
 		width: 100% !important;
 		position: static !important;
 		grid-area: unset !important;

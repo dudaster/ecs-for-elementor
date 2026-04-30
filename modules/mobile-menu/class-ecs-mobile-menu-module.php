@@ -36,6 +36,13 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 			10,
 			2
 		);
+
+		add_action(
+			'elementor/element/nav-menu/section_style_main-menu/before_section_end',
+			[ $this, 'upgrade_nav_menu_style_controls' ],
+			10,
+			2
+		);
 	}
 
 	/**
@@ -73,20 +80,20 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'dropdown'   => esc_html__( 'Dropdown',   'elementor-pro' ),
 				],
 				// prefix_class marks this widget as "DTE-controlled" so the CSS
-				// variable rules in dte-mobile-menu.css apply only to it.
+				// variable rules in ecs-mobile-menu.css apply only to it.
 				// NOTE: Elementor PHP does NOT add breakpoint prefixes (tablet-/mobile-)
 				// to prefix_class values, so ALL breakpoint values are added as
-				// dte-nav-layout-{value} without prefix. The actual responsive
+				// ecs-nav-layout-{value} without prefix. The actual responsive
 				// behaviour is handled via CSS custom properties (selectors below).
-				'prefix_class'       => 'dte-nav-layout-',
+				'prefix_class'       => 'ecs-nav-layout-',
 				'render_type'        => 'template',
 				'frontend_available' => true,
 				// CSS custom properties — Elementor generates proper @media rules
 				// AND body.elementor-device-* rules (for editor preview) from these.
 				'selectors_dictionary' => [
-					'horizontal' => '--dte-nav-main-display:flex;--dte-nav-main-dir:row;--dte-nav-toggle-display:none',
-					'vertical'   => '--dte-nav-main-display:flex;--dte-nav-main-dir:column;--dte-nav-toggle-display:none',
-					'dropdown'   => '--dte-nav-main-display:none;--dte-nav-main-dir:row;--dte-nav-toggle-display:flex',
+					'horizontal' => '--ecs-nav-main-display:flex;--ecs-nav-main-dir:row;--ecs-nav-toggle-display:none',
+					'vertical'   => '--ecs-nav-main-display:flex;--ecs-nav-main-dir:column;--ecs-nav-toggle-display:none',
+					'dropdown'   => '--ecs-nav-main-display:none;--ecs-nav-main-dir:row;--ecs-nav-toggle-display:flex',
 				],
 				'selectors'          => [
 					'{{WRAPPER}}' => '{{VALUE}}',
@@ -104,9 +111,9 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'align_items',
 			[
-				'label'     => esc_html__( 'Alignment', 'elementor-pro' ),
-				'type'      => Controls_Manager::CHOOSE,
-				'options'   => [
+				'label'                => esc_html__( 'Alignment', 'elementor-pro' ),
+				'type'                 => Controls_Manager::CHOOSE,
+				'options'              => [
 					'flex-start'    => [
 						'title' => esc_html__( 'Start', 'elementor-pro' ),
 						'icon'  => 'eicon-text-align-left',
@@ -124,10 +131,19 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 						'icon'  => 'eicon-text-align-justify',
 					],
 				],
-				'selectors' => [
-					'{{WRAPPER}} .elementor-nav-menu--main' => 'justify-content: {{VALUE}}',
+				// CSS custom property — Elementor generates correct @media rules
+				// per breakpoint; the variable cascades to the CSS rule in
+				// ecs-mobile-menu.css that reads --ecs-nav-align.
+				'selectors_dictionary' => [
+					'flex-start'    => '--ecs-nav-align:flex-start',
+					'center'        => '--ecs-nav-align:center',
+					'flex-end'      => '--ecs-nav-align:flex-end',
+					'space-between' => '--ecs-nav-align:space-between',
 				],
-				'condition' => [ 'layout!' => 'dropdown' ],
+				'selectors'            => [
+					'{{WRAPPER}}' => '{{VALUE}}',
+				],
+				'condition'            => [ 'layout!' => 'dropdown' ],
 			],
 			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'layout' ] ]
 		);
@@ -138,13 +154,17 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 	private function upgrade_pointer( $element ): void {
 		$element->remove_control( 'pointer' );
 
-		$element->add_responsive_control(
+		// Re-add pointer as non-responsive to preserve prefix_class:'e--pointer-'.
+		// With a responsive control, Elementor adds ALL device values as classes
+		// simultaneously (e.g. e--pointer-underline + e--pointer-none), causing the
+		// 'none' class to cancel out the active pointer type on desktop.
+		$element->add_control(
 			'pointer',
 			[
-				'label'                => esc_html__( 'Pointer', 'elementor-pro' ),
-				'type'                 => Controls_Manager::SELECT,
-				'default'              => 'underline',
-				'options'              => [
+				'label'          => esc_html__( 'Pointer', 'elementor-pro' ),
+				'type'           => Controls_Manager::SELECT,
+				'default'        => 'underline',
+				'options'        => [
 					'none'        => esc_html__( 'None',        'elementor-pro' ),
 					'underline'   => esc_html__( 'Underline',   'elementor-pro' ),
 					'overline'    => esc_html__( 'Overline',    'elementor-pro' ),
@@ -153,20 +173,31 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'background'  => esc_html__( 'Background',  'elementor-pro' ),
 					'text'        => esc_html__( 'Text',        'elementor-pro' ),
 				],
-				'style_transfer'       => true,
-				'render_type'          => 'template',
-				'condition'            => [ 'layout!' => 'dropdown' ],
-				// tablet/mobile "none" → hide pseudo-elements via CSS.
-				// Other values have no CSS entry → inherit desktop (no override).
-				'selectors_dictionary' => [
-					'none' => 'display:none!important;height:0!important;opacity:0!important;width:0!important;border:none!important;background:transparent!important;transform:none!important;',
-				],
-				'selectors'            => [
-					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item::before,
-					 {{WRAPPER}} .elementor-nav-menu--main .elementor-item::after' => '{{VALUE}}',
-				],
+				'prefix_class'   => 'e--pointer-',
+				'style_transfer' => true,
+				'render_type'    => 'template',
+				'condition'      => [ 'layout!' => 'dropdown' ],
 			],
 			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'align_items' ] ]
+		);
+
+		// Separate responsive control: hide pointer on specific devices.
+		// --ecs-nav-ptr-vis (default: visible) is read by ecs-mobile-menu.css.
+		$element->add_responsive_control(
+			'ecs_pointer_hide',
+			[
+				'label'                => esc_html__( 'Hide Pointer', 'ele-custom-skin' ),
+				'type'                 => Controls_Manager::SWITCHER,
+				'label_on'             => esc_html__( 'Hidden',  'ele-custom-skin' ),
+				'label_off'            => esc_html__( 'Visible', 'ele-custom-skin' ),
+				'selectors_dictionary' => [ 'yes' => '--ecs-nav-ptr-vis:hidden' ],
+				'selectors'            => [ '{{WRAPPER}}' => '{{VALUE}}' ],
+				'condition'            => [
+					'layout!'  => 'dropdown',
+					'pointer!' => 'none',
+				],
+			],
+			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'pointer' ] ]
 		);
 	}
 
@@ -195,6 +226,8 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'drop-out' => 'Drop Out',
 					'none'     => 'None',
 				],
+				// prefix_class activates Elementor Pro's animation CSS (e--animation-fade etc.)
+				'prefix_class'         => 'e--animation-',
 				'render_type'          => 'template',
 				'condition'            => [
 					'layout!'  => 'dropdown',
@@ -222,6 +255,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'corners' => 'Corners',
 					'none'    => 'None',
 				],
+				'prefix_class'         => 'e--animation-',
 				'render_type'          => 'template',
 				'condition'            => [
 					'layout!'  => 'dropdown',
@@ -255,6 +289,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'shutter-out-horizontal' => 'Shutter Out Horizontal',
 					'none'                   => 'None',
 				],
+				'prefix_class'         => 'e--animation-',
 				'render_type'          => 'template',
 				'condition'            => [
 					'layout!'  => 'dropdown',
@@ -283,6 +318,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'rotate' => 'Rotate',
 					'none'   => 'None',
 				],
+				'prefix_class'         => 'e--animation-',
 				'render_type'          => 'template',
 				'condition'            => [
 					'layout!'  => 'dropdown',
@@ -321,9 +357,9 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'dropdown' ] ]
 		);
 
-		// dte_dropdown_width — visible only when Full Width is OFF
+		// ecs_dropdown_width — visible only when Full Width is OFF
 		$element->add_control(
-			'dte_dropdown_width',
+			'ecs_dropdown_width',
 			[
 				'label'      => esc_html__( 'Dropdown Width', 'ele-custom-skin' ),
 				'type'       => Controls_Manager::SLIDER,
@@ -334,7 +370,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'vw'  => [ 'min' => 10,  'max' => 100,  'step' => 1  ],
 				],
 				'condition'  => [ 'full_width!' => 'stretch' ],
-				// !important needed to override width:auto !important from dte-mobile-menu.css
+				// !important needed to override width:auto !important from ecs-mobile-menu.css
 				'selectors'  => [
 					'{{WRAPPER}} .elementor-nav-menu--dropdown.elementor-nav-menu__container' => 'width: {{SIZE}}{{UNIT}} !important; min-width: 0 !important;',
 				],
@@ -345,17 +381,17 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		// force_breakpoint — force dropdown at Elementor's native Breakpoint,
 		// regardless of the DTE Layout setting for tablet/mobile.
 		$element->add_control(
-			'dte_force_breakpoint',
+			'ecs_force_breakpoint',
 			[
 				'label'              => esc_html__( 'Force Breakpoint', 'ele-custom-skin' ),
 				'type'               => Controls_Manager::SWITCHER,
 				'description'        => esc_html__( 'Force dropdown mode at the selected Breakpoint, regardless of the Layout setting.', 'ele-custom-skin' ),
-				'prefix_class'       => 'dte-',
+				'prefix_class'       => 'ecs-',
 				'return_value'       => 'force-breakpoint',
 				'frontend_available' => true,
 				'condition'          => [ 'dropdown!' => 'none' ],
 			],
-			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'dte_dropdown_width' ] ]
+			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'ecs_dropdown_width' ] ]
 		);
 
 		// text_align — replaced with Left/Center/Right CHOOSE control
@@ -392,7 +428,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					 {{WRAPPER}} .elementor-nav-menu--dropdown .elementor-sub-item' => 'justify-content: {{VALUE}}',
 				],
 			],
-			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'dte_force_breakpoint' ] ]
+			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'ecs_force_breakpoint' ] ]
 		);
 
 		// toggle
@@ -416,7 +452,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		);
 
 		// toggle_align — keep 'toggle!' condition, remove 'dropdown!' condition.
-		// prefix_class 'dte-toggle-align-' adds dte-toggle-align-{left|center|right}
+		// prefix_class 'ecs-toggle-align-' adds ecs-toggle-align-{left|center|right}
 		// to the wrapper so CSS can align the dropdown panel to match.
 		$element->remove_control( 'toggle_align' );
 		$element->add_control(
@@ -439,7 +475,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 						'icon'  => 'eicon-h-align-right',
 					],
 				],
-				'prefix_class'         => 'dte-toggle-align-',
+				'prefix_class'         => 'ecs-toggle-align-',
 				'selectors_dictionary' => [
 					'left'   => 'margin-right: auto',
 					'center' => 'margin: 0 auto',
@@ -452,6 +488,94 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 				'separator'            => 'before',
 			]
 			// no position → goes at end of section, after the nav_icon_options tabs
+		);
+	}
+
+	// ── Style tab upgrades ────────────────────────────────────────────────────
+
+	public function upgrade_nav_menu_style_controls( $element, $args ): void {
+		$this->upgrade_colors( $element );
+	}
+
+	private function upgrade_colors( $element ): void {
+		$tabs = 'tabs_menu_item_style';
+
+		// Normal tab
+		$element->remove_control( 'color_menu_item' );
+		$element->add_responsive_control(
+			'color_menu_item',
+			[
+				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'type'         => Controls_Manager::COLOR,
+				'default'      => '',
+				'render_type'  => 'ui',
+				'tabs_wrapper' => $tabs,
+				'inner_tab'    => 'tab_menu_item_normal',
+				'selectors'    => [
+					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item' => 'color: {{VALUE}}; fill: {{VALUE}};',
+				],
+			],
+			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'tab_menu_item_normal' ] ]
+		);
+
+		// Hover tab
+		$element->remove_control( 'color_menu_item_hover' );
+		$element->add_responsive_control(
+			'color_menu_item_hover',
+			[
+				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'type'         => Controls_Manager::COLOR,
+				'render_type'  => 'ui',
+				'tabs_wrapper' => $tabs,
+				'inner_tab'    => 'tab_menu_item_hover',
+				'selectors'    => [
+					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item:hover,
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-item.elementor-item-active,
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-item.highlighted,
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-item:focus' => 'color: {{VALUE}}; fill: {{VALUE}};',
+				],
+				'condition'    => [ 'pointer!' => 'background' ],
+			],
+			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'tab_menu_item_hover' ] ]
+		);
+
+		$element->remove_control( 'color_menu_item_hover_pointer_bg' );
+		$element->add_responsive_control(
+			'color_menu_item_hover_pointer_bg',
+			[
+				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'type'         => Controls_Manager::COLOR,
+				'default'      => '#fff',
+				'render_type'  => 'ui',
+				'tabs_wrapper' => $tabs,
+				'inner_tab'    => 'tab_menu_item_hover',
+				'selectors'    => [
+					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item:hover,
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-item.elementor-item-active,
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-item.highlighted,
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-item:focus' => 'color: {{VALUE}}',
+				],
+				'condition'    => [ 'pointer' => 'background' ],
+			],
+			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'color_menu_item_hover' ] ]
+		);
+
+		// Active tab
+		$element->remove_control( 'color_menu_item_active' );
+		$element->add_responsive_control(
+			'color_menu_item_active',
+			[
+				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'type'         => Controls_Manager::COLOR,
+				'default'      => '',
+				'render_type'  => 'ui',
+				'tabs_wrapper' => $tabs,
+				'inner_tab'    => 'tab_menu_item_active',
+				'selectors'    => [
+					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item.elementor-item-active' => 'color: {{VALUE}}',
+				],
+			],
+			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'tab_menu_item_active' ] ]
 		);
 	}
 

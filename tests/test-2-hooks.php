@@ -28,7 +28,7 @@ function ecs_has_hook( string $hook, string $keyword, int $priority = -1 ): bool
 
 ecs_section( 'color_scheme — hooks' );
 if ( $manager->is_active( 'color_scheme' ) ) {
-	ecs_ok( ecs_has_hook( 'language_attributes', 'Color_Scheme' ), 'language_attributes → inject data-dte-scheme' );
+	ecs_ok( ecs_has_hook( 'language_attributes', 'Color_Scheme' ), 'language_attributes → inject data-ecs-scheme' );
 	ecs_ok( ecs_has_hook( 'wp_head', 'Color_Scheme' ),             'wp_head → dark mode CSS output' );
 	ecs_ok( ecs_has_hook( 'elementor/kit/register_tabs', 'Color_Scheme' ), 'elementor/kit/register_tabs → Default Colours tab' );
 	ecs_ok( ecs_has_hook( 'elementor/widgets/register', 'Color_Scheme' ),  'elementor/widgets/register → Dark Mode Switcher widget' );
@@ -148,7 +148,7 @@ ecs_section( 'container_responsive (PRO) — hooks' );
 if ( $pro_active && $manager->is_active( 'container_responsive' ) ) {
 	ecs_ok(
 		ecs_has_hook( 'elementor/element/container/section_layout_container/after_section_start', 'Container_Responsive' ),
-		'container/section_layout_container → responsive dte_container_type control'
+		'container/section_layout_container → responsive ecs_container_type control'
 	);
 } elseif ( ! $pro_active ) {
 	ecs_ok( true, 'ECS Pro inactiv — skip' );

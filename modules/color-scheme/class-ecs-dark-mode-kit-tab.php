@@ -9,7 +9,7 @@
  *  └─ Custom Colours  — dynamically mirrors every entry from Default Colours' Custom Colors repeater,
  *                       each with the exact same _id → overrides --e-global-color-{id} for dark mode
  *
- * When <html data-dte-scheme="alt"> is active, all --e-global-color-* variables are overridden,
+ * When <html data-ecs-scheme="alt"> is active, all --e-global-color-* variables are overridden,
  * so every Elementor widget that references a global color switches to its dark variant automatically.
  */
 
@@ -25,7 +25,7 @@ use Elementor\Repeater;
 class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 
 	public function get_id(): string {
-		return 'dte-dark-mode-colors';
+		return 'ecs-dark-mode-colors';
 	}
 
 	public function get_title(): string {
@@ -49,7 +49,7 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 
 	private function register_system_colours_section(): void {
 		$this->start_controls_section(
-			'dte_dark_system_colours',
+			'ecs_dark_system_colours',
 			[
 				'label' => esc_html__( 'System Colours', 'ele-custom-skin' ),
 				'tab'   => $this->get_id(),
@@ -57,7 +57,7 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 		);
 
 		$this->add_control(
-			'dte_dark_system_notice',
+			'ecs_dark_system_notice',
 			[
 				'type' => Controls_Manager::RAW_HTML,
 				'raw'  => '<p style="font-size:12px;line-height:1.6;color:#555;margin:0 0 4px;">'
@@ -68,22 +68,22 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 		);
 
 		$system_colours = [
-			'dte_dark_primary'   => [
+			'ecs_dark_primary'   => [
 				'label' => esc_html__( 'Primary', 'ele-custom-skin' ),
 				'var'   => '--e-global-color-primary',
 				'default' => '#3a9ad4',
 			],
-			'dte_dark_secondary' => [
+			'ecs_dark_secondary' => [
 				'label' => esc_html__( 'Secondary', 'ele-custom-skin' ),
 				'var'   => '--e-global-color-secondary',
 				'default' => '#1e6fa0',
 			],
-			'dte_dark_text'      => [
+			'ecs_dark_text'      => [
 				'label' => esc_html__( 'Text', 'ele-custom-skin' ),
 				'var'   => '--e-global-color-text',
 				'default' => '#f0f0f0',
 			],
-			'dte_dark_accent'    => [
+			'ecs_dark_accent'    => [
 				'label' => esc_html__( 'Accent', 'ele-custom-skin' ),
 				'var'   => '--e-global-color-accent',
 				'default' => '#ff6b6b',
@@ -98,7 +98,7 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 					'type'    => Controls_Manager::COLOR,
 					'default' => $config['default'],
 					'selectors' => [
-						'[data-dte-scheme="alt"]' => $config['var'] . ': {{VALUE}};',
+						'[data-ecs-scheme="alt"]' => $config['var'] . ': {{VALUE}};',
 					],
 					'global' => [ 'active' => false ],
 				]
@@ -116,7 +116,7 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 		$custom_colours = $kit_settings['custom_colors'] ?? [];
 
 		$this->start_controls_section(
-			'dte_dark_custom_colours',
+			'ecs_dark_custom_colours',
 			[
 				'label' => esc_html__( 'Custom Colours', 'ele-custom-skin' ),
 				'tab'   => $this->get_id(),
@@ -125,7 +125,7 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 
 		if ( empty( $custom_colours ) ) {
 			$this->add_control(
-				'dte_dark_custom_empty_notice',
+				'ecs_dark_custom_empty_notice',
 				[
 					'type' => Controls_Manager::RAW_HTML,
 					'raw'  => '<p style="font-size:12px;line-height:1.6;color:#888;margin:0;">'
@@ -139,7 +139,7 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 		}
 
 		$this->add_control(
-			'dte_dark_custom_notice',
+			'ecs_dark_custom_notice',
 			[
 				'type' => Controls_Manager::RAW_HTML,
 				'raw'  => '<p style="font-size:12px;line-height:1.6;color:#555;margin:0 0 4px;">'
@@ -161,13 +161,13 @@ class ECS_Dark_Mode_Kit_Tab extends Tab_Base {
 			$css_var      = '--e-global-color-' . $colour_id;
 
 			$this->add_control(
-				'dte_dark_custom_' . $colour_id,
+				'ecs_dark_custom_' . $colour_id,
 				[
 					'label'   => esc_html( $colour_label ),
 					'type'    => Controls_Manager::COLOR,
 					'default' => '',
 					'selectors' => [
-						'[data-dte-scheme="alt"]' => $css_var . ': {{VALUE}};',
+						'[data-ecs-scheme="alt"]' => $css_var . ': {{VALUE}};',
 					],
 					'global' => [ 'active' => false ],
 				]

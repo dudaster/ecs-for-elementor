@@ -3,8 +3,8 @@
  * Module: Alternative Color Scheme
  *
  * Provides:
- *  - CSS custom properties prefixed with --dte-
- *  - Scheme toggling via <html data-dte-scheme="alt">
+ *  - CSS custom properties prefixed with --ecs-
+ *  - Scheme toggling via <html data-ecs-scheme="alt">
  *  - ECS Color Switcher Elementor widget
  *  - Cookie-based persistence (cache-safe, readable server-side)
  *  - Anti-FOUC inline script injected in <head>
@@ -29,7 +29,7 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 	}
 
 	public function boot(): void {
-		// PHP-level: add data-dte-scheme="alt" to <html> when cookie is set.
+		// PHP-level: add data-ecs-scheme="alt" to <html> when cookie is set.
 		// Runs before any output — works even with page caches that vary by cookie.
 		add_filter( 'language_attributes', [ $this, 'inject_scheme_html_attribute' ] );
 
@@ -47,13 +47,13 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 	}
 
 	/**
-	 * Add data-dte-scheme="alt" to the <html> tag when the cookie is set.
+	 * Add data-ecs-scheme="alt" to the <html> tag when the cookie is set.
 	 * This runs server-side so the attribute is present in the initial HTML —
 	 * guaranteed zero FOUC regardless of caching.
 	 */
 	public function inject_scheme_html_attribute( string $output ): string {
-		if ( ! empty( $_COOKIE['dte_color_scheme'] ) && $_COOKIE['dte_color_scheme'] === 'alt' ) {
-			$output .= ' data-dte-scheme="alt"';
+		if ( ! empty( $_COOKIE['ecs_color_scheme'] ) && $_COOKIE['ecs_color_scheme'] === 'alt' ) {
+			$output .= ' data-ecs-scheme="alt"';
 		}
 		return $output;
 	}
@@ -118,7 +118,7 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 	/**
 	 * Generate dark mode CSS by reading dark_color values from the active kit.
 	 *
-	 * Outputs a <style> block targeting [data-dte-scheme="alt"] .elementor-kit-{id}
+	 * Outputs a <style> block targeting [data-ecs-scheme="alt"] .elementor-kit-{id}
 	 * (specificity 0,2,0) which beats .elementor-kit-{id} alone (0,1,0), so the
 	 * dark values correctly override the default variables on <body>.
 	 */
@@ -152,13 +152,13 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 			return;
 		}
 
-		$selector = '[data-dte-scheme="alt"] .elementor-kit-' . $kit_id;
-		echo "\n<style id=\"dte-dark-mode-css\">\n" . $selector . '{' . implode( '', $rules ) . "}\n</style>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$selector = '[data-ecs-scheme="alt"] .elementor-kit-' . $kit_id;
+		echo "\n<style id=\"ecs-dark-mode-css\">\n" . $selector . '{' . implode( '', $rules ) . "}\n</style>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
 	 * Anti-FOUC fallback: inline script that reads the cookie and applies
-	 * data-dte-scheme="alt" before any CSS is painted.
+	 * data-ecs-scheme="alt" before any CSS is painted.
 	 *
 	 * This covers page-caches that serve static HTML without running PHP
 	 * (so the language_attributes filter above didn't run for that request).
@@ -168,19 +168,19 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 		$system_auto = false;
 		if ( did_action( 'elementor/loaded' ) ) {
 			$kit         = \Elementor\Plugin::$instance->kits_manager->get_active_kit();
-			$system_auto = $kit && $kit->get_settings( 'dte_system_auto' ) === 'yes';
+			$system_auto = $kit && $kit->get_settings( 'ecs_system_auto' ) === 'yes';
 		}
 		$auto_js = $system_auto ? 'true' : 'false';
 		?>
 		<script>
 		(function(){
-			window.dteSchemeConfig={systemAuto:<?php echo $auto_js; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>};
-			var m=document.cookie.match(/(?:^|;\s*)dte_color_scheme=([^;]+)/);
+			window.ecsSchemeConfig={systemAuto:<?php echo $auto_js; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>};
+			var m=document.cookie.match(/(?:^|;\s*)ecs_color_scheme=([^;]+)/);
 			if(m&&m[1]==='alt'){
-				document.documentElement.setAttribute('data-dte-scheme','alt');
+				document.documentElement.setAttribute('data-ecs-scheme','alt');
 			}else if(!m&&<?php echo $auto_js; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>){
 				if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
-					document.documentElement.setAttribute('data-dte-scheme','alt');
+					document.documentElement.setAttribute('data-ecs-scheme','alt');
 				}
 			}
 		})();

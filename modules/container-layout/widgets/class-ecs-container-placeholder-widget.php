@@ -4,7 +4,7 @@
  *
  * Acts as a marker inside a "DTE Custom Layout" template.
  * Each placeholder in the template receives one child element from the
- * dte-custom container, in document order.
+ * ecs-custom container, in document order.
  *
  * Distribution rules:
  *  - children_count < placeholders_count → extra placeholders stay empty (no cycling of children)
@@ -43,7 +43,7 @@ class ECS_Container_Placeholder_Widget extends Widget_Base {
 	// ── Widget identity ───────────────────────────────────────────────────────
 
 	public function get_name(): string {
-		return 'dte_container_placeholder';
+		return 'ecs_container_placeholder';
 	}
 
 	public function get_title(): string {
@@ -59,7 +59,7 @@ class ECS_Container_Placeholder_Widget extends Widget_Base {
 	}
 
 	public function get_keywords(): array {
-		return [ 'dte', 'placeholder', 'container', 'layout', 'children', 'inject' ];
+		return [ 'ecs', 'placeholder', 'container', 'layout', 'children', 'inject' ];
 	}
 
 	// ── Controls ──────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ class ECS_Container_Placeholder_Widget extends Widget_Base {
 		if ( $child !== null ) {
 			echo $child; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		} else {
-			echo '<span class="dte-slot-empty"></span>';
+			echo '<span class="ecs-slot-empty"></span>';
 		}
 	}
 
@@ -120,7 +120,7 @@ class ECS_Container_Placeholder_Widget extends Widget_Base {
 	 *
 	 * For the "more children than placeholders" case, extra children that
 	 * exceed the placeholder count cycle back via the after_container_render
-	 * fallback path (they are appended wrapped in .dte-overflow-children).
+	 * fallback path (they are appended wrapped in .ecs-overflow-children).
 	 */
 	public static function get_next_child(): ?string {
 		$count = count( self::$children );
