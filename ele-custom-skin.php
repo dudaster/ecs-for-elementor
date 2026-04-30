@@ -1,7 +1,7 @@
 <?php
 /*
  * Plugin Name: ECS - Ele Custom Skin for Elementor
- * Version: 4.1.3
+ * Version: 4.1.4
  * Description: Modular toolkit extending Elementor with custom loop skins, color schemes, container layouts, and more.
  * Plugin URI: https://dudaster.com
  * Author: Dudaster.com
