@@ -77,6 +77,8 @@
 			// command:after catches undo/redo/add/remove; editor change catches settings panel edits.
 			elementor.channels.data.on( 'command:after', scheduleRefresh );
 			elementor.channels.editor.on( 'change', scheduleRefresh );
+			// Device mode switch must re-evaluate which type is active per container.
+			elementor.channels.deviceMode.on( 'change', scheduleRefresh );
 		}
 		bindDomObserver();
 	}
@@ -156,6 +158,16 @@
 	function injectContainer( container ) {
 		var layoutId = getLayoutId( container );
 		if ( ! layoutId ) {
+			if ( container.classList.contains( 'ecs-preview-active' ) ) {
+				cleanupContainer( container );
+			}
+			return;
+		}
+
+		// In editor, check active device mode. If the resolved type for the current
+		// device is not 'custom', clean up the injection and show children directly.
+		var resolvedType = getResolvedType( container );
+		if ( resolvedType !== 'custom' ) {
 			if ( container.classList.contains( 'ecs-preview-active' ) ) {
 				cleanupContainer( container );
 			}
@@ -349,6 +361,34 @@
 		container.classList.remove( 'ecs-preview-active' );
 		delete container.dataset.ecsState;
 		delete container.dataset.ecsChildOrder;
+	}
+
+	/**
+	 * Return the resolved ecs_container_type for the current device mode,
+	 * inheriting from larger breakpoints when the device-specific value is empty.
+	 */
+	function getResolvedType( container ) {
+		var elementId = container.dataset.id;
+		if ( ! elementId ) {
+			return 'custom';
+		}
+		try {
+			var device   = window.elementor.channels.deviceMode.request( 'currentMode' ) || 'desktop';
+			var settings = window.elementor.getContainer( elementId ).settings;
+			var suffixes = { desktop: '', tablet: '_tablet', mobile: '_mobile' };
+			var order    = device === 'mobile'  ? [ 'mobile', 'tablet', 'desktop' ]
+			             : device === 'tablet'  ? [ 'tablet', 'desktop' ]
+			             : [ 'desktop' ];
+			for ( var i = 0; i < order.length; i++ ) {
+				var val = settings.get( 'ecs_container_type' + suffixes[ order[ i ] ] );
+				if ( val ) {
+					return val;
+				}
+			}
+			return 'flex';
+		} catch ( e ) {
+			return 'custom';
+		}
 	}
 
 	/**
