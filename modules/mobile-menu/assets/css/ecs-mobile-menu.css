@@ -124,6 +124,38 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   AUTO-RESPECT ELEMENTOR NATIVE BREAKPOINT
+   When no ECS layout is explicitly set for mobile/tablet, the
+   Elementor native Breakpoint control should still trigger
+   dropdown mode. These selectors have specificity 0,3,0 which
+   beats the base variable rules (0,2,0) even at equal !important,
+   so they override the inherited --ecs-nav-toggle-display:none.
+   Only targets horizontal/vertical — dropdown already works.
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+	.ecs-nav-layout-horizontal.elementor-nav-menu--dropdown-mobile .elementor-nav-menu--main,
+	.ecs-nav-layout-vertical.elementor-nav-menu--dropdown-mobile   .elementor-nav-menu--main {
+		display: none !important;
+	}
+	.ecs-nav-layout-horizontal.elementor-nav-menu--dropdown-mobile .elementor-menu-toggle,
+	.ecs-nav-layout-vertical.elementor-nav-menu--dropdown-mobile   .elementor-menu-toggle {
+		display: flex !important;
+	}
+}
+
+@media (max-width: 1024px) {
+	.ecs-nav-layout-horizontal.elementor-nav-menu--dropdown-tablet .elementor-nav-menu--main,
+	.ecs-nav-layout-vertical.elementor-nav-menu--dropdown-tablet   .elementor-nav-menu--main {
+		display: none !important;
+	}
+	.ecs-nav-layout-horizontal.elementor-nav-menu--dropdown-tablet .elementor-menu-toggle,
+	.ecs-nav-layout-vertical.elementor-nav-menu--dropdown-tablet   .elementor-menu-toggle {
+		display: flex !important;
+	}
+}
+
+/* ═══════════════════════════════════════════════════════════
    FORCE BREAKPOINT
    When "Force Breakpoint" is ON, the menu switches to dropdown
    mode at the Elementor native breakpoint regardless of the ECS

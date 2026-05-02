@@ -184,13 +184,20 @@
 	 */
 	function getSettingForDevice( settings, key, device ) {
 		if ( device === 'mobile' ) {
-			return settings.get( key + '_mobile' ) ||
-			       settings.get( key + '_tablet' ) ||
-			       settings.get( key ) || 'horizontal';
+			var mobileVal = settings.get( key + '_mobile' );
+			if ( mobileVal ) { return mobileVal; }
+			// No explicit ECS mobile layout → respect Elementor's native Breakpoint.
+			var nativeBp = settings.get( 'dropdown' ) || 'none';
+			if ( nativeBp === 'mobile' || nativeBp === 'tablet' ) { return 'dropdown'; }
+			return settings.get( key + '_tablet' ) || settings.get( key ) || 'horizontal';
 		}
 		if ( device === 'tablet' ) {
-			return settings.get( key + '_tablet' ) ||
-			       settings.get( key ) || 'horizontal';
+			var tabletVal = settings.get( key + '_tablet' );
+			if ( tabletVal ) { return tabletVal; }
+			// No explicit ECS tablet layout → respect Elementor's native Breakpoint.
+			var nativeBp2 = settings.get( 'dropdown' ) || 'none';
+			if ( nativeBp2 === 'tablet' ) { return 'dropdown'; }
+			return settings.get( key ) || 'horizontal';
 		}
 		return settings.get( key ) || 'horizontal';
 	}
