@@ -29,6 +29,7 @@
 	var refreshTimer       = null;
 	var domObserver        = null;
 	var suppressObserver   = false;
+	var editingContainerId = null;
 
 	// ── Bootstrap ─────────────────────────────────────────────────────────────
 
@@ -44,6 +45,13 @@
 		clearInterval( pollTimer );
 
 		elementor.on( 'preview:loaded', onPreviewLoaded );
+
+		if ( elementor.hooks ) {
+			elementor.hooks.addAction( 'panel/open_editor/container', function ( panel, model ) {
+				editingContainerId = model && model.get( 'id' );
+				setTimeout( syncPanelControls, 100 );
+			} );
+		}
 
 		var iframe = elementor.$preview && elementor.$preview[ 0 ];
 		if ( iframe && iframe.contentDocument && iframe.contentDocument.body &&
@@ -75,10 +83,28 @@
 		if ( ! channelBound ) {
 			channelBound = true;
 			// command:after catches undo/redo/add/remove; editor change catches settings panel edits.
-			elementor.channels.data.on( 'command:after', scheduleRefresh );
-			elementor.channels.editor.on( 'change', scheduleRefresh );
-			// Device mode switch must re-evaluate which type is active per container.
-			elementor.channels.deviceMode.on( 'change', scheduleRefresh );
+			elementor.channels.data.on( 'command:after', function ( component, command ) {
+				scheduleRefresh();
+				if ( command === 'document/elements/select' ) {
+					setTimeout( syncPanelControls, 100 );
+				}
+			} );
+			elementor.channels.editor.on( 'change', function () {
+				scheduleRefresh();
+				syncPanelControls();
+			} );
+			// Device mode switch: remove stale custom injections, then sync panel and preview.
+			elementor.channels.deviceMode.on( 'change', function () {
+				if ( iframeDoc ) {
+					iframeDoc.querySelectorAll( '.ecs-preview-active' ).forEach( function ( el ) {
+						if ( getResolvedType( el ) !== 'custom' ) {
+							cleanupContainer( el );
+						}
+					} );
+				}
+				syncPanelControls();
+				scheduleRefresh();
+			} );
 		}
 		bindDomObserver();
 	}
@@ -133,7 +159,15 @@
 
 	function scheduleRefresh() {
 		clearTimeout( refreshTimer );
-		refreshTimer = setTimeout( injectAll, 400 );
+		refreshTimer = setTimeout( function () {
+			injectAll();
+			// Notify ecs-slider.js (iframe) that settings may have changed so
+			// it can rebuild sliders with fresh column/speed settings.
+			if ( iframeDoc && iframeDoc.defaultView &&
+			     typeof iframeDoc.defaultView.ecsSliderSettingsChanged === 'function' ) {
+				iframeDoc.defaultView.ecsSliderSettingsChanged();
+			}
+		}, 400 );
 	}
 
 	// ── Injection orchestration ────────────────────────────────────────────────
@@ -143,14 +177,19 @@
 			return;
 		}
 
-		// Restore containers that have left ecs-custom mode.
+		// Restore containers whose resolved type for the current device is no longer 'custom'.
 		iframeDoc.querySelectorAll( '.ecs-preview-active' ).forEach( function ( el ) {
-			if ( ! el.classList.contains( 'e-ecs-custom' ) ) {
+			if ( getResolvedType( el ) !== 'custom' ) {
 				cleanupContainer( el );
 			}
 		} );
 
-		iframeDoc.querySelectorAll( '.e-con.e-ecs-custom' ).forEach( injectContainer );
+		// Inject into containers that carry a *-custom type class (any device breakpoint).
+		// injectContainer will call getResolvedType() and skip if the current device
+		// doesn't resolve to 'custom' (e.g. desktop=flex but tablet=custom, and we're on desktop).
+		iframeDoc.querySelectorAll(
+			'.e-con.e-ecs-custom, .e-con.e-ecs-tablet-custom, .e-con.e-ecs-mobile-custom'
+		).forEach( injectContainer );
 	}
 
 	// ── Per-container injection ────────────────────────────────────────────────
@@ -221,6 +260,19 @@
 				var doc     = container.ownerDocument;
 				var tempDiv = doc.createElement( 'div' );
 				tempDiv.innerHTML = resp.data.html;
+
+				// Move <style> blocks returned by the AJAX renderer into the iframe
+				// <head> so they apply correctly without rendering as visible text
+				// inside the container.
+				Array.from( tempDiv.querySelectorAll( 'style' ) ).forEach( function ( styleEl ) {
+					var existing = doc.head.querySelector( '[data-ecs-layout-id="' + layoutId + '"]' );
+					if ( existing ) {
+						existing.textContent = styleEl.textContent;
+					} else {
+						styleEl.setAttribute( 'data-ecs-layout-id', layoutId );
+						doc.head.appendChild( styleEl );
+					}
+				} );
 
 				// Build a quick lookup of which IDs belong to live children.
 				var childIdSet = Object.create( null );
@@ -361,6 +413,49 @@
 		container.classList.remove( 'ecs-preview-active' );
 		delete container.dataset.ecsState;
 		delete container.dataset.ecsChildOrder;
+	}
+
+	// ── Panel controls sync ───────────────────────────────────────────────────
+
+	/**
+	 * Set ecs_active_type on the currently edited container's Backbone model.
+	 *
+	 * PHP conditions for all slider/custom controls now check 'ecs_active_type'
+	 * instead of OR-ing across all breakpoints.  When JS calls settings.set(),
+	 * Elementor fires model 'change' and re-evaluates all panel conditions
+	 * automatically — no DOM manipulation needed.
+	 */
+	function syncPanelControls() {
+		var eContainer = null;
+		try {
+			if ( editingContainerId ) {
+				eContainer = window.elementor.getContainer( editingContainerId );
+			}
+			if ( ! eContainer ) {
+				var pv  = window.elementor.getPanelView();
+				var cpv = pv && ( pv.getCurrentPageView ? pv.getCurrentPageView() : pv.currentPageView );
+				var ev  = cpv && ( ( cpv.options && cpv.options.editedElementView ) || cpv.editedElementView );
+				if ( ev ) {
+					eContainer = ev.getContainer ? ev.getContainer() : ev.container;
+					if ( ! eContainer && ev.model ) {
+						eContainer = window.elementor.getContainer( ev.model.get( 'id' ) );
+					}
+				}
+			}
+		} catch ( e ) {}
+
+		if ( ! eContainer || ! eContainer.settings ) { return; }
+
+		var settings      = eContainer.settings;
+		var desktop       = settings.get( 'ecs_container_type' ) || 'flex';
+		var tablet        = settings.get( 'ecs_container_type_tablet' ) || desktop;
+		var mobile        = settings.get( 'ecs_container_type_mobile' ) || tablet;
+		var device        = window.elementor.channels.deviceMode.request( 'currentMode' ) || 'desktop';
+		var effectiveType = device === 'mobile' ? mobile : ( device === 'tablet' ? tablet : desktop );
+
+		if ( settings.get( 'ecs_active_type' ) !== effectiveType ) {
+			settings.set( 'ecs_active_type', effectiveType );
+		}
 	}
 
 	/**

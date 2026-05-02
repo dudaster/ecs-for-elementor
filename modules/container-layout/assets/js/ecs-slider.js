@@ -73,8 +73,8 @@
 		var colsDesktop = parseInt( s.ecs_slider_columns, 10 ) || 1;
 		var colsTablet  = parseInt( s.ecs_slider_columns_tablet, 10 ) || colsDesktop;
 		var colsMobile  = parseInt( s.ecs_slider_columns_mobile, 10 ) || colsTablet;
-		var layoutTablet = s.ecs_layout_tablet || '';
-		var layoutMobile = s.ecs_layout_mobile || '';
+		var layoutTablet = s.ecs_container_type_tablet || '';
+		var layoutMobile = s.ecs_container_type_mobile || '';
 
 		var config = {
 			slidesPerView: colsDesktop,
@@ -264,10 +264,46 @@
 		}
 	}
 
+	/**
+	 * Return the resolved ecs_container_type for the current device mode.
+	 * Inherits from larger breakpoints when device-specific value is empty.
+	 * Mirrors the same logic in ecs-editor-preview.js (parent frame).
+	 */
+	function getResolvedType( containerEl ) {
+		var id = containerEl.getAttribute( 'data-id' );
+		if ( ! id ) { return 'flex'; }
+		try {
+			var device   = window.parent.elementor.channels.deviceMode.request( 'currentMode' ) || 'desktop';
+			var settings = window.parent.elementor.getContainer( id ).settings;
+			var suffixes = { desktop: '', tablet: '_tablet', mobile: '_mobile' };
+			var order    = device === 'mobile'  ? [ 'mobile', 'tablet', 'desktop' ]
+			             : device === 'tablet'  ? [ 'tablet', 'desktop' ]
+			             : [ 'desktop' ];
+			for ( var i = 0; i < order.length; i++ ) {
+				var val = settings.get( 'ecs_container_type' + suffixes[ order[ i ] ] );
+				if ( val ) { return val; }
+			}
+			return 'flex';
+		} catch ( e ) { return 'flex'; }
+	}
+
 	function syncAllEditorSliders() {
-		// Cleanup: container changed type away from ecs-slider but swiper is still there
-		document.querySelectorAll( '.ecs-editor-slider-active:not(.e-ecs-slider)' ).forEach( destroyEditorSlider );
-		document.querySelectorAll( '.e-con.e-ecs-slider' ).forEach( syncEditorSlider );
+		// Cleanup or rebuild stale active markers.
+		document.querySelectorAll( '.ecs-editor-slider-active' ).forEach( function ( el ) {
+			if ( getResolvedType( el ) !== 'slider' ) {
+				destroyEditorSlider( el );
+			} else if ( ! el.querySelector( ':scope > .ecs-editor-swiper' ) ) {
+				// Elementor re-rendered and removed our swiper DOM — rebuild it.
+				destroyEditorSlider( el ); // clears stale ecs-editor-slider-active class
+				syncEditorSlider( el );
+			}
+		} );
+		// Build: any container with an ECS slider class that resolves to 'slider' now.
+		document.querySelectorAll( '.e-con[class*="-slider"]' ).forEach( function ( el ) {
+			if ( ! el.classList.contains( 'ecs-editor-slider-active' ) && getResolvedType( el ) === 'slider' ) {
+				syncEditorSlider( el );
+			}
+		} );
 	}
 
 	/**
@@ -316,7 +352,12 @@
 	}
 
 	function updateAllEditorSliderParams() {
-		document.querySelectorAll( '.e-con.e-ecs-slider' ).forEach( updateEditorSliderParams );
+		// Clear the structural key so syncEditorSlider always rebuilds with
+		// fresh settings (column count, speed, etc. may have changed).
+		document.querySelectorAll( '.ecs-editor-slider-active' ).forEach( function ( el ) {
+			el.removeAttribute( 'data-ecs-slider-key' );
+			syncEditorSlider( el );
+		} );
 	}
 
 	// ── Entry point ───────────────────────────────────────────────────────────
@@ -374,12 +415,35 @@
 			// no race condition with Backbone re-renders.
 			try {
 				var settingsTimer = null;
+				// editor:change fires for panel control edits in real usage.
 				window.parent.elementor.channels.editor.on( 'change', function () {
 					clearTimeout( settingsTimer );
 					settingsTimer = setTimeout( updateAllEditorSliderParams, 150 );
 				} );
+				// command:after fires for every $e.run() including programmatic changes.
+				window.parent.elementor.channels.data.on( 'command:after', function () {
+					clearTimeout( settingsTimer );
+					settingsTimer = setTimeout( updateAllEditorSliderParams, 150 );
+				} );
+				// Device mode switch changes which type is active — rebuild sliders.
+				window.parent.elementor.channels.deviceMode.on( 'change', function () {
+					clearTimeout( settingsTimer );
+					settingsTimer = setTimeout( syncAllEditorSliders, 200 );
+				} );
 			} catch ( e ) { /* cross-origin or elementor unavailable */ }
 		}
+
+		// Expose a hook for ecs-editor-preview.js (parent frame) to call when
+		// settings change. Cross-frame Backbone channels are unreliable for this.
+		window.ecsSliderSettingsChanged = function () {
+			// Re-sync existing active sliders with updated params.
+			document.querySelectorAll( '.ecs-editor-slider-active' ).forEach( function ( el ) {
+				el.removeAttribute( 'data-ecs-slider-key' );
+				syncEditorSlider( el );
+			} );
+			// Build any new sliders that just became active (e.g. type just set to 'slider').
+			syncAllEditorSliders();
+		};
 
 		// components:init already fired by the time a footer script loads.
 		// Run directly — Backbone views are ready by DOMContentLoaded.

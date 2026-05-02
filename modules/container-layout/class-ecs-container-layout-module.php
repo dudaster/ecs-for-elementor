@@ -154,37 +154,6 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		);
 	}
 
-	/**
-	 * Build an OR conditions array that matches slider/custom/both across all breakpoints.
-	 * Elementor conditions only check desktop value, so we must check all three breakpoints.
-	 *
-	 * @param array  $and_extra  Additional AND terms to append (each is a conditions term array).
-	 * @param string $mode       'slider' | 'custom' | 'slider_or_custom'
-	 */
-	private function make_slider_conditions( array $and_extra = [] ): array {
-		$or = [
-			'relation' => 'or',
-			'terms'    => [
-				[ 'name' => 'ecs_container_type',        'operator' => '==', 'value' => 'slider' ],
-				[ 'name' => 'ecs_container_type_tablet', 'operator' => '==', 'value' => 'slider' ],
-				[ 'name' => 'ecs_container_type_mobile', 'operator' => '==', 'value' => 'slider' ],
-			],
-		];
-		if ( empty( $and_extra ) ) { return $or; }
-		return [ 'relation' => 'and', 'terms' => array_merge( [ $or ], $and_extra ) ];
-	}
-
-	private function make_custom_conditions(): array {
-		return [
-			'relation' => 'or',
-			'terms'    => [
-				[ 'name' => 'ecs_container_type',        'operator' => '==', 'value' => 'custom' ],
-				[ 'name' => 'ecs_container_type_tablet', 'operator' => '==', 'value' => 'custom' ],
-				[ 'name' => 'ecs_container_type_mobile', 'operator' => '==', 'value' => 'custom' ],
-			],
-		];
-	}
-
 	public function add_container_type_control( $element, $args ): void {
 		// Hide the built-in Container Layout control — replaced by our responsive ecs_container_type.
 		// prefix_class uses sprintf() format: desktop → 'e-ecs-', tablet → 'e-ecs-tablet-', mobile → 'e-ecs-mobile-'
@@ -214,6 +183,11 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 	public function add_container_controls( $element, $args ): void {
 
+		// ecs_active_type is a virtual key set by JS (ecs-editor-preview.js) to reflect
+		// the effective container type for the currently active device mode.
+		// All dependent controls condition on this key so Elementor re-evaluates them
+		// automatically when JS calls container.settings.set('ecs_active_type', type).
+
 		// ── Slider settings ───────────────────────────────────────────────────
 		$element->add_responsive_control(
 			'ecs_slider_columns',
@@ -230,7 +204,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'3' => '3',
 					'4' => '4',
 				],
-				'condition'          => [ 'ecs_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_active_type' => 'slider' ],
 				'selectors'          => [
 					'{{WRAPPER}}' => '--ecs-slider-columns: {{VALUE}};',
 				],
@@ -246,7 +220,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'              => esc_html__( 'Infinite Loop', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SWITCHER,
 				'default'            => 'yes',
-				'condition'          => [ 'ecs_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_active_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
@@ -257,7 +231,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'              => esc_html__( 'Autoplay', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SWITCHER,
 				'default'            => '',
-				'condition'          => [ 'ecs_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_active_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
@@ -268,7 +242,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'              => esc_html__( 'Autoplay Speed (ms)', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::NUMBER,
 				'default'            => 3000,
-				'condition'          => [ 'ecs_container_type' => 'slider', 'ecs_autoplay' => 'yes' ],
+				'condition'          => [ 'ecs_active_type' => 'slider', 'ecs_autoplay' => 'yes' ],
 				'frontend_available' => true,
 			]
 		);
@@ -279,7 +253,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'              => esc_html__( 'Pause on Hover', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::SWITCHER,
 				'default'            => 'yes',
-				'condition'          => [ 'ecs_container_type' => 'slider', 'ecs_autoplay' => 'yes' ],
+				'condition'          => [ 'ecs_active_type' => 'slider', 'ecs_autoplay' => 'yes' ],
 				'frontend_available' => true,
 			]
 		);
@@ -290,7 +264,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'              => esc_html__( 'Transition Speed (ms)', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::NUMBER,
 				'default'            => 500,
-				'condition'          => [ 'ecs_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_active_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
@@ -301,7 +275,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'              => esc_html__( 'Space Between (px)', 'ele-custom-skin' ),
 				'type'               => \Elementor\Controls_Manager::NUMBER,
 				'default'            => 0,
-				'condition'          => [ 'ecs_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_active_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
@@ -318,7 +292,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'dots'   => esc_html__( 'Dots', 'ele-custom-skin' ),
 					'both'   => esc_html__( 'Arrows & Dots', 'ele-custom-skin' ),
 				],
-				'condition'          => [ 'ecs_container_type' => 'slider' ],
+				'condition'          => [ 'ecs_active_type' => 'slider' ],
 				'frontend_available' => true,
 			]
 		);
@@ -330,7 +304,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'     => esc_html__( 'Custom Layout Template', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::SELECT2,
 				'options'   => $this->get_custom_layout_templates(),
-				'condition' => [ 'ecs_container_type' => 'custom' ],
+				'condition' => [ 'ecs_active_type' => 'custom' ],
 				'separator' => 'before',
 			]
 		);
@@ -343,7 +317,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'return_value' => 'hide-empty-slots',
 				'default'      => '',
 				'prefix_class' => 'e-ecs-',
-				'condition'    => [ 'ecs_container_type' => 'custom' ],
+				'condition'    => [ 'ecs_active_type' => 'custom' ],
 			]
 		);
 
@@ -359,17 +333,10 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'column-reverse' => [ 'title' => esc_html__( 'Column - Reverse', 'ele-custom-skin' ), 'icon' => 'eicon-arrow-up'  ],
 				],
 				'default'   => 'row',
-				'condition' => [ 'ecs_container_type' => 'custom' ],
-				// In editor mode the original container element still exists and
-				// .ecs-injected-structure elements are flex children of it (via
-				// display:contents on .e-con-inner). In live mode the container is
-				// replaced by .ecs-custom-layout-wrap which carries the direction
-				// as an inline style set by after_container_render().
+				'condition' => [ 'ecs_active_type' => 'custom' ],
 				'selectors' => [ '{{WRAPPER}}' => 'flex-direction: {{VALUE}};' ],
 			]
 		);
-
-		
 	}
 
 	/**
@@ -377,35 +344,21 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	 * Hooked after 'section_border' so it appears near the bottom of Style tab.
 	 */
 	public function add_slider_style_controls( $element, $args ): void {
-		// Arrows condition: desktop=slider AND navigation includes arrows.
-		$cond_arrows = [
-			'relation' => 'and',
-			'terms'    => [
-				[ 'name' => 'ecs_container_type', 'operator' => '==', 'value' => 'slider' ],
-				[ 'relation' => 'or', 'terms' => [
-					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'arrows' ],
-					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'both' ],
-				]],
-			],
-		];
-		// Dots condition: desktop=slider AND navigation includes dots.
-		$cond_dots = [
-			'relation' => 'and',
-			'terms'    => [
-				[ 'name' => 'ecs_container_type', 'operator' => '==', 'value' => 'slider' ],
-				[ 'relation' => 'or', 'terms' => [
-					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'dots' ],
-					[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'both' ],
-				]],
-			],
-		];
+		$nav_arrows = [ 'relation' => 'or', 'terms' => [
+			[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'arrows' ],
+			[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'both' ],
+		] ];
+		$nav_dots = [ 'relation' => 'or', 'terms' => [
+			[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'dots' ],
+			[ 'name' => 'ecs_navigation', 'operator' => '==', 'value' => 'both' ],
+		] ];
 
 		$element->start_controls_section(
 			'section_ecs_slider_navigation',
 			[
 				'label'     => esc_html__( 'Slider Navigation', 'ele-custom-skin' ),
 				'tab'       => \Elementor\Controls_Manager::TAB_STYLE,
-				'condition' => [ 'ecs_container_type' => 'slider' ],
+				'condition' => [ 'ecs_active_type' => 'slider' ],
 			]
 		);
 
@@ -415,7 +368,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 			[
 				'label'     => esc_html__( 'Arrows', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::HEADING,
-				'conditions' => $cond_arrows,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'arrows', 'both' ] ],
 			]
 		);
 
@@ -444,14 +397,14 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'selectors'  => [
 					'{{WRAPPER}} .elementor-swiper-button' => 'font-size: {{SIZE}}{{UNIT}};',
 				],
-				'conditions' => $cond_arrows,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'arrows', 'both' ] ],
 			]
 		);
 
 		$element->start_controls_tabs(
 			'ecs_arrows_colors',
 			[
-				'conditions' => $cond_arrows,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'arrows', 'both' ] ],
 			]
 		);
 
@@ -499,7 +452,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'label'     => esc_html__( 'Dots', 'ele-custom-skin' ),
 				'type'      => \Elementor\Controls_Manager::HEADING,
 				'separator' => 'before',
-				'conditions' => $cond_dots,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'dots', 'both' ] ],
 			]
 		);
 
@@ -528,7 +481,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'selectors'  => [
 					'{{WRAPPER}} .swiper-pagination-bullet' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
 				],
-				'conditions' => $cond_dots,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'dots', 'both' ] ],
 			]
 		);
 
@@ -542,7 +495,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'selectors'  => [
 					'{{WRAPPER}} .swiper-pagination-bullet' => 'margin: 0 {{SIZE}}{{UNIT}};',
 				],
-				'conditions' => $cond_dots,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'dots', 'both' ] ],
 			]
 		);
 
@@ -554,7 +507,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'selectors' => [
 					'{{WRAPPER}} .swiper-pagination-bullet' => 'background: {{VALUE}};',
 				],
-				'conditions' => $cond_dots,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'dots', 'both' ] ],
 			]
 		);
 
@@ -566,7 +519,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				'selectors' => [
 					'{{WRAPPER}} .swiper-pagination-bullet-active' => 'background: {{VALUE}};',
 				],
-				'conditions' => $cond_dots,
+				'condition' => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'dots', 'both' ] ],
 			]
 		);
 
@@ -662,6 +615,26 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 				ob_start();
 				$frame['buffering'] = true;
 			}
+		} elseif ( in_array( $mode, [ 'flex', 'grid' ], true ) ) {
+			// Desktop is flex/grid but tablet or mobile may need custom layout / slider.
+			// Buffer the container so we can append the responsive alternative versions.
+			$tab_type = $element->get_settings( 'ecs_container_type_tablet' ) ?: '';
+			$mob_type = $element->get_settings( 'ecs_container_type_mobile' ) ?: '';
+			if ( ( in_array( 'custom', [ $tab_type, $mob_type ], true )
+				|| in_array( 'slider', [ $tab_type, $mob_type ], true ) )
+				&& ! \Elementor\Plugin::$instance->editor->is_edit_mode()
+				&& ! ECS_Container_Placeholder_Widget::is_rendering( $element->get_id() )
+			) {
+				$frame['filter_removed'] = has_filter( 'elementor/element/should_render_shortcode', '__return_true' );
+				if ( $frame['filter_removed'] ) {
+					remove_filter( 'elementor/element/should_render_shortcode', '__return_true' );
+				}
+				ob_start();
+				$frame['buffering'] = true;
+				$frame['mode']      = 'flex_responsive';
+				$frame['tab_type']  = $tab_type;
+				$frame['mob_type']  = $mob_type;
+			}
 		}
 
 		$this->render_stack[] = $frame;
@@ -691,6 +664,11 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		if ( 'slider' === $frame['mode'] ) {
 			$this->render_slider( $element, $container_html, $frame );
+			return;
+		}
+
+		if ( 'flex_responsive' === $frame['mode'] ) {
+			$this->render_flex_with_responsive( $element, $container_html, $frame );
 			return;
 		}
 
@@ -960,6 +938,209 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		echo '</div>'; // .swiper
 		echo '</div>'; // outer container
+	}
+
+	/**
+	 * Desktop=flex/grid with tablet/mobile=custom|slider.
+	 * Re-emits the buffered container as-is for desktop, then appends one or two
+	 * responsive-version blocks that CSS shows at the appropriate breakpoints.
+	 */
+	private function render_flex_with_responsive( $element, string $container_html, array $frame ): void {
+		if ( ! empty( $frame['filter_removed'] ) ) {
+			add_filter( 'elementor/element/should_render_shortcode', '__return_true' );
+		}
+
+		$tab_type     = $frame['tab_type'] ?? '';
+		$mob_type     = $frame['mob_type'] ?? '';
+		$layout_id    = absint( $element->get_settings( 'ecs_custom_layout_id' ) );
+		$container_id = $frame['id'];
+
+		// Outer opening tag.
+		preg_match( '/<div\b[^>]*>/i', $container_html, $outer_m, PREG_OFFSET_CAPTURE );
+		$outer_tag       = $outer_m[0][0] ?? '<div>';
+		$after_outer_pos = (int) $outer_m[0][1] + strlen( $outer_tag );
+
+		// Desktop inner: everything between the outer opening tag and the last </div>.
+		$last_close_pos = strrpos( $container_html, '</div>' );
+		$desktop_inner  = ( false !== $last_close_pos )
+			? substr( $container_html, $after_outer_pos, $last_close_pos - $after_outer_pos )
+			: substr( $container_html, $after_outer_pos );
+
+		// Full Width containers have no .e-con-inner — wrap in a hide-able div.
+		if ( ! preg_match( '/<div\b[^>]*\be-con-inner\b/', $desktop_inner ) ) {
+			$desktop_inner = '<div class="ecs-desktop-inner">' . $desktop_inner . '</div>';
+		}
+
+		$inner_html    = $this->extract_container_children( $container_html );
+		$children_list = $this->split_children( $inner_html );
+
+		echo $outer_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo $desktop_inner; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+		// When tablet and mobile share the same type (or mobile inherits), one block suffices.
+		$mob_resolved = $mob_type ?: $tab_type;
+		$same_type    = ( '' === $mob_type || $mob_type === $tab_type );
+
+		if ( $same_type ) {
+			echo '<div class="ecs-responsive-version">';
+			if ( 'custom' === $tab_type ) {
+				$this->echo_custom_layout_content( $element, $children_list, $layout_id, $container_id );
+			} elseif ( 'slider' === $tab_type ) {
+				$this->echo_swiper_html( $element, $children_list, $tab_type, $mob_resolved );
+			}
+			echo '</div>';
+		} else {
+			// Different types for tablet vs mobile — separate blocks.
+			if ( 'custom' === $tab_type || 'slider' === $tab_type ) {
+				echo '<div class="ecs-tablet-version">';
+				if ( 'custom' === $tab_type ) {
+					$this->echo_custom_layout_content( $element, $children_list, $layout_id, $container_id );
+				} else {
+					$this->echo_swiper_html( $element, $children_list, 'slider', '' );
+				}
+				echo '</div>';
+			}
+			if ( 'custom' === $mob_type || 'slider' === $mob_type ) {
+				echo '<div class="ecs-mobile-version">';
+				if ( 'custom' === $mob_type ) {
+					$this->echo_custom_layout_content( $element, $children_list, $layout_id, $container_id );
+				} else {
+					$this->echo_swiper_html( $element, $children_list, '', 'slider' );
+				}
+				echo '</div>';
+			}
+		}
+
+		echo '</div>'; // close outer .e-con
+	}
+
+	/**
+	 * Render a custom layout template with children injected into placeholder slots.
+	 * Used by both after_container_render (desktop=custom) and render_flex_with_responsive.
+	 *
+	 * @param array<string> $children_list Rendered HTML of each child element.
+	 */
+	private function echo_custom_layout_content( $element, array $children_list, int $layout_id, string $container_id ): void {
+		if ( ! $layout_id || 'publish' !== get_post_status( $layout_id ) ) {
+			foreach ( $children_list as $child ) {
+				echo $child; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+			return;
+		}
+
+		if ( ! class_exists( 'ECS_Container_Placeholder_Widget', false ) ) {
+			require_once $this->module_path() . 'widgets/class-ecs-container-placeholder-widget.php';
+		}
+
+		$hide_empty = ( 'hide-empty-slots' === $element->get_settings( 'ecs_hide_empty_slots' ) );
+		$direction  = $element->get_settings( 'ecs_direction' ) ?: 'row';
+
+		$css_path = WP_CONTENT_DIR . '/uploads/elementor/css/post-' . $layout_id . '.css';
+		if ( file_exists( $css_path ) ) {
+			echo '<style id="elementor-post-' . esc_attr( $layout_id ) . '-css">'
+				. file_get_contents( $css_path ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPress.Security.EscapeOutput.OutputNotEscaped
+				. '</style>';
+		}
+
+		ECS_Container_Placeholder_Widget::mark_rendering( $container_id );
+
+		$filter_was_active = has_filter( 'elementor/element/should_render_shortcode', '__return_true' );
+		if ( $filter_was_active ) {
+			remove_filter( 'elementor/element/should_render_shortcode', '__return_true' );
+		}
+
+		$wrapper_classes = 'ecs-custom-layout-wrap' . ( $hide_empty ? ' e-ecs-hide-empty-slots' : '' );
+		echo '<div class="' . esc_attr( $wrapper_classes ) . '" style="display:flex;flex-direction:' . esc_attr( $direction ) . ';">';
+
+		$batch      = $children_list;
+		$first_pass = true;
+		do {
+			ECS_Container_Placeholder_Widget::set_pending_children( $batch );
+			$output = \Elementor\Plugin::$instance->frontend->get_builder_content_for_display( $layout_id, true );
+			echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+			if ( $first_pass && ! ECS_Container_Placeholder_Widget::any_consumed() && ! empty( $children_list ) ) {
+				ECS_Container_Placeholder_Widget::reset_pending_children();
+				echo '<div class="ecs-missing-placeholder">' . implode( '', $children_list ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				break;
+			}
+			$batch      = ECS_Container_Placeholder_Widget::get_overflow_children();
+			$first_pass = false;
+			ECS_Container_Placeholder_Widget::reset_pending_children();
+		} while ( ! empty( $batch ) );
+
+		echo '</div>'; // .ecs-custom-layout-wrap
+
+		if ( $filter_was_active ) {
+			add_filter( 'elementor/element/should_render_shortcode', '__return_true' );
+		}
+
+		ECS_Container_Placeholder_Widget::unmark_rendering( $container_id );
+	}
+
+	/**
+	 * Output the Swiper HTML for responsive slider versions.
+	 * Breakpoints control enabled/disabled per device; CSS hides the wrapper block entirely.
+	 *
+	 * @param string $tab_type 'slider'|'' — type resolved for tablet
+	 * @param string $mob_type 'slider'|'' — type resolved for mobile ('' = inherit tab_type)
+	 */
+	private function echo_swiper_html( $element, array $children_list, string $tab_type, string $mob_type ): void {
+		$mob_resolved = $mob_type ?: $tab_type;
+		$cols_desktop = (int) ( $element->get_settings( 'ecs_slider_columns' ) ?: 1 );
+		$cols_tablet  = (int) $element->get_settings( 'ecs_slider_columns_tablet' ) ?: $cols_desktop;
+		$cols_mobile  = (int) $element->get_settings( 'ecs_slider_columns_mobile' ) ?: $cols_tablet;
+		$navigation   = $element->get_settings( 'ecs_navigation' ) ?: 'arrows';
+		$show_arrows  = in_array( $navigation, [ 'arrows', 'both' ], true );
+		$show_dots    = in_array( $navigation, [ 'dots', 'both' ], true );
+
+		$swiper_cfg = [
+			'slidesPerView' => $cols_desktop,
+			'loop'          => 'yes' === $element->get_settings( 'ecs_loop' ),
+			'speed'         => (int) ( $element->get_settings( 'ecs_speed' ) ?: 500 ),
+			'spaceBetween'  => (int) $element->get_settings( 'ecs_space_between' ),
+			'breakpoints'   => [
+				0    => [
+					'slidesPerView' => $cols_mobile,
+					'enabled'       => 'slider' === $mob_resolved,
+				],
+				768  => [
+					'slidesPerView' => $cols_tablet,
+					'enabled'       => 'slider' === $tab_type,
+				],
+				1025 => [ 'enabled' => false ],
+			],
+		];
+
+		if ( 'yes' === $element->get_settings( 'ecs_autoplay' ) ) {
+			$swiper_cfg['autoplay'] = [
+				'delay'                => (int) ( $element->get_settings( 'ecs_autoplay_speed' ) ?: 3000 ),
+				'pauseOnMouseEnter'    => 'yes' === $element->get_settings( 'ecs_pause_on_hover' ),
+				'disableOnInteraction' => false,
+			];
+		}
+		if ( $show_arrows ) { $swiper_cfg['navigation'] = true; }
+		if ( $show_dots )   { $swiper_cfg['pagination'] = [ 'clickable' => true ]; }
+
+		echo '<div class="swiper ecs-swiper" data-ecs-slider-settings="' . esc_attr( wp_json_encode( $swiper_cfg ) ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<div class="swiper-wrapper">';
+		foreach ( $children_list as $child ) {
+			echo '<div class="swiper-slide">' . $child . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+		echo '</div>'; // .swiper-wrapper
+
+		if ( $show_arrows ) {
+			echo '<div class="elementor-swiper-button elementor-swiper-button-prev" role="button" tabindex="0">'
+				. '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25"><path d="M15.5 5 8.5 12.5 15.5 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+				. '</div>';
+			echo '<div class="elementor-swiper-button elementor-swiper-button-next" role="button" tabindex="0">'
+				. '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25"><path d="M9.5 5 16.5 12.5 9.5 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+				. '</div>';
+		}
+		if ( $show_dots ) {
+			echo '<div class="swiper-pagination"></div>';
+		}
+		echo '</div>'; // .ecs-swiper
 	}
 
 	/**
