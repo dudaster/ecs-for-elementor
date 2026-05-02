@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 4.1.2
+Stable tag: 4.1.5
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,12 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.1.5 =
+* Fixed: WordPress Menu — native Elementor mobile/tablet Breakpoint now works
+  correctly when no responsive layout override is set for that device.
+* Fixed: Container Layout — Slider navigation arrows and pagination dots now
+  visible in editor preview in all device modes.
 
 = 4.1.2 =
 * Fixed: ECS widgets not appearing in Elementor panel — only visible in search.
