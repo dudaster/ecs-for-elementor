@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 4.1.5
+Stable tag: 4.1.6
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,9 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.1.6 =
+* Fixed: Container Layout — PHP warnings for undefined variables $cond_arrows and $cond_dots on PHP 8.3.
 
 = 4.1.5 =
 * Fixed: WordPress Menu — native Elementor mobile/tablet Breakpoint now works

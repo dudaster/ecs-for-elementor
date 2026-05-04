@@ -383,7 +383,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'outside' => esc_html__( 'Outside', 'ele-custom-skin' ),
 				],
 				'prefix_class' => 'elementor-arrows-position-',
-				'conditions'   => $cond_arrows,
+				'condition'    => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'arrows', 'both' ] ],
 			]
 		);
 
@@ -467,7 +467,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					'outside' => esc_html__( 'Outside', 'ele-custom-skin' ),
 				],
 				'prefix_class' => 'elementor-pagination-position-',
-				'conditions'   => $cond_dots,
+				'condition'    => [ 'ecs_active_type' => 'slider', 'ecs_navigation' => [ 'dots', 'both' ] ],
 			]
 		);
 
