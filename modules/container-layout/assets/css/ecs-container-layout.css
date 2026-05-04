@@ -18,11 +18,12 @@
 }
 
 /* Desktop flex/grid classes from our responsive control */
-.e-con.e-ecs-flex {
+/* :not() prevents overriding Elementor's elementor-hidden-* display:none rules */
+.e-con.e-ecs-flex:not([class*="elementor-hidden-"]) {
 	--display: flex;
 	display: flex;
 }
-.e-con.e-ecs-grid {
+.e-con.e-ecs-grid:not([class*="elementor-hidden-"]) {
 	--display: grid;
 	display: grid;
 }
