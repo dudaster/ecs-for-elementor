@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 4.1.7
+Stable tag: 4.1.8
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,11 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.1.8 =
+* Fixed: Legacy module — Pro detection now correctly uses ELECSP_VER constant (ECS Pro 4.x) instead of the removed ele_custom_skin_pro() function from 3.x; "Get ECS Pro" notice and locked preview controls no longer appear when ECS Pro is active.
+* Added: Dynamic Repeater Builder module card now appears in the modules list with a preview.
+* Improved: Pro modules list — Legacy Pro module always displayed last.
 
 = 4.1.7 =
 * Fixed: Container Layout — containers set as hidden via Elementor's responsive

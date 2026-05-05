@@ -11,6 +11,11 @@ $pro_activate_url = admin_url( 'plugins.php?action=activate&plugin=' . urlencode
 // Static list of Pro modules — shown as locked placeholders when Pro is not installed.
 $pro_stubs = [
 	[
+		'id'          => 'dynamic_repeater',
+		'title'       => __( 'Dynamic Repeater Builder', 'ele-custom-skin' ),
+		'description' => __( 'Populate any Elementor repeater from Posts, Terms, ACF, or JSON. Supports one-time generation and runtime data binding.', 'ele-custom-skin' ),
+	],
+	[
 		'id'          => 'container_responsive',
 		'title'       => __( 'Responsive Container Layout', 'ele-custom-skin' ),
 		'description' => __( 'Set a different container type (Flexbox, Grid, Slider, Custom Layout) for each breakpoint — desktop, tablet, and mobile independently.', 'ele-custom-skin' ),
@@ -53,6 +58,11 @@ foreach ( $manager->get_all() as $module ) {
 		$free_modules[] = $module;
 	}
 }
+
+// Legacy/deprecated modules go last in both lists.
+$push_deprecated_last = fn( $a, $b ) => $a->is_deprecated() <=> $b->is_deprecated();
+usort( $free_modules, $push_deprecated_last );
+usort( $pro_modules,  $push_deprecated_last );
 
 // For card rendering: "locked" means pro not active (installed but inactive, or not installed at all).
 $pro_locked_global = ! $pro_active;

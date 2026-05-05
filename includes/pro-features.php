@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 */
 
 function ecs_admin_notice(){
-    if (function_exists('ele_custom_skin_pro')) return;
+    if ( defined( 'ELECSP_VER' ) ) return;
     $user_id = get_current_user_id();
     if (get_user_meta( $user_id, 'ele_custom_skin_notice_dismissed' )) return;
     $offer = '2019-10-10' > date("Y-m-d") ? 'Limited Offer: <b style="color:red;">Unlimited Sites Lifetime License</b>.':"";
@@ -56,6 +56,6 @@ add_action( 'plugin_action_links_' . ELECS_NAME, 'elecs_action_links' );
 *
 */
 
-if(!function_exists('ele_custom_skin_pro')){
-  require_once ELECS_DIR.'includes/pro-preview.php';
+if ( ! defined( 'ELECSP_VER' ) ) {
+	require_once ELECS_DIR . 'includes/pro-preview.php';
 }
