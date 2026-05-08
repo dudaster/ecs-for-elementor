@@ -131,17 +131,14 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 						'icon'  => 'eicon-text-align-justify',
 					],
 				],
-				// CSS custom property — Elementor generates correct @media rules
-				// per breakpoint; the variable cascades to the CSS rule in
-				// ecs-mobile-menu.css that reads --ecs-nav-align.
-				'selectors_dictionary' => [
-					'flex-start'    => '--ecs-nav-align:flex-start',
-					'center'        => '--ecs-nav-align:center',
-					'flex-end'      => '--ecs-nav-align:flex-end',
-					'space-between' => '--ecs-nav-align:space-between',
-				],
-				'selectors'            => [
-					'{{WRAPPER}}' => '{{VALUE}}',
+				// Direct selectors — Elementor generates scoped per-element CSS with
+				// proper @media breakpoints. When no value is set for a breakpoint,
+				// Elementor emits no rule, so native Elementor alignment is preserved.
+				// (Previous CSS-variable approach used a flex-start fallback that
+				// overwrote the user's existing alignment when the CSS cache was stale.)
+				'selectors' => [
+					'{{WRAPPER}} .elementor-nav-menu--main,
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-nav-menu' => 'justify-content: {{VALUE}};',
 				],
 				'condition'            => [ 'layout!' => 'dropdown' ],
 			],
@@ -515,8 +512,9 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item' => 'color: {{VALUE}}; fill: {{VALUE}};',
 				],
 			],
-			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'tab_menu_item_normal' ] ]
-		);
+			);
+		// No position arg — inner_tab places it in the correct tab; all other Normal tab
+		// controls are removed by ECS so order within the tab doesn't matter.
 
 		// Hover tab
 		$element->remove_control( 'color_menu_item_hover' );
@@ -536,7 +534,10 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 				],
 				'condition'    => [ 'pointer!' => 'background' ],
 			],
-			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'tab_menu_item_hover' ] ]
+			// pointer_color_menu_item_hover has both tabs_wrapper and inner_tab set,
+			// so it's safe as a position anchor (avoids the undefined 'inner_tab' warning
+			// that tab-type controls trigger in Elementor's get_position_info()).
+			[ 'position' => [ 'type' => 'control', 'at' => 'before', 'of' => 'pointer_color_menu_item_hover' ] ]
 		);
 
 		$element->remove_control( 'color_menu_item_hover_pointer_bg' );
@@ -575,7 +576,8 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item.elementor-item-active' => 'color: {{VALUE}}',
 				],
 			],
-			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'tab_menu_item_active' ] ]
+			// pointer_color_menu_item_active has both tabs_wrapper and inner_tab — safe anchor.
+			[ 'position' => [ 'type' => 'control', 'at' => 'before', 'of' => 'pointer_color_menu_item_active' ] ]
 		);
 	}
 

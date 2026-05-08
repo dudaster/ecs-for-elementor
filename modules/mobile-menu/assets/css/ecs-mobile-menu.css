@@ -20,6 +20,11 @@
    The presence of any ecs-nav-layout-* class on the wrapper
    indicates ECS layout is active for that widget, scoping our
    CSS variable rules so they never affect other nav-menu widgets.
+
+   ALIGNMENT: justify-content is set via direct Elementor selectors
+   (per-element scoped CSS) rather than a global CSS variable rule.
+   This avoids a flex-start fallback overriding the user's existing
+   alignment when the CSS cache is stale.
    ============================================================ */
 
 /* Apply CSS variables to nav-menu elements when ECS layout is active.
@@ -42,16 +47,6 @@
 .ecs-nav-layout-vertical   .elementor-menu-toggle,
 .ecs-nav-layout-dropdown   .elementor-menu-toggle {
 	display: var( --ecs-nav-toggle-display, none ) !important;
-}
-
-/* Alignment — reads --ecs-nav-align; applies justify-content to both the
-   <nav> (positions the <ul> within the flex container) and the <ul> itself
-   (aligns <li> items when the <ul> is full-width in vertical layout). */
-.ecs-nav-layout-horizontal .elementor-nav-menu--main,
-.ecs-nav-layout-vertical   .elementor-nav-menu--main,
-.ecs-nav-layout-horizontal .elementor-nav-menu--main .elementor-nav-menu,
-.ecs-nav-layout-vertical   .elementor-nav-menu--main .elementor-nav-menu {
-	justify-content: var( --ecs-nav-align, flex-start ) !important;
 }
 
 /* Pointer visibility — reads --ecs-nav-ptr-vis set by the ecs_pointer_hide responsive
@@ -77,15 +72,24 @@
 
    Skipped when Full Width is ON (:not(.elementor-nav-menu--stretch))
    to avoid conflict with the stretch rules below.
+
+   IMPORTANT: These rules require .ecs-nav-layout-dropdown on the
+   widget wrapper, which is only added when the ECS layout control
+   is explicitly set to 'dropdown' for at least one breakpoint.
+   This prevents overriding Smartmenus.js position calculations for
+   nav menus using the native Elementor Breakpoint control (those
+   have ecs-nav-layout-horizontal/vertical, not ecs-nav-layout-dropdown)
+   — Smartmenus sets left/top inline and CSS !important would win,
+   misplacing the dropdown panel.
    ═══════════════════════════════════════════════════════════ */
 
 /* Base: make dropdown absolutely positioned when ECS align is active.
    top: 100% places it immediately below the widget (same as Full Width). */
-.ecs-toggle-align-left:not(.elementor-nav-menu--stretch)
+.ecs-nav-layout-dropdown.ecs-toggle-align-left:not(.elementor-nav-menu--stretch)
 	.elementor-nav-menu--dropdown.elementor-nav-menu__container,
-.ecs-toggle-align-center:not(.elementor-nav-menu--stretch)
+.ecs-nav-layout-dropdown.ecs-toggle-align-center:not(.elementor-nav-menu--stretch)
 	.elementor-nav-menu--dropdown.elementor-nav-menu__container,
-.ecs-toggle-align-right:not(.elementor-nav-menu--stretch)
+.ecs-nav-layout-dropdown.ecs-toggle-align-right:not(.elementor-nav-menu--stretch)
 	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
 	position:  absolute    !important;
 	top:       100%        !important;
@@ -93,20 +97,20 @@
 	min-width: max-content;
 }
 
-.ecs-toggle-align-left:not(.elementor-nav-menu--stretch)
+.ecs-nav-layout-dropdown.ecs-toggle-align-left:not(.elementor-nav-menu--stretch)
 	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
 	left:  0    !important;
 	right: auto !important;
 }
 
-.ecs-toggle-align-center:not(.elementor-nav-menu--stretch)
+.ecs-nav-layout-dropdown.ecs-toggle-align-center:not(.elementor-nav-menu--stretch)
 	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
 	left:      50%                !important;
 	right:     auto               !important;
 	transform: translateX( -50% ) !important;
 }
 
-.ecs-toggle-align-right:not(.elementor-nav-menu--stretch)
+.ecs-nav-layout-dropdown.ecs-toggle-align-right:not(.elementor-nav-menu--stretch)
 	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
 	right: 0    !important;
 	left:  auto !important;

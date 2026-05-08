@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 4.1.9
+Stable tag: 4.1.10
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,11 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.1.10 =
+* Fixed: WordPress Menu — dropdown panel no longer mispositioned when ECS Mobile Menu module is active and the nav menu uses Elementor's native Breakpoint control. Previously, the CSS toggle-align rules (applied by default to all nav menus) used !important to override position/left/transform, which conflicted with Smartmenus.js position calculations, causing the dropdown to appear clipped or off-screen. The dropdown alignment rules now require the ECS layout to be explicitly set to "dropdown" for at least one breakpoint.
+* Fixed: WordPress Menu — nav menu alignment no longer resets to left-aligned when ECS Mobile Menu module is active. Previously, a global CSS rule with a flex-start fallback overrode the user's existing alignment setting whenever the Elementor CSS cache was stale. Alignment is now applied per-widget via direct Elementor selectors, so it only takes effect when the user has explicitly set a value.
+* Fixed: Mobile Menu — resolved PHP warning "Undefined array key inner_tab" in PHP 8.x. Position anchors in the color controls upgrade pointed to tab-type controls that have tabs_wrapper but no inner_tab, causing Elementor's get_position_info() to access an undefined key.
 
 = 4.1.9 =
 * Fixed: Legacy module (ECS Loop Skin) — removed redeclaration of $current_permalink property that caused a PHP Fatal error with Elementor Pro 4.x due to a PHP 8.1+ property inheritance rule.
