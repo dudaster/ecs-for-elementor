@@ -120,8 +120,12 @@
    FIX: Dropdown panel width (Fill Width ON)
    ═══════════════════════════════════════════════════════════ */
 
-/* Fill Width ON → full width (reinforce existing behaviour) */
-.elementor-nav-menu--stretch
+/* Fill Width ON → full width, only when ECS dropdown layout is active.
+   Gated on ecs-nav-layout-dropdown so it never fires on menus using the
+   native Elementor Breakpoint (ecs-nav-layout-horizontal/vertical), where
+   Smartmenus.js owns positioning and width: 100% collapses the dropdown
+   to the toggle's narrow flex-item width instead of the viewport width. */
+.ecs-nav-layout-dropdown.elementor-nav-menu--stretch
 	.elementor-nav-menu--dropdown.elementor-nav-menu__container {
 	width: 100% !important;
 	left:  0    !important;
