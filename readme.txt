@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 4.1.11
+Stable tag: 4.2.0
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,11 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.2.0 =
+* NEW: Color Wheel module — generates color harmonies (Analogous, Complementary, Monochromatic, Triadic, Tetradic) directly inside the Elementor color picker. Works with both classic Pickr and Atomic Widgets color pickers. Click any swatch to apply the color. Save and reuse palettes across your site.
+* Improved: Color Wheel — swatches update live as you move the color picker or click Elementor global colors.
+* Improved: Color Wheel — panel repositions upward automatically when it would overflow the viewport.
 
 = 4.1.11 =
 * Fixed: WordPress Menu. The Fill Width (stretch) CSS rule that forces width: 100% and left: 0 on the dropdown panel is now scoped to ECS dropdown layout mode only. Previously it applied to all nav menus with Fill Width enabled, overriding Smartmenus.js positioning calculations on menus using the native Elementor Breakpoint and collapsing the dropdown to the toggle width instead of the full header width.

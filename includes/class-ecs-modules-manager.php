@@ -51,6 +51,7 @@ class ECS_Modules_Manager {
 			'style-templates'    => ECS_PATH . 'modules/style-templates/class-ecs-style-templates-module.php',
 			'json-poweredit'       => ECS_PATH . 'modules/json-poweredit/class-ecs-json-poweredit-module.php',
 			'dynamic-repeater'     => ECS_PATH . 'modules/dynamic-repeater/class-ecs-dynamic-repeater-module.php',
+			'color-wheel'          => ECS_PATH . 'modules/color-wheel/class-ecs-colorwheel-module.php',
 		];
 
 		foreach ( $module_files as $file ) {
@@ -69,6 +70,7 @@ class ECS_Modules_Manager {
 			'ECS_Style_Templates_Module',
 			'ECS_JSON_PowerEdit_Module',
 			'ECS_Dynamic_Repeater_Module',
+			'ECS_Colorwheel_Module',
 		];
 
 		foreach ( $module_classes as $class ) {
