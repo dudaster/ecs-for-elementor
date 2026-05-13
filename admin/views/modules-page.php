@@ -3,6 +3,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! function_exists( 'is_plugin_active' ) ) {
+	require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+
+// ── Integrations data ──────────────────────────────────────────────────────────
+$integrations = [
+	[
+		'id'          => 'aicom',
+		'title'       => 'AICOM — AI Commander',
+		'description' => 'Use your AI subscription to manage WordPress: create Elementor pages, update content, automate tasks, and stay fully in control.',
+		'plugin_file' => 'aicom/aicom.php',
+		'link'        => admin_url( 'plugin-install.php?s=aicom&tab=search&type=term' ),
+		'link_target' => '_self',
+		'bg'          => '#efffdb',
+	],
+	[
+		'id'          => 'widget_finder',
+		'title'       => 'Widget Finder for Elementor',
+		'description' => 'Search and install Elementor widgets without leaving the editor. Discover thousands of widgets from WordPress.org in a single click.',
+		'plugin_file' => 'widget-finder-for-elementor/widget-finder-for-elementor.php',
+		'link'        => 'https://github.com/dudaster/widget-finder-for-elementor/releases/latest',
+		'link_target' => '_blank',
+		'bg'          => '#fff3e0',
+	],
+	[
+		'id'          => 'ele_conditions',
+		'title'       => 'Ele Conditions',
+		'description' => 'Trigger actions on any Elementor element: show, hide, animate, or redirect on click, scroll, hover, or exit — no code needed.',
+		'plugin_file' => 'ele-conditions/ele-conditions.php',
+		'link'        => admin_url( 'plugin-install.php?s=ele+conditions&tab=search&type=term' ),
+		'link_target' => '_self',
+		'bg'          => '#e0f8f8',
+	],
+];
+
 $manager       = ECS_Core::instance()->modules();
 $pro_active    = defined( 'ELECSP_VER' );
 $pro_installed = $pro_active || file_exists( WP_PLUGIN_DIR . '/ele-custom-skin-pro/ele-custom-skin-pro.php' );
@@ -199,6 +234,52 @@ $render_stub = function ( array $stub ) {
 	</div>
 	<?php
 };
+/**
+ * Render a companion plugin integration card.
+ */
+$render_integration = function( array $int ) {
+	$installed = file_exists( WP_PLUGIN_DIR . '/' . $int['plugin_file'] );
+	$active    = $installed && is_plugin_active( $int['plugin_file'] );
+	$inactive  = $installed && ! $active;
+
+	$card_classes = 'ecs-module-card ecs-integration-card' . ( $active ? ' is-active' : '' );
+	?>
+	<div class="<?php echo esc_attr( $card_classes ); ?>" style="--ecs-int-bg:<?php echo esc_attr( $int['bg'] ); ?>">
+
+		<div class="ecs-module-card__header">
+			<span class="ecs-module-card__title"><?php echo esc_html( $int['title'] ); ?></span>
+			<div class="ecs-module-card__badges">
+				<span class="ecs-badge ecs-badge--free"><?php esc_html_e( 'FREE', 'ele-custom-skin' ); ?></span>
+			</div>
+		</div>
+
+		<p class="ecs-module-card__desc"><?php echo esc_html( $int['description'] ); ?></p>
+
+		<div class="ecs-module-card__footer">
+			<?php if ( $active ) : ?>
+				<span class="ecs-toggle ecs-int-toggle ecs-int-toggle--active">
+					<span class="ecs-toggle__slider"></span>
+					<span class="ecs-toggle__label ecs-toggle__label--active"><?php esc_html_e( 'Active', 'ele-custom-skin' ); ?></span>
+				</span>
+			<?php elseif ( $inactive ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>"
+				   class="ecs-toggle ecs-int-toggle ecs-int-toggle--not-installed">
+					<span class="ecs-toggle__slider"></span>
+					<span class="ecs-int-status"><?php esc_html_e( 'Inactive', 'ele-custom-skin' ); ?></span>
+				</a>
+			<?php else : ?>
+				<a href="<?php echo esc_url( $int['link'] ); ?>"
+				   class="ecs-toggle ecs-int-toggle ecs-int-toggle--not-installed"
+				   <?php if ( '_blank' === $int['link_target'] ) : ?>target="_blank" rel="noopener noreferrer"<?php endif; ?>>
+					<span class="ecs-toggle__slider"></span>
+					<span class="ecs-int-status"><?php esc_html_e( 'Not installed', 'ele-custom-skin' ); ?></span>
+				</a>
+			<?php endif; ?>
+		</div>
+
+	</div>
+	<?php
+};
 ?>
 <div class="wrap ecs-admin-wrap">
 
@@ -212,6 +293,16 @@ $render_stub = function ( array $stub ) {
 			<p><?php esc_html_e( 'Module settings saved.', 'ele-custom-skin' ); ?></p>
 		</div>
 	<?php endif; ?>
+
+	<!-- ── INTEGRATIONS ──────────────────────────────────────── -->
+	<div class="ecs-section-header ecs-section-header--integrations">
+		<h2 class="ecs-section-title"><?php esc_html_e( 'Integrations', 'ele-custom-skin' ); ?></h2>
+	</div>
+	<div class="ecs-modules-grid ecs-integrations-grid">
+		<?php foreach ( $integrations as $int ) : ?>
+			<?php $render_integration( $int ); ?>
+		<?php endforeach; ?>
+	</div>
 
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 		<?php wp_nonce_field( 'ecs_save_modules' ); ?>

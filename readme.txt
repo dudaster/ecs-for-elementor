@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 4.2.0
+Stable tag: 4.3.0
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,10 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.3.0 =
+* NEW: Integrations section in the Modules admin page — shows AICOM, Widget Finder for Elementor, and Ele Conditions with install links and active state detection.
+* Fixed: Grid containers no longer reset to Flex layout when opening the container panel with the Container Layout module active. The sync between ecs_container_type and the native container_type now initialises from the native value instead of overwriting it.
 
 = 4.2.0 =
 * NEW: Color Wheel module — generates color harmonies (Analogous, Complementary, Monochromatic, Triadic, Tetradic) directly inside the Elementor color picker. Works with both classic Pickr and Atomic Widgets color pickers. Click any swatch to apply the color. Save and reuse palettes across your site.

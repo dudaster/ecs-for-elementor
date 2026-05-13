@@ -355,6 +355,48 @@
 	border-radius: 4px;
 }
 
+/* ── Integrations ─────────────────────────────────────────── */
+
+.ecs-section-header--integrations {
+	border-bottom-color: #78c87a;
+}
+
+.ecs-integration-card {
+	background: var(--ecs-int-bg, #fff);
+}
+
+/* Link-based toggle (no checkbox) */
+.ecs-int-toggle {
+	text-decoration: none;
+}
+
+/* Active state: slider visually ON */
+.ecs-int-toggle--active .ecs-toggle__slider {
+	background: #2271b1;
+}
+
+.ecs-int-toggle--active .ecs-toggle__slider::after {
+	transform: translateX(18px);
+}
+
+.ecs-int-toggle--active .ecs-toggle__label--active {
+	display: inline;
+	color: #2271b1;
+	font-weight: 500;
+}
+
+/* "Not installed" / "Inactive" label */
+.ecs-int-status {
+	font-size: 13px;
+	color: #888;
+	font-style: italic;
+}
+
+.ecs-int-toggle--not-installed:hover .ecs-int-status {
+	color: #2271b1;
+	text-decoration: underline;
+}
+
 /* ── Save Button ──────────────────────────────────────────── */
 
 .ecs-save-btn {

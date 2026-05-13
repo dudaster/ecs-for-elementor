@@ -83,7 +83,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		if ( ECS_Custom_Layout_Document::get_type() !== $document->get_type() ) {
 			return;
 		}
-		delete_post_meta_by_key( '_elementor_element_cache' );
+		delete_post_meta_by_key( \Elementor\Core\Base\Document::CACHE_META_KEY );
 	}
 
 	/**
@@ -1432,7 +1432,11 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 			var nat   = ( "grid" === dteCt ) ? "grid" : "flex";
 			if ( settings.get( "container_type" ) !== nat ) { settings.set( "container_type", nat ); }
 		}
-		syncNative();
+		if ( settings.get( "ecs_container_type" ) ) {
+			syncNative();
+		} else {
+			settings.set( "ecs_container_type", settings.get( "container_type" ) || "flex", { silent: true } );
+		}
 		settings.on( "change:ecs_container_type", syncNative );
 	} );
 } )();
