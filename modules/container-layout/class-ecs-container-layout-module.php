@@ -53,8 +53,8 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		add_action( 'elementor/element/container/section_border/after_section_end',
 			[ $this, 'add_slider_style_controls' ], 10, 2 );
 
-		// Intercept container render for layout injection
-		add_filter( 'elementor/frontend/container/should_render', '__return_true' );
+		// Intercept container render for layout injection.
+		// No should_render override — third-party conditional display (EA, etc.) must work for all containers.
 		add_action( 'elementor/frontend/container/before_render', [ $this, 'before_container_render' ] );
 		add_action( 'elementor/frontend/container/after_render',  [ $this, 'after_container_render' ] );
 
