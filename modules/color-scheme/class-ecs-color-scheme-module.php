@@ -165,16 +165,24 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 	 * Priority 1 ensures it runs before any stylesheet is enqueued.
 	 */
 	public function inject_anti_fouc_script(): void {
-		$system_auto = false;
+		$system_auto   = false;
+		$dark_logo_url = '';
 		if ( did_action( 'elementor/loaded' ) ) {
-			$kit         = \Elementor\Plugin::$instance->kits_manager->get_active_kit();
-			$system_auto = $kit && $kit->get_settings( 'ecs_system_auto' ) === 'yes';
+			$kit = \Elementor\Plugin::$instance->kits_manager->get_active_kit();
+			if ( $kit ) {
+				$system_auto = $kit->get_settings( 'ecs_system_auto' ) === 'yes';
+				$dark_logo   = $kit->get_settings( 'ecs_dark_logo' );
+				if ( is_array( $dark_logo ) && ! empty( $dark_logo['url'] ) ) {
+					$dark_logo_url = esc_url_raw( $dark_logo['url'] );
+				}
+			}
 		}
 		$auto_js = $system_auto ? 'true' : 'false';
+		$logo_js = wp_json_encode( $dark_logo_url );
 		?>
 		<script>
 		(function(){
-			window.ecsSchemeConfig={systemAuto:<?php echo $auto_js; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>};
+			window.ecsSchemeConfig={systemAuto:<?php echo $auto_js; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>,darkLogoUrl:<?php echo $logo_js; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>};
 			var m=document.cookie.match(/(?:^|;\s*)ecs_color_scheme=([^;]+)/);
 			if(m&&m[1]==='alt'){
 				document.documentElement.setAttribute('data-ecs-scheme','alt');

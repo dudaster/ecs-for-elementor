@@ -111,6 +111,18 @@
 	font-style: italic;
 }
 
+/* ── Dark Mode Logo: hidden by default, shown only in dark mode ── */
+
+.elementor-control-ecs_dark_logo_heading,
+.elementor-control-ecs_dark_logo {
+	display: none !important;
+}
+
+.ecs-mode-dark .elementor-control-ecs_dark_logo_heading,
+.ecs-mode-dark .elementor-control-ecs_dark_logo {
+	display: block !important;
+}
+
 /* Reference swatch showing the default colour as fallback preview */
 .ecs-fallback-swatch {
 	display: inline-block;

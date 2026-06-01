@@ -34,6 +34,37 @@
 		} else {
 			document.documentElement.removeAttribute('data-ecs-scheme');
 		}
+		swapLogos(scheme === ALT_VALUE);
+	}
+
+	/**
+	 * Swap site logo src when dark mode is active.
+	 * Targets the Elementor Site Logo widget and the standard WP custom logo.
+	 * Stores the original src in data-ecs-logo-default so it can be restored.
+	 */
+	function swapLogos(isAlt) {
+		var cfg     = window.ecsSchemeConfig || {};
+		var darkUrl = cfg.darkLogoUrl;
+		if (!darkUrl) { return; }
+
+		document.querySelectorAll(
+			'.elementor-widget-theme-site-logo img, .elementor-widget-site-logo img, a.custom-logo-link img'
+		).forEach(function(img) {
+			if (isAlt) {
+				if (!img.dataset.ecsLogoDefault) {
+					img.dataset.ecsLogoDefault = img.src;
+				}
+				if (img.src !== darkUrl) {
+					img.src = darkUrl;
+					img.srcset = '';
+				}
+			} else {
+				if (img.dataset.ecsLogoDefault) {
+					img.src = img.dataset.ecsLogoDefault;
+					img.dataset.ecsLogoDefault = '';
+				}
+			}
+		});
 	}
 
 	/**
@@ -130,8 +161,9 @@
 	// ── Init ─────────────────────────────────────────────────────────────────
 
 	function init() {
-		// Sync widgets to whatever the anti-FOUC script already set on <html>
+		// Sync widgets and logo to whatever the anti-FOUC script already set on <html>
 		syncAllWidgets();
+		swapLogos(getCurrentScheme() === ALT_VALUE);
 
 		// System Auto: if enabled and no manual preference stored,
 		// follow live OS theme changes.

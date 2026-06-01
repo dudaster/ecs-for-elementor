@@ -180,6 +180,27 @@ class ECS_Default_Colours_Tab extends Global_Colors {
 			]
 		);
 
+		// ── Dark Mode Logo (visible only in Dark Mode tab) ────────────
+
+		$this->add_control(
+			'ecs_dark_logo_heading',
+			[
+				'type'      => Controls_Manager::HEADING,
+				'label'     => esc_html__( 'Dark Mode Logo', 'ele-custom-skin' ),
+				'separator' => 'before',
+			]
+		);
+
+		$this->add_control(
+			'ecs_dark_logo',
+			[
+				'label'       => esc_html__( 'Logo for Dark Mode', 'ele-custom-skin' ),
+				'type'        => Controls_Manager::MEDIA,
+				'description' => esc_html__( 'Replaces the site logo when Dark Mode is active. Leave empty to keep the default logo.', 'ele-custom-skin' ),
+				'default'     => [ 'url' => '', 'id' => '' ],
+			]
+		);
+
 		$this->end_controls_section();
 	}
 }

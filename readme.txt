@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 4.3.2
+Stable tag: 4.3.3
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,10 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.3.3 =
+* Added: Dark Mode Logo option in Default Colours (Site Settings). Upload a separate logo image for dark mode; it swaps automatically when dark mode is active and restores when switching back to light.
+* Fixed: Legacy module admin cards now display a specific notice mentioning ECS Free or ECS Pro depending on the plugin, instead of a generic message.
 
 = 4.3.2 =
 * Fixed: Container Layout module no longer forces all Elementor containers to render unconditionally. The should_render filter is now conditional, so third-party plugins such as Essential Addons conditional display work correctly on plain flex and grid containers again.
