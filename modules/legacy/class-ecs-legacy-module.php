@@ -34,6 +34,10 @@ class ECS_Legacy_Module extends ECS_Module_Base {
 		return true;
 	}
 
+	public function get_deprecated_notice(): string {
+		return __( 'Features from this module are being moved to dedicated modules in ECS Free. Keep it active to preserve your existing site, and switch to the new modules when ready.', 'ele-custom-skin' );
+	}
+
 	public function boot(): void {
 		// Always load: enqueue styles, pro-features notices, dynamic style fix.
 		require_once ELECS_DIR . 'includes/enqueue-styles.php';

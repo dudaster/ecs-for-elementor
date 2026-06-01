@@ -158,9 +158,10 @@ $render_card = function ( $module ) use ( $manager, $pro_active ) {
 			<p class="ecs-module-card__desc"><?php echo esc_html( $module->get_description() ); ?></p>
 		<?php endif; ?>
 
-		<?php if ( $is_deprecated ) : ?>
+		<?php $deprecated_notice = $is_deprecated ? $module->get_deprecated_notice() : ''; ?>
+		<?php if ( $deprecated_notice ) : ?>
 			<p class="ecs-module-deprecated-notice">
-				<?php esc_html_e( 'This module contains the original ECS functionality. It is kept for backward compatibility and will be removed in a future version.', 'ele-custom-skin' ); ?>
+				<?php echo esc_html( $deprecated_notice ); ?>
 			</p>
 		<?php endif; ?>
 

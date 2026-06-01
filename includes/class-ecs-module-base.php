@@ -25,6 +25,11 @@ abstract class ECS_Module_Base {
 		return false;
 	}
 
+	/** Optional migration notice shown on deprecated module cards */
+	public function get_deprecated_notice(): string {
+		return '';
+	}
+
 	/** Whether this module requires ECS Pro licence */
 	public function is_pro(): bool {
 		return false;
