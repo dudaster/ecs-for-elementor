@@ -116,7 +116,7 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 
 = 4.3.3 =
 * Added: Dark Mode Logo option in Default Colours (Site Settings). Upload a separate logo image for dark mode; it swaps automatically when dark mode is active and restores when switching back to light.
-* Fixed: Legacy module admin cards now display a specific notice mentioning ECS Free or ECS Pro depending on the plugin, instead of a generic message.
+* Fixed: Legacy module admin cards now show a more specific migration notice.
 
 = 4.3.2 =
 * Fixed: Container Layout module no longer forces all Elementor containers to render unconditionally. The should_render filter is now conditional, so third-party plugins such as Essential Addons conditional display work correctly on plain flex and grid containers again.
