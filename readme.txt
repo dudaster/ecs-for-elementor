@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 4.3.3
+Stable tag: 4.3.4
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,9 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.3.4 =
+* Fixed: WordPress Menu — Stretch alignment (Justify) no longer loses equal item widths when the Mobile Menu module is active. Navigation items now grow to fill the full header width again, matching the original Elementor behaviour.
 
 = 4.3.3 =
 * Added: Dark Mode Logo option in Default Colours (Site Settings). Upload a separate logo image for dark mode; it swaps automatically when dark mode is active and restores when switching back to light.

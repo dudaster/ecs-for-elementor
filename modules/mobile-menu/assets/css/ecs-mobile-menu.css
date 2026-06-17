@@ -58,6 +58,14 @@
 	visibility: var( --ecs-nav-ptr-vis, visible );
 }
 
+/* Stretch/Justify alignment: grow each item to fill equal width.
+   --ecs-nav-li-grow is set to 1 by the align_items selectors_dictionary
+   when "Stretch" (space-between) is selected; defaults to 0 otherwise. */
+.ecs-nav-layout-horizontal .elementor-nav-menu--main .elementor-nav-menu > li,
+.ecs-nav-layout-vertical   .elementor-nav-menu--main .elementor-nav-menu > li {
+	flex-grow: var( --ecs-nav-li-grow, 0 );
+}
+
 /* ═══════════════════════════════════════════════════════════
    DROPDOWN ALIGNMENT — follows Toggle Button align
    Uses prefix_class ecs-toggle-align-{left|center|right} set

@@ -136,9 +136,20 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 				// Elementor emits no rule, so native Elementor alignment is preserved.
 				// (Previous CSS-variable approach used a flex-start fallback that
 				// overwrote the user's existing alignment when the CSS cache was stale.)
+				//
+				// space-between also sets --ecs-nav-li-grow:1 so <li> items expand to
+				// fill equal widths (equivalent to Elementor native flex-grow:1 on >li).
+				// All values must be mapped; unmapped values would output the raw key
+				// as CSS (e.g. "flex-start;" alone), which is invalid.
+				'selectors_dictionary' => [
+					'flex-start'    => 'justify-content:flex-start',
+					'center'        => 'justify-content:center',
+					'flex-end'      => 'justify-content:flex-end',
+					'space-between' => 'justify-content:space-between;--ecs-nav-li-grow:1',
+				],
 				'selectors' => [
 					'{{WRAPPER}} .elementor-nav-menu--main,
-					 {{WRAPPER}} .elementor-nav-menu--main .elementor-nav-menu' => 'justify-content: {{VALUE}};',
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-nav-menu' => '{{VALUE}};',
 				],
 				'condition'            => [ 'layout!' => 'dropdown' ],
 			],
