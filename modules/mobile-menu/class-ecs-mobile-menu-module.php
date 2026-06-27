@@ -43,6 +43,23 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 			10,
 			2
 		);
+
+		// Restore the native layout prefix class removed by upgrade_layout().
+		// Elementor Pro CSS targets elementor-nav-menu--layout-{value} for pointer
+		// animations, frame/underline positioning, and dropdown behaviour. Without it,
+		// pointer effects break and a ghost frame appears shifted on hover.
+		add_action(
+			'elementor/frontend/widget/before_render',
+			[ $this, 'restore_native_layout_class' ]
+		);
+	}
+
+	public function restore_native_layout_class( \Elementor\Element_Base $widget ): void {
+		if ( $widget->get_name() !== 'nav-menu' ) {
+			return;
+		}
+		$layout = $widget->get_settings_for_display( 'layout' ) ?: 'horizontal';
+		$widget->add_render_attribute( '_wrapper', 'class', 'elementor-nav-menu--layout-' . $layout );
 	}
 
 	/**

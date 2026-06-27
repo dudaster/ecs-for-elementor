@@ -50,6 +50,96 @@
 			.replace( /"/g, '&quot;' );
 	}
 
+	// ── TSV conversion ────────────────────────────────────────────────────────
+
+	function tsvCell( s ) {
+		s = String( s );
+		if ( s.indexOf( '\t' ) !== -1 || s.indexOf( '\n' ) !== -1 || s.indexOf( '"' ) !== -1 ) {
+			return '"' + s.replace( /"/g, '""' ) + '"';
+		}
+		return s;
+	}
+
+	function jsonToTsv( data ) {
+		if ( ! Array.isArray( data ) || ! data.length ) { return ''; }
+
+		var keys = [];
+		data.forEach( function ( row ) {
+			if ( row && typeof row === 'object' ) {
+				Object.keys( row ).forEach( function ( k ) {
+					if ( keys.indexOf( k ) === -1 ) { keys.push( k ); }
+				} );
+			}
+		} );
+
+		var lines = [ keys.map( tsvCell ).join( '\t' ) ];
+		data.forEach( function ( row ) {
+			lines.push( keys.map( function ( k ) {
+				var v = row[ k ];
+				if ( v === undefined || v === null ) { return ''; }
+				if ( typeof v === 'object' ) { return tsvCell( JSON.stringify( v ) ); }
+				return tsvCell( String( v ) );
+			} ).join( '\t' ) );
+		} );
+		return lines.join( '\n' );
+	}
+
+	function detectDelimiter( text ) {
+		var firstLine = text.split( '\n' )[ 0 ] || '';
+		var tabs      = ( firstLine.match( /\t/g ) || [] ).length;
+		var commas    = ( firstLine.match( /,/g )  || [] ).length;
+		return tabs >= commas ? '\t' : ',';
+	}
+
+	function parseDsvLine( line, sep ) {
+		var cells = [];
+		var i = 0;
+		while ( i <= line.length ) {
+			if ( i === line.length ) { cells.push( '' ); break; }
+			if ( line[ i ] === '"' ) {
+				var cell = '';
+				i++;
+				while ( i < line.length ) {
+					if ( line[ i ] === '"' && line[ i + 1 ] === '"' ) { cell += '"'; i += 2; }
+					else if ( line[ i ] === '"' ) { i++; break; }
+					else { cell += line[ i++ ]; }
+				}
+				cells.push( cell );
+				if ( line[ i ] === sep ) { i++; } else { break; }
+			} else {
+				var end = line.indexOf( sep, i );
+				if ( end === -1 ) { cells.push( line.slice( i ) ); break; }
+				cells.push( line.slice( i, end ) );
+				i = end + 1;
+			}
+		}
+		return cells;
+	}
+
+	function tsvToJson( tsv ) {
+		var sep   = detectDelimiter( tsv );
+		var lines = tsv.split( '\n' );
+		var rows  = lines.map( function ( l ) { return parseDsvLine( l, sep ); } );
+
+		if ( rows.length < 2 ) { return []; }
+
+		var headers = rows[ 0 ];
+		return rows.slice( 1 ).filter( function ( cells ) {
+			return cells.some( function ( c ) { return c.trim() !== ''; } );
+		} ).map( function ( cells ) {
+			var obj = {};
+			headers.forEach( function ( h, idx ) {
+				if ( ! h ) { return; }
+				var v = cells[ idx ] !== undefined ? cells[ idx ] : '';
+				if ( ( v[ 0 ] === '{' || v[ 0 ] === '[' ) ) {
+					try { v = JSON.parse( v ); } catch ( _ ) {}
+				}
+				obj[ h ] = v;
+			} );
+			return obj;
+		} );
+	}
+
 	// ── Tree rendering ────────────────────────────────────────────────────────
 
 	function valuePreview( val ) {
@@ -147,9 +237,15 @@
 			'    <button class="ecs-jpe-action" data-tree-action="collapse">Collapse All</button>',
 			'  </div>',
 			'  <div class="ecs-jpe-tree" style="display:none"></div>',
+			'  <div class="ecs-jpe-sheet-hint" style="display:none">',
+			'    Paste directly from Excel or Google Sheets (TSV or CSV — auto-detected). First row = field names.',
+			'    Complex values (links, images) appear as JSON and are preserved on import.',
+			'  </div>',
+			'  <textarea class="ecs-jpe-textarea ecs-jpe-sheet-textarea" spellcheck="false" style="display:none"></textarea>',
 			'  <div class="ecs-jpe-error"></div>',
 			'  <div class="ecs-jpe-toolbar">',
 			'    <button class="ecs-jpe-action" data-action="tree" id="ecs-jpe-tree-btn">Accessibility</button>',
+			'    <button class="ecs-jpe-action" data-action="sheet">Spreadsheet</button>',
 			'    <button class="ecs-jpe-action" data-action="format">Format</button>',
 			'    <button class="ecs-jpe-action" data-action="copy">Copy</button>',
 			'    <button class="ecs-jpe-action" data-action="reset">Reset</button>',
@@ -196,15 +292,18 @@
 	}
 
 	function openModal( controlKey, widgetLabel, currentVal, container ) {
-		var modal       = getOrCreateModal();
-		var textarea    = modal.querySelector( '.ecs-jpe-textarea' );
-		var treeEl      = modal.querySelector( '.ecs-jpe-tree' );
-		var treeToolbar = modal.querySelector( '.ecs-jpe-tree-toolbar' );
-		var metaEl      = modal.querySelector( '.ecs-jpe-meta' );
-		var errorEl     = modal.querySelector( '.ecs-jpe-error' );
+		var modal        = getOrCreateModal();
+		var textarea     = modal.querySelector( '.ecs-jpe-textarea:not(.ecs-jpe-sheet-textarea)' );
+		var sheetTextarea = modal.querySelector( '.ecs-jpe-sheet-textarea' );
+		var sheetHint    = modal.querySelector( '.ecs-jpe-sheet-hint' );
+		var treeEl       = modal.querySelector( '.ecs-jpe-tree' );
+		var treeToolbar  = modal.querySelector( '.ecs-jpe-tree-toolbar' );
+		var metaEl       = modal.querySelector( '.ecs-jpe-meta' );
+		var errorEl      = modal.querySelector( '.ecs-jpe-error' );
 
 		var originalJson = JSON.stringify( currentVal, null, 2 );
 		var isTreeMode   = false;
+		var isSheetMode  = false;
 
 		textarea.value      = originalJson;
 		metaEl.textContent  = widgetLabel + '  ·  ' + controlKey + '  ·  ' + currentVal.length + ' item(s)';
@@ -214,8 +313,13 @@
 		textarea.style.display      = '';
 		treeEl.style.display        = 'none';
 		treeToolbar.style.display   = 'none';
-		var treeBtn = modal.querySelector( '[data-action="tree"]' );
-		if ( treeBtn ) { treeBtn.innerHTML = ACCESSIBILITY_SVG + 'Accessibility'; treeBtn.classList.remove( 'ecs-jpe-action--active' ); }
+		sheetHint.style.display     = 'none';
+		sheetTextarea.style.display = 'none';
+
+		var treeBtn  = modal.querySelector( '[data-action="tree"]' );
+		var sheetBtn = modal.querySelector( '[data-action="sheet"]' );
+		if ( treeBtn )  { treeBtn.innerHTML = ACCESSIBILITY_SVG + 'Accessibility'; treeBtn.classList.remove( 'ecs-jpe-action--active' ); }
+		if ( sheetBtn ) { sheetBtn.classList.remove( 'ecs-jpe-action--active' ); }
 
 		modal.classList.add( 'ecs-jpe-open' );
 		textarea.focus();
@@ -229,22 +333,54 @@
 			var parsed;
 			try { parsed = JSON.parse( textarea.value ); } catch ( e ) { setError( 'Invalid JSON — fix before switching to Tree view.' ); return; }
 			isTreeMode                  = true;
+			isSheetMode                 = false;
 			treeEl.innerHTML            = renderTree( parsed );
 			textarea.style.display      = 'none';
 			treeEl.style.display        = '';
 			treeToolbar.style.display   = '';
+			sheetHint.style.display     = 'none';
+			sheetTextarea.style.display = 'none';
 			treeBtn.innerHTML           = '{ } Raw JSON';
 			treeBtn.classList.add( 'ecs-jpe-action--active' );
+			sheetBtn.classList.remove( 'ecs-jpe-action--active' );
+			setError( '' );
+		}
+
+		function switchToSheet() {
+			var parsed;
+			try { parsed = JSON.parse( textarea.value ); } catch ( e ) { parsed = currentVal; }
+			if ( ! Array.isArray( parsed ) ) { parsed = []; }
+			isSheetMode                 = true;
+			isTreeMode                  = false;
+			sheetTextarea.value         = jsonToTsv( parsed );
+			textarea.style.display      = 'none';
+			treeEl.style.display        = 'none';
+			treeToolbar.style.display   = 'none';
+			sheetHint.style.display     = '';
+			sheetTextarea.style.display = '';
+			sheetBtn.classList.add( 'ecs-jpe-action--active' );
+			treeBtn.innerHTML           = ACCESSIBILITY_SVG + 'Accessibility';
+			treeBtn.classList.remove( 'ecs-jpe-action--active' );
+			sheetTextarea.focus();
 			setError( '' );
 		}
 
 		function switchToRaw() {
+			if ( isSheetMode ) {
+				// Sync TSV back to JSON textarea so the user doesn't lose edits.
+				var parsed = tsvToJson( sheetTextarea.value );
+				textarea.value = JSON.stringify( parsed, null, 2 );
+			}
 			isTreeMode                  = false;
+			isSheetMode                 = false;
 			textarea.style.display      = '';
 			treeEl.style.display        = 'none';
 			treeToolbar.style.display   = 'none';
+			sheetHint.style.display     = 'none';
+			sheetTextarea.style.display = 'none';
 			treeBtn.innerHTML           = ACCESSIBILITY_SVG + 'Accessibility';
 			treeBtn.classList.remove( 'ecs-jpe-action--active' );
+			sheetBtn.classList.remove( 'ecs-jpe-action--active' );
 		}
 
 		function handleAction( e ) {
@@ -252,11 +388,19 @@
 			if ( ! action ) { return; }
 
 			if ( action === 'tree' ) {
+				if ( isSheetMode ) { switchToRaw(); return; }
 				isTreeMode ? switchToRaw() : switchToTree();
 				return;
 			}
 
+			if ( action === 'sheet' ) {
+				if ( isTreeMode ) { switchToRaw(); }
+				isSheetMode ? switchToRaw() : switchToSheet();
+				return;
+			}
+
 			if ( action === 'format' ) {
+				if ( isSheetMode ) { return; }
 				try {
 					var parsed = JSON.parse( textarea.value );
 					textarea.value = JSON.stringify( parsed, null, 2 );
@@ -268,29 +412,55 @@
 			}
 
 			if ( action === 'copy' ) {
-				var text = textarea.value;
+				var text = isSheetMode ? sheetTextarea.value : textarea.value;
 				if ( navigator.clipboard && navigator.clipboard.writeText ) {
 					navigator.clipboard.writeText( text )
 						.then( function () { flashButton( e.target, 'Copied!' ); } )
-						.catch( function () { legacyCopy( textarea ); } );
+						.catch( function () { legacyCopy( isSheetMode ? sheetTextarea : textarea ); } );
 				} else {
-					legacyCopy( textarea );
+					legacyCopy( isSheetMode ? sheetTextarea : textarea );
 				}
 				return;
 			}
 
-			if ( action === 'reset' ) { textarea.value = originalJson; setError( '' ); if ( isTreeMode ) switchToTree(); return; }
-			if ( action === 'clear' ) { textarea.value = '[]'; setError( '' ); if ( isTreeMode ) switchToTree(); return; }
+			if ( action === 'reset' ) {
+				textarea.value = originalJson;
+				setError( '' );
+				if ( isTreeMode )  { switchToTree();  return; }
+				if ( isSheetMode ) { switchToSheet(); return; }
+				return;
+			}
+
+			if ( action === 'clear' ) {
+				if ( isSheetMode ) {
+					sheetTextarea.value = '';
+				} else {
+					textarea.value = '[]';
+				}
+				setError( '' );
+				if ( isTreeMode ) { switchToTree(); }
+				return;
+			}
 
 			if ( action === 'apply' ) {
 				var raw;
-				try {
-					raw = JSON.parse( textarea.value );
-				} catch ( jsonErr ) {
-					if ( isTreeMode ) switchToRaw();
-					setError( 'Invalid JSON: ' + jsonErr.message );
-					return;
+
+				if ( isSheetMode ) {
+					raw = tsvToJson( sheetTextarea.value );
+					if ( ! raw.length ) {
+						setError( 'No data found. Make sure the first row contains column names and at least one data row follows.' );
+						return;
+					}
+				} else {
+					try {
+						raw = JSON.parse( textarea.value );
+					} catch ( jsonErr ) {
+						if ( isTreeMode ) { switchToRaw(); }
+						setError( 'Invalid JSON: ' + jsonErr.message );
+						return;
+					}
 				}
+
 				var validationError = validate( raw );
 				if ( validationError ) { setError( validationError ); return; }
 				applyToContainer( container, controlKey, raw );
@@ -303,8 +473,9 @@
 		toolbar.parentNode.replaceChild( newToolbar, toolbar );
 		newToolbar.addEventListener( 'click', handleAction );
 
-		// Re-bind tree button reference after toolbar replacement.
-		treeBtn = modal.querySelector( '[data-action="tree"]' );
+		// Re-bind button references after toolbar replacement.
+		treeBtn  = modal.querySelector( '[data-action="tree"]' );
+		sheetBtn = modal.querySelector( '[data-action="sheet"]' );
 
 		modal.querySelector( '.ecs-jpe-close' ).onclick    = function () { closeModal( modal ); };
 		modal.querySelector( '.ecs-jpe-backdrop' ).onclick = function () { closeModal( modal ); };

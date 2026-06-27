@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 4.3.4
+Stable tag: 4.3.5
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,10 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.3.5 =
+* Fixed: WordPress Menu -- pointer animations (underline, frame, background) and dropdown behaviour are now restored when the Mobile Menu module is active. Previously, the module's responsive layout control replaced the native Elementor layout class, causing all pointer effects to stop working and a ghost frame to appear on hover.
+* Added: JSON PowerEdit -- Spreadsheet mode. Click "Spreadsheet" in the JSON PowerEdit toolbar to see repeater data as a tab-separated table. Paste directly from Excel or Google Sheets (TSV and CSV are both supported, auto-detected). Complex field values (links, images) are shown as JSON and round-trip cleanly on import.
 
 = 4.3.4 =
 * Fixed: WordPress Menu — Stretch alignment (Justify) no longer loses equal item widths when the Mobile Menu module is active. Navigation items now grow to fill the full header width again, matching the original Elementor behaviour.
