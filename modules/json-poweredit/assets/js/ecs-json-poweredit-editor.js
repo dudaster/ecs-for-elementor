@@ -116,14 +116,31 @@
 		return cells;
 	}
 
-	function tsvToJson( tsv ) {
+	function buildFieldSchema( headers, schemaRows ) {
+		var schema = {};
+		if ( ! schemaRows || ! schemaRows.length ) { return schema; }
+		headers.forEach( function ( h ) {
+			for ( var i = 0; i < schemaRows.length; i++ ) {
+				var v = schemaRows[ i ][ h ];
+				if ( v !== undefined && v !== null && typeof v === 'object' && ! Array.isArray( v ) ) {
+					schema[ h ] = v;
+					break;
+				}
+			}
+		} );
+		return schema;
+	}
+
+	function tsvToJson( tsv, schemaRows ) {
 		var sep   = detectDelimiter( tsv );
 		var lines = tsv.split( '\n' );
 		var rows  = lines.map( function ( l ) { return parseDsvLine( l, sep ); } );
 
 		if ( rows.length < 2 ) { return []; }
 
-		var headers = rows[ 0 ];
+		var headers  = rows[ 0 ];
+		var schema   = buildFieldSchema( headers, schemaRows );
+
 		return rows.slice( 1 ).filter( function ( cells ) {
 			return cells.some( function ( c ) { return c.trim() !== ''; } );
 		} ).map( function ( cells ) {
@@ -131,9 +148,23 @@
 			headers.forEach( function ( h, idx ) {
 				if ( ! h ) { return; }
 				var v = cells[ idx ] !== undefined ? cells[ idx ] : '';
-				if ( ( v[ 0 ] === '{' || v[ 0 ] === '[' ) ) {
-					try { v = JSON.parse( v ); } catch ( _ ) {}
+
+				// Try JSON parse for object/array-looking values first.
+				if ( v && ( v[ 0 ] === '{' || v[ 0 ] === '[' ) ) {
+					try { obj[ h ] = JSON.parse( v ); return; } catch ( _ ) {}
 				}
+
+				// URL-type field: if the original value was an object with a "url"
+				// key and the cell is a plain string, wrap it automatically.
+				var tmpl = schema[ h ];
+				if ( tmpl && 'url' in tmpl ) {
+					var merged = {};
+					Object.keys( tmpl ).forEach( function ( k ) { merged[ k ] = tmpl[ k ]; } );
+					merged.url = v;
+					obj[ h ] = merged;
+					return;
+				}
+
 				obj[ h ] = v;
 			} );
 			return obj;
@@ -446,7 +477,7 @@
 				var raw;
 
 				if ( isSheetMode ) {
-					raw = tsvToJson( sheetTextarea.value );
+					raw = tsvToJson( sheetTextarea.value, currentVal );
 					if ( ! raw.length ) {
 						setError( 'No data found. Make sure the first row contains column names and at least one data row follows.' );
 						return;
