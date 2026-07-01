@@ -5,11 +5,38 @@
 ( function ( $ ) {
 	'use strict';
 
-	const cfg     = window.ecsDrb || {};
-	const AJAX    = cfg.ajaxUrl || '';
-	const NONCE   = cfg.nonce   || '';
-	const SOURCES = cfg.sources || [];
-	const L10N    = cfg.l10n    || {};
+	const cfg           = window.ecsDrb || {};
+	const AJAX          = cfg.ajaxUrl      || '';
+	const NONCE         = cfg.nonce        || '';
+	const SOURCES       = cfg.sources      || [];
+	const L10N          = cfg.l10n         || {};
+	const BINDING_INDEX = cfg.bindingIndex || {};
+
+	// element_id:control_key keys that are bound in the current document.
+	const BOUND_KEYS = new Set();
+
+	function initBoundKeys() {
+		try {
+			const docId = String( window.elementor?.config?.document?.id || '' );
+			if ( ! docId ) return;
+			Object.entries( BINDING_INDEX ).forEach( ( [ key, dId ] ) => {
+				if ( String( dId ) === docId ) BOUND_KEYS.add( key );
+			} );
+		} catch ( _ ) {}
+	}
+
+	function injectBtnLabel( isBound ) {
+		const base = '&#10022; ' + ( L10N.btnLabel || 'Dynamic Populate' );
+		return isBound ? base + ' <span class="ecs-drb-bound-tag">Bound</span>' : base;
+	}
+
+	function updateInjectBtn( controlKey, isBound ) {
+		const btn = document.querySelector( `.elementor-control-${ controlKey } .ecs-drb-inject-btn` );
+		if ( ! btn ) return;
+		btn.innerHTML = injectBtnLabel( isBound );
+		btn.classList.toggle( 'ecs-drb-inject-btn--bound', isBound );
+		btn.title = isBound ? 'Bound — data is generated at runtime on every page load' : '';
+	}
 
 	// ── State ─────────────────────────────────────────────────────────────────
 
@@ -1340,6 +1367,9 @@
 			config     : JSON.stringify( config ),
 		} ).then( () => {
 			state.isBound = true;
+			const bKey = state.container?.model?.get( 'id' ) + ':' + state.controlKey;
+			BOUND_KEYS.add( bKey );
+			updateInjectBtn( state.controlKey, true );
 			setActiveTab( 'binding' );
 			setStatus( 'Binding saved. Data will be generated at runtime.' );
 		} ).catch( err => setStatus( err, true ) );
@@ -1357,6 +1387,9 @@
 		} ).then( () => {
 			state.isBound       = false;
 			state.bindingConfig = null;
+			const bKey = state.container?.model?.get( 'id' ) + ':' + state.controlKey;
+			BOUND_KEYS.delete( bKey );
+			updateInjectBtn( state.controlKey, false );
 			setActiveTab( 'binding' );
 			setStatus( 'Binding removed.' );
 		} ).catch( err => setStatus( err, true ) );
@@ -1373,11 +1406,14 @@
 		if ( ! match ) return;
 
 		const controlKey = match[1];
+		const elementId  = getActiveContainer()?.model?.get( 'id' ) || '';
+		const isBound    = elementId && BOUND_KEYS.has( elementId + ':' + controlKey );
 
 		const btn = document.createElement( 'button' );
 		btn.type      = 'button';
-		btn.className = 'ecs-drb-inject-btn';
-		btn.innerHTML = '&#10022; ' + ( L10N.btnLabel || 'Dynamic Populate' );
+		btn.className = 'ecs-drb-inject-btn' + ( isBound ? ' ecs-drb-inject-btn--bound' : '' );
+		btn.innerHTML = injectBtnLabel( isBound );
+		if ( isBound ) { btn.title = 'Bound — data is generated at runtime on every page load'; }
 
 		btn.addEventListener( 'click', () => {
 			const container = getActiveContainer();
@@ -1405,6 +1441,8 @@
 
 	function init() {
 		if ( ! window.elementor ) return;
+
+		initBoundKeys();
 
 		const observer = new MutationObserver( () => scanPanel() );
 		const panel = document.getElementById( 'elementor-panel' );

@@ -54,6 +54,31 @@
 	background : var(--e-a-bg-active);
 }
 
+.ecs-drb-inject-btn--bound {
+	background   : #f0fdf4;
+	border-color : #86efac;
+	color        : #166534;
+}
+
+.ecs-drb-inject-btn--bound:hover {
+	background   : #dcfce7;
+	border-color : #4ade80;
+}
+
+.ecs-drb-bound-tag {
+	display        : inline-block;
+	background     : #16a34a;
+	color          : #fff;
+	font-size      : 9px;
+	font-weight    : 700;
+	letter-spacing : 0.4px;
+	padding        : 1px 5px;
+	border-radius  : 3px;
+	margin-left    : 5px;
+	vertical-align : middle;
+	text-transform : uppercase;
+}
+
 /* ── Modal overlay ───────────────────────────────────────────────────────── */
 
 #ecs-drb-modal {

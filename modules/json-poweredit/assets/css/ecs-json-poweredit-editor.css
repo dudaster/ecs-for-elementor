@@ -251,6 +251,183 @@
 	line-height : 1.5;
 }
 
+/* ── Spreadsheet table view ─────────────────────────────────────────────── */
+
+.ecs-jpe-sheet {
+	display        : flex;
+	flex-direction : column;
+	flex           : 1;
+	min-height     : 0;
+}
+
+.ecs-jpe-sheet-scroll {
+	flex       : 1;
+	overflow   : auto;
+	min-height : 0;
+}
+
+.ecs-jpe-sheet-table {
+	border-collapse : collapse;
+	min-width       : 100%;
+	font-family     : 'Courier New', Courier, monospace;
+	font-size       : 12.5px;
+	line-height     : 1.5;
+}
+
+.ecs-jpe-sheet-table th,
+.ecs-jpe-sheet-table td {
+	border     : 1px solid var(--jpe-border);
+	padding    : 0;
+	white-space: nowrap;
+}
+
+.ecs-jpe-sheet-table thead th {
+	background : var(--e-a-bg-hover, #f5f5f5);
+	position   : sticky;
+	top        : 0;
+	z-index    : 1;
+}
+
+.ecs-jpe-sheet-rn {
+	background     : var(--jpe-surface);
+	color          : var(--jpe-text-ter);
+	font-size      : 11px;
+	text-align     : center;
+	width          : 36px;
+	min-width      : 36px;
+	user-select    : none;
+	vertical-align : middle;
+	padding        : 0 4px;
+}
+
+.ecs-jpe-cell {
+	display    : block;
+	padding    : 3px 8px;
+	min-width  : 90px;
+	min-height : 24px;
+	outline    : none;
+	color      : var(--jpe-text);
+	white-space: pre;
+}
+
+.ecs-jpe-cell:focus {
+	background : #fffde7;
+	box-shadow : inset 0 0 0 2px #f59e0b;
+}
+
+.ecs-jpe-sheet-table thead .ecs-jpe-cell {
+	font-weight : 600;
+	color       : #1d4ed8;
+}
+
+.ecs-jpe-sheet-add-row {
+	flex-shrink : 0;
+	margin      : 8px 16px;
+	align-self  : flex-start;
+}
+
+/* ── Row ⋮ handle ───────────────────────────────────────────────────────── */
+
+.ecs-jpe-rn-btn {
+	display         : flex;
+	align-items     : center;
+	justify-content : center;
+	width           : 100%;
+	min-height      : 22px;
+	background      : none;
+	border          : none;
+	padding         : 0;
+	cursor          : grab;
+	font-size       : 0;
+	line-height     : 1;
+	transition      : color .1s;
+	user-select     : none;
+	position        : relative;
+}
+
+.ecs-jpe-rn-btn::before {
+	content   : attr(data-n);
+	font-size : 11px;
+	color     : var(--jpe-text-ter);
+}
+
+tr:hover .ecs-jpe-rn-btn {
+	font-size : 16px;
+	color     : var(--jpe-border);
+}
+
+tr:hover .ecs-jpe-rn-btn::before {
+	display : none;
+}
+
+tr:hover .ecs-jpe-rn-btn:hover {
+	color : var(--jpe-text-ter);
+}
+
+/* ── Row context menu ────────────────────────────────────────────────────── */
+
+.ecs-jpe-row-menu {
+	display       : none;
+	position      : fixed;
+	z-index       : 1000001;
+	background    : var(--jpe-bg);
+	border        : 1px solid var(--jpe-border);
+	border-radius : 4px;
+	box-shadow    : 0 4px 16px rgba(0,0,0,.15);
+	min-width     : 175px;
+	padding       : 4px 0;
+	font-family   : Roboto, Arial, Helvetica, sans-serif;
+	font-size     : 12px;
+}
+
+.ecs-jpe-row-menu--open {
+	display : block;
+}
+
+.ecs-jpe-row-menu button {
+	display     : block;
+	width       : 100%;
+	padding     : 7px 14px;
+	background  : none;
+	border      : none;
+	text-align  : left;
+	cursor      : pointer;
+	color       : var(--jpe-text);
+	font-family : inherit;
+	font-size   : inherit;
+	transition  : background .1s;
+	box-sizing  : border-box;
+}
+
+.ecs-jpe-row-menu button:hover {
+	background : var(--jpe-surface);
+}
+
+.ecs-jpe-row-menu-sep {
+	border     : none;
+	border-top : 1px solid var(--jpe-border);
+	margin     : 4px 0;
+}
+
+.ecs-jpe-row-menu-delete {
+	color : #dc2626 !important;
+}
+
+.ecs-jpe-row-menu-delete:hover {
+	background : #fef2f2 !important;
+}
+
+/* ── Drag-and-drop visual states ─────────────────────────────────────────── */
+
+.ecs-jpe-dragging {
+	opacity : 0.35;
+}
+
+.ecs-jpe-drag-over {
+	outline        : 2px solid #f59e0b;
+	outline-offset : -1px;
+}
+
 /* ── Tree toolbar ───────────────────────────────────────────────────────── */
 
 .ecs-jpe-tree-toolbar {

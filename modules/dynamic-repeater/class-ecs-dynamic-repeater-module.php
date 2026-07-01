@@ -106,10 +106,11 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		);
 
 		wp_localize_script( 'ecs-drb-editor', 'ecsDrb', [
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'ecs_drb' ),
-			'sources' => ECS_DRB_Sources::instance()->get_list_for_js(),
-			'l10n'    => [
+			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+			'nonce'        => wp_create_nonce( 'ecs_drb' ),
+			'sources'      => ECS_DRB_Sources::instance()->get_list_for_js(),
+			'bindingIndex' => (object) get_option( self::OPTION_BINDING_INDEX, [] ),
+			'l10n'         => [
 				'title'          => __( 'Dynamic Repeater Builder', 'ele-custom-skin' ),
 				'btnLabel'       => __( 'Dynamic Populate', 'ele-custom-skin' ),
 				'tabSource'      => __( 'Source', 'ele-custom-skin' ),

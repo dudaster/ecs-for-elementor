@@ -10,6 +10,10 @@
 	var BTN_CLASS     = 'ecs-jpe-btn';
 	var BTN_DONE_ATTR = 'data-ecs-jpe';
 
+	// Sheet row drag-and-drop + context menu state
+	var dragSrcRow    = null;
+	var menuTargetRow = null;
+
 	// ── Helpers ───────────────────────────────────────────────────────────────
 
 	function getActiveContainer() {
@@ -50,39 +54,7 @@
 			.replace( /"/g, '&quot;' );
 	}
 
-	// ── TSV conversion ────────────────────────────────────────────────────────
-
-	function tsvCell( s ) {
-		s = String( s );
-		if ( s.indexOf( '\t' ) !== -1 || s.indexOf( '\n' ) !== -1 || s.indexOf( '"' ) !== -1 ) {
-			return '"' + s.replace( /"/g, '""' ) + '"';
-		}
-		return s;
-	}
-
-	function jsonToTsv( data ) {
-		if ( ! Array.isArray( data ) || ! data.length ) { return ''; }
-
-		var keys = [];
-		data.forEach( function ( row ) {
-			if ( row && typeof row === 'object' ) {
-				Object.keys( row ).forEach( function ( k ) {
-					if ( keys.indexOf( k ) === -1 ) { keys.push( k ); }
-				} );
-			}
-		} );
-
-		var lines = [ keys.map( tsvCell ).join( '\t' ) ];
-		data.forEach( function ( row ) {
-			lines.push( keys.map( function ( k ) {
-				var v = row[ k ];
-				if ( v === undefined || v === null ) { return ''; }
-				if ( typeof v === 'object' ) { return tsvCell( JSON.stringify( v ) ); }
-				return tsvCell( String( v ) );
-			} ).join( '\t' ) );
-		} );
-		return lines.join( '\n' );
-	}
+	// ── TSV utilities ─────────────────────────────────────────────────────────
 
 	function detectDelimiter( text ) {
 		var firstLine = text.split( '\n' )[ 0 ] || '';
@@ -116,6 +88,27 @@
 		return cells;
 	}
 
+	// Parse DSV text → array of row objects (plain strings, no schema conversion).
+	function parseDsvToRows( dsv ) {
+		var sep   = detectDelimiter( dsv );
+		var lines = dsv.split( '\n' );
+		var rows  = lines.map( function ( l ) { return parseDsvLine( l, sep ); } );
+		if ( rows.length < 2 ) { return { headers: rows[ 0 ] || [], data: [] }; }
+		var headers = rows[ 0 ];
+		var data = rows.slice( 1 ).filter( function ( cells ) {
+			return cells.some( function ( c ) { return c.trim() !== ''; } );
+		} ).map( function ( cells ) {
+			var obj = {};
+			headers.forEach( function ( h, idx ) {
+				if ( h ) { obj[ h ] = cells[ idx ] !== undefined ? cells[ idx ] : ''; }
+			} );
+			return obj;
+		} );
+		return { headers: headers, data: data };
+	}
+
+	// ── Schema-aware conversion ───────────────────────────────────────────────
+
 	function buildFieldSchema( headers, schemaRows ) {
 		var schema = {};
 		if ( ! schemaRows || ! schemaRows.length ) { return schema; }
@@ -131,43 +124,448 @@
 		return schema;
 	}
 
-	function tsvToJson( tsv, schemaRows ) {
-		var sep   = detectDelimiter( tsv );
-		var lines = tsv.split( '\n' );
-		var rows  = lines.map( function ( l ) { return parseDsvLine( l, sep ); } );
+	// Convert raw string rows → Elementor-ready objects:
+	//  - JSON-looking strings → JSON.parse
+	//  - Plain string in a URL-type field  → {url: value, ...rest of template}
+	//  - Plain string in an icon-type field → {value: value, library: tmpl.library}
+	function applySchemaToRows( rows, schemaRows ) {
+		if ( ! rows.length ) { return rows; }
+		var headers = Object.keys( rows[ 0 ] );
+		var schema  = buildFieldSchema( headers, schemaRows );
 
-		if ( rows.length < 2 ) { return []; }
-
-		var headers  = rows[ 0 ];
-		var schema   = buildFieldSchema( headers, schemaRows );
-
-		return rows.slice( 1 ).filter( function ( cells ) {
-			return cells.some( function ( c ) { return c.trim() !== ''; } );
-		} ).map( function ( cells ) {
+		return rows.map( function ( row ) {
 			var obj = {};
-			headers.forEach( function ( h, idx ) {
-				if ( ! h ) { return; }
-				var v = cells[ idx ] !== undefined ? cells[ idx ] : '';
+			headers.forEach( function ( h ) {
+				var v = row[ h ];
 
-				// Try JSON parse for object/array-looking values first.
-				if ( v && ( v[ 0 ] === '{' || v[ 0 ] === '[' ) ) {
+				if ( v && typeof v === 'string' && ( v[ 0 ] === '{' || v[ 0 ] === '[' ) ) {
 					try { obj[ h ] = JSON.parse( v ); return; } catch ( _ ) {}
 				}
 
-				// URL-type field: if the original value was an object with a "url"
-				// key and the cell is a plain string, wrap it automatically.
 				var tmpl = schema[ h ];
-				if ( tmpl && 'url' in tmpl ) {
+				if ( tmpl ) {
 					var merged = {};
 					Object.keys( tmpl ).forEach( function ( k ) { merged[ k ] = tmpl[ k ]; } );
-					merged.url = v;
-					obj[ h ] = merged;
-					return;
+					if ( 'url' in tmpl ) {
+						merged.url = v;
+						obj[ h ] = merged;
+						return;
+					}
+					if ( 'value' in tmpl && 'library' in tmpl ) {
+						merged.value = v;
+						obj[ h ] = merged;
+						return;
+					}
 				}
 
 				obj[ h ] = v;
 			} );
 			return obj;
+		} );
+	}
+
+	// ── Sheet table helpers ───────────────────────────────────────────────────
+
+	function makeCell( text, isHeader ) {
+		var cell = document.createElement( isHeader ? 'th' : 'td' );
+		var div  = document.createElement( 'div' );
+		div.className       = 'ecs-jpe-cell';
+		div.contentEditable = 'true';
+		div.spellcheck      = false;
+		div.textContent     = text;
+		cell.appendChild( div );
+		return cell;
+	}
+
+	function makeRowNum( label ) {
+		var isHeader = ( label === '#' );
+		var cell = document.createElement( isHeader ? 'th' : 'td' );
+		cell.className = 'ecs-jpe-sheet-rn';
+		if ( isHeader ) {
+			cell.textContent = '#';
+		} else {
+			var btn = document.createElement( 'button' );
+			btn.type      = 'button';
+			btn.className = 'ecs-jpe-rn-btn';
+			btn.setAttribute( 'data-n', String( label ) );
+			btn.textContent = '⋮';
+			btn.title     = 'Row options';
+			cell.appendChild( btn );
+		}
+		return cell;
+	}
+
+	function updateRowNums( tableEl ) {
+		tableEl.querySelectorAll( 'tbody tr' ).forEach( function ( tr, i ) {
+			var btn = tr.querySelector( '.ecs-jpe-rn-btn' );
+			if ( btn ) {
+				btn.setAttribute( 'data-n', String( i + 1 ) );
+				btn.title = 'Row ' + ( i + 1 ) + ' options';
+			}
+		} );
+	}
+
+	// ── Row operations ────────────────────────────────────────────────────────
+
+	function makeEmptyRowEl( refRow ) {
+		var colCount = refRow.querySelectorAll( 'td:not(.ecs-jpe-sheet-rn)' ).length;
+		var tr = document.createElement( 'tr' );
+		tr.appendChild( makeRowNum( 1 ) );
+		for ( var i = 0; i < colCount; i++ ) { tr.appendChild( makeCell( '', false ) ); }
+		return tr;
+	}
+
+	function duplicateRow( tr ) {
+		var newTr = tr.cloneNode( true );
+		tr.after( newTr );
+		bindRowDrag( newTr );
+		bindRowMenuBtn( newTr );
+		updateRowNums( tr.closest( 'table' ) );
+	}
+
+	function insertRowAbove( tr ) {
+		var newTr = makeEmptyRowEl( tr );
+		tr.before( newTr );
+		bindRowDrag( newTr );
+		bindRowMenuBtn( newTr );
+		updateRowNums( tr.closest( 'table' ) );
+	}
+
+	function insertRowBelow( tr ) {
+		var newTr = makeEmptyRowEl( tr );
+		tr.after( newTr );
+		bindRowDrag( newTr );
+		bindRowMenuBtn( newTr );
+		updateRowNums( tr.closest( 'table' ) );
+	}
+
+	function deleteRow( tr ) {
+		var tbody = tr.parentNode;
+		if ( tbody.children.length <= 1 ) {
+			tr.querySelectorAll( '.ecs-jpe-cell' ).forEach( function ( c ) { c.textContent = ''; } );
+			return;
+		}
+		tr.remove();
+		updateRowNums( tbody.closest( 'table' ) );
+	}
+
+	// ── Row context menu ─────────────────────────────────────────────────────
+
+	function getOrCreateRowMenu() {
+		var menu = document.getElementById( 'ecs-jpe-row-menu' );
+		if ( menu ) { return menu; }
+
+		menu = document.createElement( 'div' );
+		menu.id = 'ecs-jpe-row-menu';
+		menu.className = 'ecs-jpe-row-menu';
+		menu.innerHTML = [
+			'<button data-rma="duplicate">Duplicate Row</button>',
+			'<button data-rma="insert-above">Insert New Above</button>',
+			'<button data-rma="insert-below">Insert New Below</button>',
+			'<hr class="ecs-jpe-row-menu-sep">',
+			'<button data-rma="delete" class="ecs-jpe-row-menu-delete">Delete Row</button>',
+		].join( '' );
+		document.body.appendChild( menu );
+
+		menu.addEventListener( 'click', function ( e ) {
+			var btn = e.target.closest( '[data-rma]' );
+			if ( ! btn || ! menuTargetRow ) { closeRowMenu(); return; }
+			var action = btn.getAttribute( 'data-rma' );
+			var row = menuTargetRow;
+			closeRowMenu();
+			if ( action === 'duplicate' )    { duplicateRow( row ); }
+			if ( action === 'insert-above' ) { insertRowAbove( row ); }
+			if ( action === 'insert-below' ) { insertRowBelow( row ); }
+			if ( action === 'delete' )       { deleteRow( row ); }
+		} );
+
+		document.addEventListener( 'mousedown', function ( e ) {
+			if ( menu.classList.contains( 'ecs-jpe-row-menu--open' ) &&
+			     ! menu.contains( e.target ) &&
+			     ! e.target.classList.contains( 'ecs-jpe-rn-btn' ) ) {
+				closeRowMenu();
+			}
+		} );
+
+		return menu;
+	}
+
+	function openRowMenu( tr, anchorEl ) {
+		menuTargetRow = tr;
+		var menu = getOrCreateRowMenu();
+		menu.style.visibility = 'hidden';
+		menu.classList.add( 'ecs-jpe-row-menu--open' );
+		var rect    = anchorEl.getBoundingClientRect();
+		var menuH   = menu.offsetHeight;
+		var spaceB  = window.innerHeight - rect.bottom;
+		menu.style.top  = ( spaceB < menuH + 4 && rect.top > menuH + 4 )
+			? ( rect.top - menuH - 4 ) + 'px'
+			: ( rect.bottom + 4 ) + 'px';
+		menu.style.left = rect.left + 'px';
+		menu.style.visibility = '';
+	}
+
+	function closeRowMenu() {
+		var menu = document.getElementById( 'ecs-jpe-row-menu' );
+		if ( menu ) { menu.classList.remove( 'ecs-jpe-row-menu--open' ); }
+		menuTargetRow = null;
+	}
+
+	// ── Row drag-and-drop ─────────────────────────────────────────────────────
+
+	function bindRowDrag( tr ) {
+		var handle = tr.querySelector( '.ecs-jpe-rn-btn' );
+		if ( ! handle ) { return; }
+
+		handle.addEventListener( 'mousedown', function () {
+			tr.draggable = true;
+		} );
+
+		tr.addEventListener( 'dragstart', function ( e ) {
+			dragSrcRow = tr;
+			tr.classList.add( 'ecs-jpe-dragging' );
+			e.dataTransfer.effectAllowed = 'move';
+			e.dataTransfer.setData( 'text/plain', '' );
+		} );
+
+		tr.addEventListener( 'dragend', function () {
+			tr.draggable = false;
+			dragSrcRow   = null;
+			tr.classList.remove( 'ecs-jpe-dragging' );
+			var tbody = tr.parentNode;
+			if ( tbody ) {
+				tbody.querySelectorAll( '.ecs-jpe-drag-over' ).forEach( function ( r ) {
+					r.classList.remove( 'ecs-jpe-drag-over' );
+				} );
+			}
+		} );
+
+		tr.addEventListener( 'dragover', function ( e ) {
+			if ( ! dragSrcRow || dragSrcRow === tr ) { return; }
+			e.preventDefault();
+			e.dataTransfer.dropEffect = 'move';
+			tr.parentNode.querySelectorAll( '.ecs-jpe-drag-over' ).forEach( function ( r ) {
+				r.classList.remove( 'ecs-jpe-drag-over' );
+			} );
+			tr.classList.add( 'ecs-jpe-drag-over' );
+		} );
+
+		tr.addEventListener( 'dragleave', function ( e ) {
+			if ( ! tr.contains( e.relatedTarget ) ) {
+				tr.classList.remove( 'ecs-jpe-drag-over' );
+			}
+		} );
+
+		tr.addEventListener( 'drop', function ( e ) {
+			if ( ! dragSrcRow || dragSrcRow === tr ) { return; }
+			e.preventDefault();
+			var tbody  = tr.parentNode;
+			var rows   = Array.from( tbody.children );
+			var srcIdx = rows.indexOf( dragSrcRow );
+			var dstIdx = rows.indexOf( tr );
+			if ( srcIdx < dstIdx ) {
+				tbody.insertBefore( dragSrcRow, tr.nextSibling );
+			} else {
+				tbody.insertBefore( dragSrcRow, tr );
+			}
+			tr.classList.remove( 'ecs-jpe-drag-over' );
+			updateRowNums( tbody.closest( 'table' ) );
+		} );
+	}
+
+	function bindRowMenuBtn( tr ) {
+		var btn = tr.querySelector( '.ecs-jpe-rn-btn' );
+		if ( ! btn ) { return; }
+		btn.addEventListener( 'click', function ( e ) {
+			e.stopPropagation();
+			var menu = document.getElementById( 'ecs-jpe-row-menu' );
+			if ( menuTargetRow === tr && menu && menu.classList.contains( 'ecs-jpe-row-menu--open' ) ) {
+				closeRowMenu();
+			} else {
+				openRowMenu( tr, btn );
+			}
+		} );
+	}
+
+	function populateSheet( sheetEl, data ) {
+		var tableEl = sheetEl.querySelector( '.ecs-jpe-sheet-table' );
+		var thead   = tableEl.querySelector( 'thead' );
+		var tbody   = tableEl.querySelector( 'tbody' );
+		thead.innerHTML = '';
+		tbody.innerHTML = '';
+
+		var keys = [];
+		if ( Array.isArray( data ) ) {
+			data.forEach( function ( row ) {
+				if ( row && typeof row === 'object' ) {
+					Object.keys( row ).forEach( function ( k ) {
+						if ( keys.indexOf( k ) === -1 ) { keys.push( k ); }
+					} );
+				}
+			} );
+		}
+		if ( ! keys.length ) { keys = [ 'column1' ]; }
+
+		// Header row
+		var trh = document.createElement( 'tr' );
+		trh.appendChild( makeRowNum( '#' ) );
+		keys.forEach( function ( k ) { trh.appendChild( makeCell( k, true ) ); } );
+		thead.appendChild( trh );
+
+		// Data rows
+		if ( Array.isArray( data ) && data.length ) {
+			data.forEach( function ( row, i ) {
+				var tr = document.createElement( 'tr' );
+				tr.appendChild( makeRowNum( i + 1 ) );
+				keys.forEach( function ( k ) {
+					var v    = row[ k ];
+					var text = ( v === null || v === undefined ) ? '' :
+					           ( typeof v === 'object' ) ? JSON.stringify( v ) : String( v );
+					tr.appendChild( makeCell( text, false ) );
+				} );
+				tbody.appendChild( tr );
+				bindRowDrag( tr );
+				bindRowMenuBtn( tr );
+			} );
+		} else {
+			var tr = document.createElement( 'tr' );
+			tr.appendChild( makeRowNum( 1 ) );
+			keys.forEach( function () { tr.appendChild( makeCell( '', false ) ); } );
+			tbody.appendChild( tr );
+			bindRowDrag( tr );
+			bindRowMenuBtn( tr );
+		}
+	}
+
+	function readSheet( sheetEl ) {
+		var tableEl     = sheetEl.querySelector( '.ecs-jpe-sheet-table' );
+		var headerCells = tableEl.querySelectorAll( 'thead tr th:not(.ecs-jpe-sheet-rn) .ecs-jpe-cell' );
+		var headers     = Array.from( headerCells ).map( function ( c ) { return c.textContent.trim(); } );
+
+		var rows = [];
+		tableEl.querySelectorAll( 'tbody tr' ).forEach( function ( tr ) {
+			var cells = tr.querySelectorAll( 'td:not(.ecs-jpe-sheet-rn) .ecs-jpe-cell' );
+			var obj   = {};
+			headers.forEach( function ( h, i ) {
+				if ( h ) { obj[ h ] = cells[ i ] ? cells[ i ].textContent : ''; }
+			} );
+			if ( Object.keys( obj ).some( function ( k ) { return obj[ k ].trim() !== ''; } ) ) {
+				rows.push( obj );
+			}
+		} );
+		return rows;
+	}
+
+	// Fill only tbody rows, preserving existing thead columns.
+	function fillSheetRows( sheetEl, data, keys ) {
+		var tableEl = sheetEl.querySelector( '.ecs-jpe-sheet-table' );
+		var tbody   = tableEl.querySelector( 'tbody' );
+		tbody.innerHTML = '';
+
+		if ( Array.isArray( data ) && data.length ) {
+			data.forEach( function ( row, i ) {
+				var tr = document.createElement( 'tr' );
+				tr.appendChild( makeRowNum( i + 1 ) );
+				keys.forEach( function ( k ) {
+					var v    = row[ k ];
+					var text = ( v === null || v === undefined ) ? '' :
+					           ( typeof v === 'object' ) ? JSON.stringify( v ) : String( v );
+					tr.appendChild( makeCell( text, false ) );
+				} );
+				tbody.appendChild( tr );
+				bindRowDrag( tr );
+				bindRowMenuBtn( tr );
+			} );
+		} else {
+			var tr = document.createElement( 'tr' );
+			tr.appendChild( makeRowNum( 1 ) );
+			keys.forEach( function () { tr.appendChild( makeCell( '', false ) ); } );
+			tbody.appendChild( tr );
+			bindRowDrag( tr );
+			bindRowMenuBtn( tr );
+		}
+	}
+
+	function pasteIntoSheet( sheetEl, text ) {
+		// Always preserve existing columns — never overwrite headers from clipboard.
+		var existingHeaders = Array.from(
+			sheetEl.querySelectorAll( '.ecs-jpe-sheet-table thead th:not(.ecs-jpe-sheet-rn) .ecs-jpe-cell' )
+		).map( function ( c ) { return c.textContent.trim(); } );
+
+		if ( ! existingHeaders.length ) { return; }
+
+		var sep  = detectDelimiter( text );
+		var rows = text.split( '\n' )
+			.map( function ( l ) { return parseDsvLine( l.replace( /\r$/, '' ), sep ); } )
+			.filter( function ( cells ) { return cells.some( function ( c ) { return c.trim() !== ''; } ); } );
+
+		if ( ! rows.length ) { return; }
+
+		// Decide if first row is a header row: any cell matches an existing column name.
+		var firstRow         = rows[ 0 ].map( function ( c ) { return c.trim(); } );
+		var hasHeaderRow     = firstRow.some( function ( c ) { return existingHeaders.indexOf( c ) !== -1; } );
+		var pasteHeaders     = hasHeaderRow ? firstRow : existingHeaders;
+		var dataRows         = hasHeaderRow ? rows.slice( 1 ) : rows;
+
+		// Map each clipboard row to existing column keys.
+		var data = dataRows.map( function ( cells ) {
+			var obj = {};
+			existingHeaders.forEach( function ( h, posIdx ) {
+				var namedIdx = pasteHeaders.indexOf( h );
+				var val = namedIdx !== -1 ? ( cells[ namedIdx ] || '' ) :
+				          ( cells[ posIdx ] !== undefined ? cells[ posIdx ] : '' );
+				obj[ h ] = val;
+			} );
+			return obj;
+		} );
+
+		fillSheetRows( sheetEl, data, existingHeaders );
+	}
+
+	function bindSheetEvents( sheetEl ) {
+		var tableEl = sheetEl.querySelector( '.ecs-jpe-sheet-table' );
+
+		// Paste anywhere on the table: fill from clipboard TSV/CSV
+		tableEl.addEventListener( 'paste', function ( e ) {
+			e.preventDefault();
+			var text = ( e.clipboardData || window.clipboardData ).getData( 'text/plain' );
+			pasteIntoSheet( sheetEl, text );
+		} );
+
+		// Tab key: move between cells
+		tableEl.addEventListener( 'keydown', function ( e ) {
+			if ( e.key !== 'Tab' ) { return; }
+			e.preventDefault();
+			var cells = Array.from( tableEl.querySelectorAll( '.ecs-jpe-cell' ) );
+			var idx   = cells.indexOf( document.activeElement );
+			if ( idx === -1 ) { return; }
+			var next = cells[ e.shiftKey ? idx - 1 : idx + 1 ];
+			if ( next ) {
+				next.focus();
+				// Move cursor to end
+				var range = document.createRange();
+				range.selectNodeContents( next );
+				range.collapse( false );
+				var sel = window.getSelection();
+				sel.removeAllRanges();
+				sel.addRange( range );
+			}
+		} );
+
+		// Add row button
+		sheetEl.querySelector( '.ecs-jpe-sheet-add-row' ).addEventListener( 'click', function () {
+			var thead    = tableEl.querySelector( 'thead tr' );
+			var colCount = thead.querySelectorAll( 'th:not(.ecs-jpe-sheet-rn)' ).length;
+			var tbody    = tableEl.querySelector( 'tbody' );
+			var tr = document.createElement( 'tr' );
+			tr.appendChild( makeRowNum( 1 ) );
+			for ( var i = 0; i < colCount; i++ ) {
+				tr.appendChild( makeCell( '', false ) );
+			}
+			tbody.appendChild( tr );
+			bindRowDrag( tr );
+			bindRowMenuBtn( tr );
+			updateRowNums( tableEl );
 		} );
 	}
 
@@ -268,11 +666,16 @@
 			'    <button class="ecs-jpe-action" data-tree-action="collapse">Collapse All</button>',
 			'  </div>',
 			'  <div class="ecs-jpe-tree" style="display:none"></div>',
-			'  <div class="ecs-jpe-sheet-hint" style="display:none">',
-			'    Paste directly from Excel or Google Sheets (TSV or CSV — auto-detected). First row = field names.',
-			'    Complex values (links, images) appear as JSON and are preserved on import.',
+			'  <div class="ecs-jpe-sheet" style="display:none">',
+			'    <div class="ecs-jpe-sheet-hint">',
+			'      Paste from Excel or Google Sheets (Ctrl+V anywhere on the table).',
+			'      First row = field names. URLs, images, and icons auto-convert from plain text.',
+			'    </div>',
+			'    <div class="ecs-jpe-sheet-scroll">',
+			'      <table class="ecs-jpe-sheet-table"><thead></thead><tbody></tbody></table>',
+			'    </div>',
+			'    <button class="ecs-jpe-action ecs-jpe-sheet-add-row" type="button">+ Add Row</button>',
 			'  </div>',
-			'  <textarea class="ecs-jpe-textarea ecs-jpe-sheet-textarea" spellcheck="false" style="display:none"></textarea>',
 			'  <div class="ecs-jpe-error"></div>',
 			'  <div class="ecs-jpe-toolbar">',
 			'    <button class="ecs-jpe-action" data-action="tree" id="ecs-jpe-tree-btn">Accessibility</button>',
@@ -291,10 +694,9 @@
 		var tb = modal.querySelector( '#ecs-jpe-tree-btn' );
 		if ( tb ) { tb.innerHTML = ACCESSIBILITY_SVG + 'Accessibility'; tb.removeAttribute( 'id' ); }
 
-		// Tree toolbar and tree toggle listeners are attached once here so they
-		// don't accumulate on every openModal() / switchToTree() call.
 		var treeEl      = modal.querySelector( '.ecs-jpe-tree' );
 		var treeToolbar = modal.querySelector( '.ecs-jpe-tree-toolbar' );
+		var sheetEl     = modal.querySelector( '.ecs-jpe-sheet' );
 
 		treeToolbar.addEventListener( 'click', function( e ) {
 			var act = e.target.dataset.treeAction;
@@ -303,6 +705,7 @@
 		} );
 
 		bindTreeEvents( treeEl );
+		bindSheetEvents( sheetEl );
 
 		return modal;
 	}
@@ -323,14 +726,13 @@
 	}
 
 	function openModal( controlKey, widgetLabel, currentVal, container ) {
-		var modal        = getOrCreateModal();
-		var textarea     = modal.querySelector( '.ecs-jpe-textarea:not(.ecs-jpe-sheet-textarea)' );
-		var sheetTextarea = modal.querySelector( '.ecs-jpe-sheet-textarea' );
-		var sheetHint    = modal.querySelector( '.ecs-jpe-sheet-hint' );
-		var treeEl       = modal.querySelector( '.ecs-jpe-tree' );
-		var treeToolbar  = modal.querySelector( '.ecs-jpe-tree-toolbar' );
-		var metaEl       = modal.querySelector( '.ecs-jpe-meta' );
-		var errorEl      = modal.querySelector( '.ecs-jpe-error' );
+		var modal       = getOrCreateModal();
+		var textarea    = modal.querySelector( '.ecs-jpe-textarea' );
+		var treeEl      = modal.querySelector( '.ecs-jpe-tree' );
+		var treeToolbar = modal.querySelector( '.ecs-jpe-tree-toolbar' );
+		var sheetEl     = modal.querySelector( '.ecs-jpe-sheet' );
+		var metaEl      = modal.querySelector( '.ecs-jpe-meta' );
+		var errorEl     = modal.querySelector( '.ecs-jpe-error' );
 
 		var originalJson = JSON.stringify( currentVal, null, 2 );
 		var isTreeMode   = false;
@@ -340,12 +742,10 @@
 		metaEl.textContent  = widgetLabel + '  ·  ' + controlKey + '  ·  ' + currentVal.length + ' item(s)';
 		errorEl.style.display = 'none';
 
-		// Always start in raw mode.
-		textarea.style.display      = '';
-		treeEl.style.display        = 'none';
-		treeToolbar.style.display   = 'none';
-		sheetHint.style.display     = 'none';
-		sheetTextarea.style.display = 'none';
+		textarea.style.display    = '';
+		treeEl.style.display      = 'none';
+		treeToolbar.style.display = 'none';
+		sheetEl.style.display     = 'none';
 
 		var treeBtn  = modal.querySelector( '[data-action="tree"]' );
 		var sheetBtn = modal.querySelector( '[data-action="sheet"]' );
@@ -363,15 +763,14 @@
 		function switchToTree() {
 			var parsed;
 			try { parsed = JSON.parse( textarea.value ); } catch ( e ) { setError( 'Invalid JSON — fix before switching to Tree view.' ); return; }
-			isTreeMode                  = true;
-			isSheetMode                 = false;
-			treeEl.innerHTML            = renderTree( parsed );
-			textarea.style.display      = 'none';
-			treeEl.style.display        = '';
-			treeToolbar.style.display   = '';
-			sheetHint.style.display     = 'none';
-			sheetTextarea.style.display = 'none';
-			treeBtn.innerHTML           = '{ } Raw JSON';
+			isTreeMode                = true;
+			isSheetMode               = false;
+			treeEl.innerHTML          = renderTree( parsed );
+			textarea.style.display    = 'none';
+			treeEl.style.display      = '';
+			treeToolbar.style.display = '';
+			sheetEl.style.display     = 'none';
+			treeBtn.innerHTML         = '{ } Raw JSON';
 			treeBtn.classList.add( 'ecs-jpe-action--active' );
 			sheetBtn.classList.remove( 'ecs-jpe-action--active' );
 			setError( '' );
@@ -381,35 +780,32 @@
 			var parsed;
 			try { parsed = JSON.parse( textarea.value ); } catch ( e ) { parsed = currentVal; }
 			if ( ! Array.isArray( parsed ) ) { parsed = []; }
-			isSheetMode                 = true;
-			isTreeMode                  = false;
-			sheetTextarea.value         = jsonToTsv( parsed );
-			textarea.style.display      = 'none';
-			treeEl.style.display        = 'none';
-			treeToolbar.style.display   = 'none';
-			sheetHint.style.display     = '';
-			sheetTextarea.style.display = '';
+			isSheetMode               = true;
+			isTreeMode                = false;
+			populateSheet( sheetEl, parsed );
+			textarea.style.display    = 'none';
+			treeEl.style.display      = 'none';
+			treeToolbar.style.display = 'none';
+			sheetEl.style.display     = '';
 			sheetBtn.classList.add( 'ecs-jpe-action--active' );
-			treeBtn.innerHTML           = ACCESSIBILITY_SVG + 'Accessibility';
+			treeBtn.innerHTML         = ACCESSIBILITY_SVG + 'Accessibility';
 			treeBtn.classList.remove( 'ecs-jpe-action--active' );
-			sheetTextarea.focus();
 			setError( '' );
 		}
 
 		function switchToRaw() {
 			if ( isSheetMode ) {
-				// Sync TSV back to JSON textarea so the user doesn't lose edits.
-				var parsed = tsvToJson( sheetTextarea.value );
-				textarea.value = JSON.stringify( parsed, null, 2 );
+				var rows    = readSheet( sheetEl );
+				var applied = applySchemaToRows( rows, currentVal );
+				textarea.value = JSON.stringify( applied, null, 2 );
 			}
-			isTreeMode                  = false;
-			isSheetMode                 = false;
-			textarea.style.display      = '';
-			treeEl.style.display        = 'none';
-			treeToolbar.style.display   = 'none';
-			sheetHint.style.display     = 'none';
-			sheetTextarea.style.display = 'none';
-			treeBtn.innerHTML           = ACCESSIBILITY_SVG + 'Accessibility';
+			isTreeMode                = false;
+			isSheetMode               = false;
+			textarea.style.display    = '';
+			treeEl.style.display      = 'none';
+			treeToolbar.style.display = 'none';
+			sheetEl.style.display     = 'none';
+			treeBtn.innerHTML         = ACCESSIBILITY_SVG + 'Accessibility';
 			treeBtn.classList.remove( 'ecs-jpe-action--active' );
 			sheetBtn.classList.remove( 'ecs-jpe-action--active' );
 		}
@@ -443,13 +839,34 @@
 			}
 
 			if ( action === 'copy' ) {
-				var text = isSheetMode ? sheetTextarea.value : textarea.value;
+				var text;
+				if ( isSheetMode ) {
+					// Export as TSV
+					var rows = readSheet( sheetEl );
+					if ( rows.length ) {
+						var keys = Object.keys( rows[ 0 ] );
+						var lines = [ keys.join( '\t' ) ];
+						rows.forEach( function ( row ) {
+							lines.push( keys.map( function ( k ) {
+								var v = row[ k ];
+								return v.indexOf( '\t' ) !== -1 || v.indexOf( '"' ) !== -1
+									? '"' + v.replace( /"/g, '""' ) + '"'
+									: v;
+							} ).join( '\t' ) );
+						} );
+						text = lines.join( '\n' );
+					} else {
+						text = '';
+					}
+				} else {
+					text = textarea.value;
+				}
 				if ( navigator.clipboard && navigator.clipboard.writeText ) {
 					navigator.clipboard.writeText( text )
 						.then( function () { flashButton( e.target, 'Copied!' ); } )
-						.catch( function () { legacyCopy( isSheetMode ? sheetTextarea : textarea ); } );
+						.catch( function () { legacyCopyText( text ); } );
 				} else {
-					legacyCopy( isSheetMode ? sheetTextarea : textarea );
+					legacyCopyText( text );
 				}
 				return;
 			}
@@ -458,30 +875,32 @@
 				textarea.value = originalJson;
 				setError( '' );
 				if ( isTreeMode )  { switchToTree();  return; }
-				if ( isSheetMode ) { switchToSheet(); return; }
+				if ( isSheetMode ) {
+					populateSheet( sheetEl, currentVal );
+				}
 				return;
 			}
 
 			if ( action === 'clear' ) {
 				if ( isSheetMode ) {
-					sheetTextarea.value = '';
+					populateSheet( sheetEl, [] );
 				} else {
 					textarea.value = '[]';
+					if ( isTreeMode ) { switchToTree(); }
 				}
 				setError( '' );
-				if ( isTreeMode ) { switchToTree(); }
 				return;
 			}
 
 			if ( action === 'apply' ) {
 				var raw;
-
 				if ( isSheetMode ) {
-					raw = tsvToJson( sheetTextarea.value, currentVal );
-					if ( ! raw.length ) {
-						setError( 'No data found. Make sure the first row contains column names and at least one data row follows.' );
+					var rows = readSheet( sheetEl );
+					if ( ! rows.length ) {
+						setError( 'No data found. Make sure the table has at least one data row.' );
 						return;
 					}
+					raw = applySchemaToRows( rows, currentVal );
 				} else {
 					try {
 						raw = JSON.parse( textarea.value );
@@ -504,7 +923,6 @@
 		toolbar.parentNode.replaceChild( newToolbar, toolbar );
 		newToolbar.addEventListener( 'click', handleAction );
 
-		// Re-bind button references after toolbar replacement.
 		treeBtn  = modal.querySelector( '[data-action="tree"]' );
 		sheetBtn = modal.querySelector( '[data-action="sheet"]' );
 
@@ -522,10 +940,15 @@
 		setTimeout( function () { btn.textContent = orig; }, 1200 );
 	}
 
-	function legacyCopy( textarea ) {
-		textarea.select();
+	function legacyCopyText( text ) {
+		var ta = document.createElement( 'textarea' );
+		ta.value = text;
+		ta.style.position = 'fixed';
+		ta.style.opacity = '0';
+		document.body.appendChild( ta );
+		ta.select();
 		try { document.execCommand( 'copy' ); } catch ( _e ) {}
-		window.getSelection().removeAllRanges();
+		document.body.removeChild( ta );
 	}
 
 	// ── Apply to Elementor ────────────────────────────────────────────────────
@@ -534,16 +957,12 @@
 		var collection    = container.settings.get( controlKey );
 		var existingCount = ( collection && collection.models ) ? collection.models.length : 0;
 
-		// Remove existing items back-to-front so indices stay valid.
 		for ( var i = existingCount - 1; i >= 0; i-- ) {
 			try {
 				$e.run( 'document/repeater/remove', { container: container, name: controlKey, index: i } );
 			} catch ( _ ) {}
 		}
 
-		// Insert new items — document/repeater/insert creates the per-item
-		// containers that the panel views depend on (direct collection
-		// manipulation is deprecated since Elementor 3.0).
 		newValue.forEach( function ( row, idx ) {
 			try {
 				$e.run( 'document/repeater/insert', {
