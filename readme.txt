@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 4.3.5
+Stable tag: 4.3.6
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,9 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.3.6 =
+* Fixed: WordPress Menu -- dropdown panels going off screen on mobile and horizontal scroll breaking after 4.3.5. The layout class fix now uses client-side JavaScript instead of PHP so the correct class is applied per viewport, not locked to the desktop value.
 
 = 4.3.5 =
 * Fixed: WordPress Menu -- pointer animations (underline, frame, background) and dropdown behaviour are now restored when the Mobile Menu module is active. Previously, the module's responsive layout control replaced the native Elementor layout class, causing all pointer effects to stop working and a ghost frame to appear on hover.
