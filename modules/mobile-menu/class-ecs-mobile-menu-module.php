@@ -147,9 +147,17 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'flex-end'      => 'justify-content:flex-end',
 					'space-between' => 'justify-content:space-between;--ecs-nav-li-grow:1',
 				],
+				// Also targets .elementor-nav-menu--dropdown .elementor-nav-menu so
+				// alignment still applies when the native Elementor Breakpoint (not
+				// the ECS Layout control) switches this horizontal/vertical menu into
+				// its dropdown/burger state. Without this, Elementor Pro's own
+				// .elementor-nav-menu__align-{value} CSS would have covered both
+				// variants, but that class is no longer added since this control
+				// replaces the native one.
 				'selectors' => [
 					'{{WRAPPER}} .elementor-nav-menu--main,
-					 {{WRAPPER}} .elementor-nav-menu--main .elementor-nav-menu' => '{{VALUE}};',
+					 {{WRAPPER}} .elementor-nav-menu--main .elementor-nav-menu,
+					 {{WRAPPER}} .elementor-nav-menu--dropdown .elementor-nav-menu' => '{{VALUE}};',
 				],
 				'condition'            => [ 'layout!' => 'dropdown' ],
 			],
