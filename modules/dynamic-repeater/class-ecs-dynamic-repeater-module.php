@@ -499,6 +499,21 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	}
 
 	/**
+	 * Sanitize bound row values recursively. Row values can be plain strings,
+	 * or nested arrays for control types like icon/media. Non-string leaves
+	 * (ids, booleans, numbers) pass through unchanged.
+	 */
+	private function sanitize_bound_row( $value ) {
+		if ( is_array( $value ) ) {
+			return array_map( [ $this, 'sanitize_bound_row' ], $value );
+		}
+		if ( is_string( $value ) ) {
+			return wp_kses_post( $value );
+		}
+		return $value;
+	}
+
+	/**
 	 * Recursively walk the Elementor element tree and replace repeater settings
 	 * for any element that has a binding configured.
 	 */
@@ -554,6 +569,13 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 				}
 
 				$new_rows = ECS_DRB_Mapper::resolve( $source_rows, $mapping, $field_types );
+
+				// This runtime injection bypasses Elementor's own save-time
+				// wp_kses on widget settings, since the values never go through
+				// the normal editor save flow — sanitize them here instead, or a
+				// bound JSON/Posts/Terms/ACF source could stored-XSS every
+				// visitor who views the page.
+				$new_rows = $this->sanitize_bound_row( $new_rows );
 
 				if ( $apply_mode === 'append' ) {
 					$existing = $element['settings'][ $control_key ] ?? [];

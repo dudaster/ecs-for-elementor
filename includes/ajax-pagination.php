@@ -427,6 +427,8 @@ class ECS_Ajax_Load {
 
   public function get_document_data(){
 
+    check_ajax_referer( 'ecsload', 'nonce' );
+
     global $wp_query;
 
 
@@ -511,6 +513,7 @@ class ECS_Ajax_Load {
     wp_localize_script( 'ecs_ajax_load', 'ecs_ajax_params', array(
         'ajaxurl' => site_url() . '/wp-admin/admin-ajax.php', // WordPress AJAX
         'posts' => json_encode( $wp_query->query_vars ),
+        'nonce' => wp_create_nonce( 'ecsload' ),
      ) );
 
     wp_enqueue_script( 'ecs_ajax_load' ); 

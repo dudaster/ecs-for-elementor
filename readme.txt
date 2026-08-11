@@ -116,7 +116,8 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 
 = 4.3.8 =
 * Security: Dynamic Repeater Builder AJAX handlers now require the correct capability and post ownership, instead of only a valid nonce. Thanks to Seongwon LEE for the report.
-* Security: the AJAX pagination endpoint no longer returns content from a document without checking that it is publicly viewable, closing a way to read draft or private content anonymously. Thanks to Seongwon LEE for the report.
+* Security: Dynamic Repeater Builder now sanitizes values coming from a bound data source before they are written into widget settings, closing a stored XSS path. Thanks to Shivamani Vastrala for the report.
+* Security: the AJAX pagination endpoint now requires a valid nonce and only returns content from a document that is publicly viewable, closing a way to read draft or private content anonymously. Thanks to Jashid Sany for the report.
 
 = 4.3.7 =
 * Fixed: WordPress Menu -- the Alignment control (Start/Center/End/Stretch) was ignored once the menu switched into dropdown mode via the native Elementor Breakpoint. Alignment now applies correctly in both states.

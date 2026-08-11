@@ -27,6 +27,7 @@ function ECS_load_next_page(id){
   }
   data = {
     'action': 'ecsload',
+    'nonce': ecs_ajax_params.nonce,
     'query': ecs_ajax_params.posts,
     'ecs_ajax_settings': settings,
   };
