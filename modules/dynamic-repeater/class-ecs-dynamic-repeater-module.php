@@ -154,8 +154,25 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 	// ── AJAX handlers ─────────────────────────────────────────────────────────
 
+	/**
+	 * Every handler is reachable by anyone who can read the 'ecs_drb' nonce,
+	 * which Elementor prints for any user who can open the editor (including
+	 * Contributors). This enforces the actual capability required for the
+	 * data the handler touches: base editing rights for read/preview
+	 * operations, ownership of the target post for binding read/write, and
+	 * a site-level capability for the presets option (which is not scoped
+	 * to any post).
+	 */
+	private function check_capability( string $capability, int $object_id = 0 ): void {
+		$allowed = $object_id ? current_user_can( $capability, $object_id ) : current_user_can( $capability );
+		if ( ! $allowed ) {
+			wp_send_json_error( [ 'message' => 'Insufficient permissions' ], 403 );
+		}
+	}
+
 	private function ajax_get_source_schema(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		$this->check_capability( 'edit_posts' );
 
 		$source_id     = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
@@ -173,6 +190,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 	private function ajax_get_available_fields(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		$this->check_capability( 'edit_posts' );
 
 		$source_id       = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config   = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
@@ -191,6 +209,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 	private function ajax_generate(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		$this->check_capability( 'edit_posts' );
 
 		$source_id      = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config  = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
@@ -234,11 +253,15 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 	private function ajax_get_presets(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		$this->check_capability( 'edit_posts' );
 		wp_send_json_success( [ 'presets' => array_values( (array) get_option( self::OPTION_PRESETS, [] ) ) ] );
 	}
 
 	private function ajax_save_preset(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		// Presets are a site-wide option, not scoped to any post — ownership
+		// checks don't apply, so this requires a site-level capability instead.
+		$this->check_capability( 'edit_theme_options' );
 
 		$name   = sanitize_text_field( $_POST['name'] ?? '' );
 		$config = json_decode( stripslashes( $_POST['config'] ?? '{}' ), true ) ?: [];
@@ -262,6 +285,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 	private function ajax_delete_preset(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		$this->check_capability( 'edit_theme_options' );
 
 		$id = sanitize_key( $_POST['id'] ?? '' );
 		$presets = (array) get_option( self::OPTION_PRESETS, [] );
@@ -278,6 +302,8 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		$element_id  = sanitize_text_field( $_POST['element_id'] ?? '' );
 		$control_key = sanitize_text_field( $_POST['control_key'] ?? '' );
 		$config      = json_decode( stripslashes( $_POST['config'] ?? '{}' ), true ) ?: [];
+
+		$this->check_capability( 'edit_post', $post_id );
 
 		if ( ! $post_id || ! $element_id || ! $control_key ) {
 			wp_send_json_error( [ 'message' => 'Missing required parameters' ] );
@@ -308,6 +334,8 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		$element_id  = sanitize_text_field( $_POST['element_id'] ?? '' );
 		$control_key = sanitize_text_field( $_POST['control_key'] ?? '' );
 
+		$this->check_capability( 'edit_post', $post_id );
+
 		$bindings = (array) get_post_meta( $post_id, self::META_BINDINGS, true );
 		$key      = $element_id . ':' . $control_key;
 		unset( $bindings[ $key ] );
@@ -324,14 +352,23 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	private function ajax_get_bindings(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
 
-		$post_id  = intval( $_POST['post_id'] ?? 0 );
-		$bindings = $post_id ? (array) get_post_meta( $post_id, self::META_BINDINGS, true ) : [];
+		$post_id = intval( $_POST['post_id'] ?? 0 );
+
+		if ( ! $post_id ) {
+			wp_send_json_success( [ 'bindings' => [] ] );
+			return;
+		}
+
+		$this->check_capability( 'edit_post', $post_id );
+
+		$bindings = (array) get_post_meta( $post_id, self::META_BINDINGS, true );
 
 		wp_send_json_success( [ 'bindings' => array_values( $bindings ) ] );
 	}
 
 	private function ajax_get_terms(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		$this->check_capability( 'edit_posts' );
 
 		$taxonomy = sanitize_key( $_POST['taxonomy'] ?? '' );
 		$search   = sanitize_text_field( $_POST['search'] ?? '' );
@@ -365,6 +402,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 	private function ajax_get_acf_repeaters(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
+		$this->check_capability( 'edit_posts' );
 		wp_send_json_success( [ 'fields' => ECS_DRB_Source_ACF::get_repeater_field_names() ] );
 	}
 

@@ -426,9 +426,9 @@ class ECS_Ajax_Load {
   }
 
   public function get_document_data(){
- 
+
     global $wp_query;
-    
+
 
     $id = $this->widget_id;
 
@@ -436,6 +436,18 @@ class ECS_Ajax_Load {
     $theme_id = $this->theme_id;
     $old_query = $wp_query->query_vars;
 
+    // This endpoint is reachable by anonymous visitors (wp_ajax_nopriv_ecsload),
+    // so both documents must be checked for public visibility before any of
+    // their content is loaded or returned. theme_id supplies the elements that
+    // actually get returned to the caller; post_id only supplies the wrapper
+    // used for matching in clean_response(), but is still validated here as a
+    // second line of defense since it also gets loaded and switched to.
+    if (
+      ! is_post_publicly_viewable( $theme_id ) || post_password_required( $theme_id ) ||
+      ! is_post_publicly_viewable( $post_id ) || post_password_required( $post_id )
+    ) {
+      wp_die();
+    }
 
     $this->query['paged'] = $this->current_page; // we need current(next) page to be loaded
     $this->query['post_status'] = 'publish';
@@ -445,11 +457,19 @@ class ECS_Ajax_Load {
     if (is_archive()){
       $post_id = $theme_id;
     }
- 
+
 		$document = \Elementor\Plugin::$instance->documents->get_doc_for_frontend( $post_id );
 		$theme_document = \Elementor\Plugin::$instance->documents->get_doc_for_frontend( $theme_id );
-   
-    $data[] = $this->get_element_data($id,$theme_document->get_elements_data());
+
+    if ( ! $document || ! $theme_document ) {
+      wp_die();
+    }
+
+    $element_data = $this->get_element_data($id,$theme_document->get_elements_data());
+    if ( ! $element_data ) {
+      wp_die();
+    }
+    $data[] = $element_data;
 
 		// Change the current post, so widgets can use `documents->get_current`.
 		\Elementor\Plugin::$instance->documents->switch_to_document( $document );
