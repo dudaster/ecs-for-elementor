@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 4.3.8
+Stable tag: 4.3.9
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -113,6 +113,10 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 5. Style Templates — saving and applying a style preset from the Style tab.
 
 == Changelog ==
+
+= 4.3.9 =
+* Security: Dynamic Repeater Builder's ACF source now requires read access to the specific post a data source config points at, instead of trusting a post ID from the request. Thanks to Erwan Le Rousseau (WPScan) for the report.
+* Security: the ACF source no longer falls back to reading raw post meta for a field name with no registered ACF repeater definition.
 
 = 4.3.8 =
 * Security: Dynamic Repeater Builder AJAX handlers now require the correct capability and post ownership, instead of only a valid nonce. Thanks to Seongwon LEE for the report.

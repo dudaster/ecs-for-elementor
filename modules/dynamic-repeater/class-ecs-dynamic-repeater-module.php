@@ -170,12 +170,30 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		}
 	}
 
+	/**
+	 * Several source configs accept a 'post_id' to read data from a specific
+	 * post (currently the ACF source), independent of any post ownership
+	 * already checked elsewhere (e.g. the post a binding is saved on). That
+	 * post_id is attacker-controlled and must be checked here, at the point
+	 * every source config is consumed, rather than inside each source —
+	 * otherwise a future source with the same pattern reopens this.
+	 */
+	private function check_source_config_post_capability( array $config ): void {
+		if ( empty( $config['post_id'] ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'read_post', intval( $config['post_id'] ) ) ) {
+			wp_send_json_error( [ 'message' => 'Insufficient permissions' ], 403 );
+		}
+	}
+
 	private function ajax_get_source_schema(): void {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
 		$this->check_capability( 'edit_posts' );
 
 		$source_id     = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$this->check_source_config_post_capability( $source_config );
 
 		$source = ECS_DRB_Sources::instance()->get( $source_id );
 		if ( ! $source ) {
@@ -194,6 +212,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 		$source_id       = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config   = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$this->check_source_config_post_capability( $source_config );
 		$current_post_id = intval( $_POST['current_post_id'] ?? 0 );
 		if ( $current_post_id && empty( $source_config['post_id'] ) ) {
 			$source_config['_current_post_id'] = $current_post_id;
@@ -213,6 +232,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 		$source_id      = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config  = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$this->check_source_config_post_capability( $source_config );
 		$mapping        = json_decode( stripslashes( $_POST['mapping'] ?? '[]' ), true ) ?: [];
 		$field_types    = json_decode( stripslashes( $_POST['field_types'] ?? '{}' ), true ) ?: [];
 		$use_cache      = filter_var( $_POST['use_cache'] ?? true, FILTER_VALIDATE_BOOLEAN );
@@ -538,6 +558,16 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 				$control_key = $binding['control_key'] ?? '';
 
 				if ( ! $control_key || ! $source_id ) {
+					continue;
+				}
+
+				// source_config['post_id'] is set by whoever configured this
+				// binding and can point at any post, independent of the post
+				// this binding itself is saved on. Since this filter renders
+				// on the frontend for every visitor, skip the binding instead
+				// of exposing data from a post the current viewer (who may be
+				// anonymous) is not allowed to read.
+				if ( ! empty( $s_config['post_id'] ) && ! current_user_can( 'read_post', intval( $s_config['post_id'] ) ) ) {
 					continue;
 				}
 

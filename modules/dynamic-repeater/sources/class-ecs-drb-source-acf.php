@@ -101,10 +101,19 @@ class ECS_DRB_Source_ACF extends ECS_DRB_Source_Base {
 			return [];
 		}
 
+		// Without this, get_field() falls back to reading raw postmeta for any
+		// field name with no registered ACF definition, which would let this
+		// source read arbitrary postmeta keys, not just ACF repeater fields.
+		$field_name = sanitize_text_field( $config['field_name'] );
+		$field      = function_exists( 'acf_get_field' ) ? acf_get_field( $field_name ) : null;
+		if ( ! $field || $field['type'] !== 'repeater' ) {
+			return [];
+		}
+
 		$post_id = ! empty( $config['post_id'] )
 			? intval( $config['post_id'] )
 			: ( intval( $config['_current_post_id'] ?? 0 ) ?: get_the_ID() );
-		$rows    = get_field( sanitize_text_field( $config['field_name'] ), $post_id );
+		$rows    = get_field( $field_name, $post_id );
 
 		if ( ! is_array( $rows ) ) {
 			return [];
