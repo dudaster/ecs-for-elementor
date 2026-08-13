@@ -454,6 +454,18 @@ HTML;
 		}
 	}
 
+	/**
+	 * Templates are stored in a single site-wide option and applied to any
+	 * linked widget on any post, so writing one is not scoped to a post the
+	 * caller owns — edit_posts (held by Contributors) is not enough here.
+	 */
+	private function verify_ajax_write(): void {
+		$this->verify_ajax();
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
+			wp_send_json_error( 'Unauthorized', 403 );
+		}
+	}
+
 	/** List all templates for a widget type. */
 	public function ajax_list(): void {
 		$this->verify_ajax();
@@ -475,7 +487,7 @@ HTML;
 
 	/** Save a new template. Fails if name already exists. */
 	public function ajax_save_new(): void {
-		$this->verify_ajax();
+		$this->verify_ajax_write();
 
 		$widget_type   = sanitize_key( $_POST['widget_type'] ?? '' );
 		$template_name = sanitize_text_field( substr( $_POST['template_name'] ?? '', 0, 100 ) );
@@ -507,7 +519,7 @@ HTML;
 
 	/** Overwrite an existing template's style_settings. */
 	public function ajax_overwrite(): void {
-		$this->verify_ajax();
+		$this->verify_ajax_write();
 
 		$widget_type   = sanitize_key( $_POST['widget_type'] ?? '' );
 		$template_name = sanitize_text_field( substr( $_POST['template_name'] ?? '', 0, 100 ) );
@@ -549,7 +561,7 @@ HTML;
 
 	/** Delete a template. */
 	public function ajax_delete(): void {
-		$this->verify_ajax();
+		$this->verify_ajax_write();
 
 		$widget_type   = sanitize_key( $_POST['widget_type'] ?? '' );
 		$template_name = sanitize_text_field( $_POST['template_name'] ?? '' );

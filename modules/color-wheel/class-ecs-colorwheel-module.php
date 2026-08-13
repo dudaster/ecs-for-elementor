@@ -66,7 +66,10 @@ class ECS_Colorwheel_Module extends ECS_Module_Base {
 	public function ajax_save_palette(): void {
 		check_ajax_referer( 'ecs_colorwheel', 'nonce' );
 
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		// Palettes are a single site-wide option shared by every user of the
+		// color picker, so writing one is not scoped to a post the caller
+		// owns — edit_posts (held by Contributors) is not enough here.
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
 			wp_send_json_error( 'Unauthorized', 403 );
 		}
 
@@ -108,7 +111,7 @@ class ECS_Colorwheel_Module extends ECS_Module_Base {
 	public function ajax_delete_palette(): void {
 		check_ajax_referer( 'ecs_colorwheel', 'nonce' );
 
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( 'edit_theme_options' ) ) {
 			wp_send_json_error( 'Unauthorized', 403 );
 		}
 
