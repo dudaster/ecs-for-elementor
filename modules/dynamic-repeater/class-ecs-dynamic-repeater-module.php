@@ -173,18 +173,45 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	/**
 	 * Several source configs accept a 'post_id' to read data from a specific
 	 * post (currently the ACF source), independent of any post ownership
-	 * already checked elsewhere (e.g. the post a binding is saved on). That
-	 * post_id is attacker-controlled and must be checked here, at the point
-	 * every source config is consumed, rather than inside each source —
-	 * otherwise a future source with the same pattern reopens this.
+	 * already checked elsewhere (e.g. the post a binding is saved on). The
+	 * ACF source falls back to '_current_post_id' when 'post_id' is empty,
+	 * and that key can arrive either already inside the decoded config or
+	 * merged in afterwards from the request's own current_post_id — both are
+	 * attacker-controlled, so this must be called on the FINAL config, after
+	 * any such merging, not on the config as first decoded from the request.
 	 */
+	private function resolve_config_post_id( array $config ): int {
+		if ( ! empty( $config['post_id'] ) ) {
+			return intval( $config['post_id'] );
+		}
+		if ( ! empty( $config['_current_post_id'] ) ) {
+			return intval( $config['_current_post_id'] );
+		}
+		return 0;
+	}
+
 	private function check_source_config_post_capability( array $config ): void {
-		if ( empty( $config['post_id'] ) ) {
+		$post_id = $this->resolve_config_post_id( $config );
+		if ( ! $post_id ) {
 			return;
 		}
-		if ( ! current_user_can( 'read_post', intval( $config['post_id'] ) ) ) {
+		if ( ! current_user_can( 'read_post', $post_id ) ) {
 			wp_send_json_error( [ 'message' => 'Insufficient permissions' ], 403 );
 		}
+	}
+
+	/**
+	 * Same resolution as check_source_config_post_capability(), but for the
+	 * frontend runtime binding path: returns a bool instead of dying, and
+	 * accepts a fallback post id (the post actually being viewed) for when
+	 * the config supplies neither post_id nor _current_post_id.
+	 */
+	private function current_viewer_can_read_config_post( array $config, int $fallback_post_id = 0 ): bool {
+		$post_id = $this->resolve_config_post_id( $config ) ?: $fallback_post_id;
+		if ( ! $post_id ) {
+			return true;
+		}
+		return current_user_can( 'read_post', $post_id );
 	}
 
 	private function ajax_get_source_schema(): void {
@@ -212,11 +239,11 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 		$source_id       = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config   = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
-		$this->check_source_config_post_capability( $source_config );
 		$current_post_id = intval( $_POST['current_post_id'] ?? 0 );
 		if ( $current_post_id && empty( $source_config['post_id'] ) ) {
 			$source_config['_current_post_id'] = $current_post_id;
 		}
+		$this->check_source_config_post_capability( $source_config );
 
 		$source = ECS_DRB_Sources::instance()->get( $source_id );
 		if ( ! $source ) {
@@ -232,7 +259,6 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 		$source_id      = sanitize_key( $_POST['source_type'] ?? '' );
 		$source_config  = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
-		$this->check_source_config_post_capability( $source_config );
 		$mapping        = json_decode( stripslashes( $_POST['mapping'] ?? '[]' ), true ) ?: [];
 		$field_types    = json_decode( stripslashes( $_POST['field_types'] ?? '{}' ), true ) ?: [];
 		$use_cache      = filter_var( $_POST['use_cache'] ?? true, FILTER_VALIDATE_BOOLEAN );
@@ -241,6 +267,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		if ( $current_post_id && empty( $source_config['post_id'] ) ) {
 			$source_config['_current_post_id'] = $current_post_id;
 		}
+		$this->check_source_config_post_capability( $source_config );
 
 		$source = ECS_DRB_Sources::instance()->get( $source_id );
 		if ( ! $source ) {
@@ -561,18 +588,22 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 					continue;
 				}
 
-				// source_config['post_id'] is set by whoever configured this
-				// binding and can point at any post, independent of the post
-				// this binding itself is saved on. Since this filter renders
-				// on the frontend for every visitor, skip the binding instead
-				// of exposing data from a post the current viewer (who may be
-				// anonymous) is not allowed to read.
-				if ( ! empty( $s_config['post_id'] ) && ! current_user_can( 'read_post', intval( $s_config['post_id'] ) ) ) {
+				$source = ECS_DRB_Sources::instance()->get( $source_id );
+				if ( ! $source ) {
 					continue;
 				}
 
-				$source = ECS_DRB_Sources::instance()->get( $source_id );
-				if ( ! $source ) {
+				// Whoever configured this binding chose post_id (or
+				// _current_post_id) in source_config, and it can point at any
+				// post, independent of the post this binding itself is saved
+				// on. Resolved the same way the source itself resolves it
+				// (post_id, then _current_post_id, then the post actually
+				// being viewed) so this covers it regardless of which of
+				// those ends up supplying the id. Since this filter renders
+				// on the frontend for every visitor, skip the binding instead
+				// of exposing data the current viewer — who may be anonymous
+				// — is not allowed to read.
+				if ( ! $this->current_viewer_can_read_config_post( $s_config, $current_post ) ) {
 					continue;
 				}
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * Plugin Name: ECS - Ele Custom Skin for Elementor
- * Version: 4.3.9
+ * Version: 4.3.10
  * Description: Modular toolkit extending Elementor with custom loop skins, color schemes, container layouts, and more.
  * Plugin URI: https://dudaster.com
  * Author: Dudaster.com
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-define( 'ECS_VERSION', '4.3.9' );
+define( 'ECS_VERSION', '4.3.10' );
 define( 'ECS_FILE',    __FILE__ );
 define( 'ECS_PATH',    plugin_dir_path( __FILE__ ) );
 define( 'ECS_URL',     plugin_dir_url( __FILE__ ) );
