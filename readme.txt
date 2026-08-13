@@ -4,7 +4,7 @@ Tags: elementor, dark mode, color scheme, loop, container
 Donate link: https://www.paypal.me/dudaster
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 4.3.12
+Stable tag: 4.3.11
 Requires PHP: 8.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0
@@ -114,11 +114,9 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 
 == Changelog ==
 
-= 4.3.12 =
-* Verified compatibility with WordPress 7.1 (currently in Release Candidate) -- full plugin test suite passing.
-
 = 4.3.11 =
 * Security: Style Templates and Color Wheel now require a site-level capability to save or delete a template/palette, since both are stored in a single site-wide option shared by every user, instead of trusting edit_posts alone.
+* Verified compatibility with WordPress 7.1 (currently in Release Candidate) -- full plugin test suite passing.
 
 = 4.3.10 =
 * Security: closed a gap in the 4.3.9 fix -- the Dynamic Repeater ACF source's post read check can now no longer be bypassed via the current_post_id fallback. Thanks to Erwan Le Rousseau (WPScan) for the follow-up report.
