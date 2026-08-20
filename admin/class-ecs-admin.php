@@ -93,13 +93,13 @@ class ECS_Admin {
 		}
 		wp_enqueue_style(
 			'ecs-admin',
-			ECS_URL . 'assets/admin/css/ecs-admin.css',
+			ecs_asset_url( ECS_URL . 'assets/admin/css/ecs-admin.css', ECS_PATH . 'assets/admin/css/ecs-admin.css' ),
 			[],
 			ECS_VERSION
 		);
 		wp_enqueue_script(
 			'ecs-admin',
-			ECS_URL . 'assets/admin/js/ecs-admin.js',
+			ecs_asset_url( ECS_URL . 'assets/admin/js/ecs-admin.js', ECS_PATH . 'assets/admin/js/ecs-admin.js' ),
 			[],
 			ECS_VERSION,
 			true

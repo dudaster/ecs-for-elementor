@@ -508,7 +508,7 @@ class ECS_Ajax_Load {
     
     global $wp_query; 
     
-    wp_register_script('ecs_ajax_load', plugin_dir_url(__DIR__) . 'assets/js/ecs_ajax_pagination.js',array('jquery'),ELECS_VER);
+    wp_register_script('ecs_ajax_load', ecs_asset_url( plugin_dir_url(__DIR__) . 'assets/js/ecs_ajax_pagination.js', plugin_dir_path(__DIR__) . 'assets/js/ecs_ajax_pagination.js' ),array('jquery'),ELECS_VER);
     
     wp_localize_script( 'ecs_ajax_load', 'ecs_ajax_params', array(
         'ajaxurl' => site_url() . '/wp-admin/admin-ajax.php', // WordPress AJAX

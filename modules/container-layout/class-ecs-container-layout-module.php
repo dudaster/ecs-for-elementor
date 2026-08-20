@@ -1365,7 +1365,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	public function enqueue_frontend_assets(): void {
 		wp_enqueue_style(
 			'ecs-container-layout',
-			$this->module_url() . 'assets/css/ecs-container-layout.css',
+			$this->module_asset_url( 'assets/css/ecs-container-layout.css' ),
 			[],
 			ECS_VERSION
 		);
@@ -1377,7 +1377,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		wp_enqueue_script(
 			'ecs-slider',
-			$this->module_url() . 'assets/js/ecs-slider.js',
+			$this->module_asset_url( 'assets/js/ecs-slider.js' ),
 			[ 'swiper', 'elementor-frontend' ],
 			ECS_VERSION,
 			[ 'in_footer' => true ]
@@ -1387,14 +1387,14 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_style(
 			'ecs-container-layout-editor',
-			$this->module_url() . 'assets/css/ecs-container-layout.css',
+			$this->module_asset_url( 'assets/css/ecs-container-layout.css' ),
 			[],
 			ECS_VERSION
 		);
 
 		wp_enqueue_script(
 			'ecs-editor-preview',
-			$this->module_url() . 'assets/js/ecs-editor-preview.js',
+			$this->module_asset_url( 'assets/js/ecs-editor-preview.js' ),
 			[ 'elementor-editor' ],
 			ECS_VERSION,
 			true

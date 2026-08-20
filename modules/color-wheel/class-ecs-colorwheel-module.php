@@ -29,14 +29,14 @@ class ECS_Colorwheel_Module extends ECS_Module_Base {
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_style(
 			'ecs-colorwheel-editor',
-			$this->module_url() . 'assets/css/ecs-colorwheel-editor.css',
+			$this->module_asset_url( 'assets/css/ecs-colorwheel-editor.css' ),
 			[],
 			ECS_VERSION
 		);
 
 		wp_enqueue_script(
 			'ecs-colorwheel-editor',
-			$this->module_url() . 'assets/js/ecs-colorwheel-editor.js',
+			$this->module_asset_url( 'assets/js/ecs-colorwheel-editor.js' ),
 			[ 'elementor-editor', 'jquery' ],
 			ECS_VERSION,
 			true

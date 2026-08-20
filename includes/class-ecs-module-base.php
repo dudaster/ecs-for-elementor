@@ -61,4 +61,9 @@ abstract class ECS_Module_Base {
 	protected function module_url(): string {
 		return ECS_URL . 'modules/' . str_replace( '_', '-', $this->get_id() ) . '/';
 	}
+
+	/** Enqueue URL for a .css/.js file under this module, minified when available. */
+	protected function module_asset_url( string $rel_path ): string {
+		return ecs_asset_url( $this->module_url() . $rel_path, $this->module_path() . $rel_path );
+	}
 }

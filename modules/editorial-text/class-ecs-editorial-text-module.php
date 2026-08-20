@@ -34,7 +34,7 @@ class ECS_Editorial_Text_Module extends ECS_Module_Base {
 	public function enqueue_frontend_assets(): void {
 		wp_enqueue_style(
 			'ecs-editorial-text',
-			$this->module_url() . 'assets/css/ecs-editorial-text.css',
+			$this->module_asset_url( 'assets/css/ecs-editorial-text.css' ),
 			[],
 			ECS_VERSION
 		);
@@ -43,7 +43,7 @@ class ECS_Editorial_Text_Module extends ECS_Module_Base {
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_style(
 			'ecs-editorial-text-editor',
-			$this->module_url() . 'assets/css/ecs-editorial-text.css',
+			$this->module_asset_url( 'assets/css/ecs-editorial-text.css' ),
 			[],
 			ECS_VERSION
 		);

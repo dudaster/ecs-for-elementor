@@ -74,14 +74,14 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 	public function enqueue_frontend_assets(): void {
 		wp_enqueue_style(
 			'ecs-color-scheme',
-			$this->module_url() . 'assets/css/ecs-color-scheme.css',
+			$this->module_asset_url( 'assets/css/ecs-color-scheme.css' ),
 			[],
 			ECS_VERSION
 		);
 
 		wp_enqueue_script(
 			'ecs-color-switcher',
-			$this->module_url() . 'assets/js/ecs-color-switcher.js',
+			$this->module_asset_url( 'assets/js/ecs-color-switcher.js' ),
 			[],
 			ECS_VERSION,
 			true
@@ -92,7 +92,7 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 		// Frontend colour variables (needed in the editor preview iframe too)
 		wp_enqueue_style(
 			'ecs-color-scheme-editor',
-			$this->module_url() . 'assets/css/ecs-color-scheme.css',
+			$this->module_asset_url( 'assets/css/ecs-color-scheme.css' ),
 			[],
 			ECS_VERSION
 		);
@@ -100,7 +100,7 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 		// Default Colours panel: tab UI styles
 		wp_enqueue_style(
 			'ecs-colour-editor-ui',
-			$this->module_url() . 'assets/css/ecs-colour-editor.css',
+			$this->module_asset_url( 'assets/css/ecs-colour-editor.css' ),
 			[],
 			ECS_VERSION
 		);
@@ -108,7 +108,7 @@ class ECS_Color_Scheme_Module extends ECS_Module_Base {
 		// Default Colours panel: tab switching JS
 		wp_enqueue_script(
 			'ecs-colour-editor',
-			$this->module_url() . 'assets/js/ecs-colour-editor.js',
+			$this->module_asset_url( 'assets/js/ecs-colour-editor.js' ),
 			[ 'jquery', 'elementor-editor' ],
 			ECS_VERSION,
 			true

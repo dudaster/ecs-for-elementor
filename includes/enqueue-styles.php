@@ -26,8 +26,8 @@ class ECS_Enqueue_Style {
   public function frontend_styles() {
     //adding some css fixes
 
-    wp_enqueue_style('ecs-styles', plugin_dir_url(__DIR__) . 'assets/css/ecs-style.css',array(),ELECS_VER);
-    wp_enqueue_script('ecs-script', plugin_dir_url(__DIR__) . 'assets/js/ecs.js',array(),ELECS_VER);
+    wp_enqueue_style('ecs-styles', ecs_asset_url( plugin_dir_url(__DIR__) . 'assets/css/ecs-style.css', plugin_dir_path(__DIR__) . 'assets/css/ecs-style.css' ),array(),ELECS_VER);
+    wp_enqueue_script('ecs-script', ecs_asset_url( plugin_dir_url(__DIR__) . 'assets/js/ecs.js', plugin_dir_path(__DIR__) . 'assets/js/ecs.js' ),array(),ELECS_VER);
     
     $styles=$this->get_skin_template();
     $upload_dir = wp_upload_dir();

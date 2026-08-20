@@ -605,7 +605,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 	public function enqueue_frontend_assets(): void {
 		wp_enqueue_style(
 			'ecs-mobile-menu',
-			$this->module_url() . 'assets/css/ecs-mobile-menu.css',
+			$this->module_asset_url( 'assets/css/ecs-mobile-menu.css' ),
 			[],
 			ECS_VERSION
 		);
@@ -617,7 +617,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		// class so pointer animations and dropdown positioning both work correctly.
 		wp_enqueue_script(
 			'ecs-mobile-menu',
-			$this->module_url() . 'assets/js/ecs-mobile-menu.js',
+			$this->module_asset_url( 'assets/js/ecs-mobile-menu.js' ),
 			[],
 			ECS_VERSION,
 			false
@@ -627,14 +627,14 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_style(
 			'ecs-mobile-menu',
-			$this->module_url() . 'assets/css/ecs-mobile-menu.css',
+			$this->module_asset_url( 'assets/css/ecs-mobile-menu.css' ),
 			[],
 			ECS_VERSION
 		);
 
 		wp_enqueue_script(
 			'ecs-mobile-menu-editor',
-			$this->module_url() . 'assets/js/ecs-mobile-menu-editor.js',
+			$this->module_asset_url( 'assets/js/ecs-mobile-menu-editor.js' ),
 			[],
 			ECS_VERSION,
 			true

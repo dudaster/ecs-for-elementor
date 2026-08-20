@@ -38,6 +38,7 @@ define( 'ELECS_VER',  ECS_VERSION );
 
 require_once ECS_PATH . 'includes/ecs-notices.php';
 require_once ECS_PATH . 'includes/ecs-dependencies.php';
+require_once ECS_PATH . 'includes/ecs-assets.php';
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 

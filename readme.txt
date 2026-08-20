@@ -116,6 +116,7 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 
 = 4.3.11 =
 * Security: Style Templates and Color Wheel now require a site-level capability to save or delete a template/palette, since both are stored in a single site-wide option shared by every user, instead of trusting edit_posts alone.
+* Added: all CSS and JS files are now minified in the release build, cutting file size by roughly 25-30%.
 * Verified compatibility with WordPress 7.1 (currently in Release Candidate) -- full plugin test suite passing.
 
 = 4.3.10 =

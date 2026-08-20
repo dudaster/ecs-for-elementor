@@ -92,14 +92,14 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_style(
 			'ecs-drb-editor',
-			$this->module_url() . 'assets/css/ecs-dynamic-repeater-editor.css',
+			$this->module_asset_url( 'assets/css/ecs-dynamic-repeater-editor.css' ),
 			[],
 			ECS_VERSION
 		);
 
 		wp_enqueue_script(
 			'ecs-drb-editor',
-			$this->module_url() . 'assets/js/ecs-dynamic-repeater-editor.js',
+			$this->module_asset_url( 'assets/js/ecs-dynamic-repeater-editor.js' ),
 			[ 'jquery', 'elementor-editor' ],
 			ECS_VERSION,
 			true

@@ -617,7 +617,7 @@ HTML;
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_script(
 			'ecs-style-templates-editor',
-			$this->module_url() . 'assets/js/ecs-style-templates-editor.js',
+			$this->module_asset_url( 'assets/js/ecs-style-templates-editor.js' ),
 			[ 'elementor-editor', 'jquery' ],
 			ECS_VERSION,
 			[ 'in_footer' => true ]
@@ -643,7 +643,7 @@ HTML;
 
 		wp_enqueue_style(
 			'ecs-style-templates-editor',
-			$this->module_url() . 'assets/css/ecs-style-templates-editor.css',
+			$this->module_asset_url( 'assets/css/ecs-style-templates-editor.css' ),
 			[],
 			ECS_VERSION
 		);

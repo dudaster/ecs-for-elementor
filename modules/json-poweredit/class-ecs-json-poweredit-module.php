@@ -37,14 +37,14 @@ class ECS_JSON_PowerEdit_Module extends ECS_Module_Base {
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_style(
 			'ecs-json-poweredit-editor',
-			ECS_URL . 'modules/json-poweredit/assets/css/ecs-json-poweredit-editor.css',
+			$this->module_asset_url( 'assets/css/ecs-json-poweredit-editor.css' ),
 			[],
 			ECS_VERSION
 		);
 
 		wp_enqueue_script(
 			'ecs-json-poweredit-editor',
-			ECS_URL . 'modules/json-poweredit/assets/js/ecs-json-poweredit-editor.js',
+			$this->module_asset_url( 'assets/js/ecs-json-poweredit-editor.js' ),
 			[ 'jquery', 'elementor-editor' ],
 			ECS_VERSION,
 			true

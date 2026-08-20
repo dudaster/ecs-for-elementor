@@ -379,7 +379,7 @@ class ECS_Loop_Custom_Layout_Module extends ECS_Module_Base {
 	public function enqueue_editor_assets(): void {
 		wp_enqueue_script(
 			'ecs-loop-custom-layout-editor',
-			$this->module_url() . 'assets/js/ecs-loop-custom-layout-editor.js',
+			$this->module_asset_url( 'assets/js/ecs-loop-custom-layout-editor.js' ),
 			[ 'elementor-editor' ],
 			ECS_VERSION,
 			true
