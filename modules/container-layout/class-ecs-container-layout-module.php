@@ -18,6 +18,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ECS_Container_Layout_Module extends ECS_Module_Base {
 
+	/**
+	 * ecs_slider_columns (and its tablet/mobile variants) used to be a SLIDER
+	 * control, saved as an array ( ['size' => N, 'unit' => ...] ). It is now a
+	 * SELECT control storing a plain numeric string, but sites with data saved
+	 * under the old control type still have the array shape in their
+	 * _elementor_data. (int) on that array always yields 1 in PHP, and
+	 * parseInt() on the equivalent JS object yields NaN — both silently
+	 * collapsing the slider to 1 visible slide instead of the configured
+	 * column count. Accept either shape here.
+	 */
+	private static function slider_columns_int( $value ): int {
+		if ( is_array( $value ) ) {
+			$value = $value['size'] ?? 0;
+		}
+		return (int) $value;
+	}
+
 	public function get_id(): string {
 		return 'container_layout';
 	}
@@ -760,9 +777,9 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 			if ( $needs_slider ) {
 				// Build Swiper — breakpoints enable/disable slider per device.
-				$cols_desktop = (int) ( $element->get_settings( 'ecs_slider_columns' ) ?: 1 );
-				$cols_tablet  = (int) $element->get_settings( 'ecs_slider_columns_tablet' ) ?: $cols_desktop;
-				$cols_mobile  = (int) $element->get_settings( 'ecs_slider_columns_mobile' ) ?: $cols_tablet;
+				$cols_desktop = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns' ) ) ?: 1;
+				$cols_tablet  = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns_tablet' ) ) ?: $cols_desktop;
+				$cols_mobile  = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns_mobile' ) ) ?: $cols_tablet;
 				$navigation   = $element->get_settings( 'ecs_navigation' ) ?: 'arrows';
 				$show_arrows  = in_array( $navigation, [ 'arrows', 'both' ], true );
 				$show_dots    = in_array( $navigation, [ 'dots',   'both' ], true );
@@ -865,9 +882,9 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		$autoplay_on = 'yes' === $element->get_settings( 'ecs_autoplay' );
 
 		// Responsive columns ('' = inherit from larger breakpoint).
-		$cols_desktop = (int) ( $element->get_settings( 'ecs_slider_columns' ) ?: 1 );
-		$cols_tablet  = (int) $element->get_settings( 'ecs_slider_columns_tablet' );
-		$cols_mobile  = (int) $element->get_settings( 'ecs_slider_columns_mobile' );
+		$cols_desktop = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns' ) ) ?: 1;
+		$cols_tablet  = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns_tablet' ) );
+		$cols_mobile  = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns_mobile' ) );
 		$cols_tablet  = $cols_tablet ?: $cols_desktop;
 		$cols_mobile  = $cols_mobile ?: $cols_tablet;
 
@@ -1087,9 +1104,9 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	 */
 	private function echo_swiper_html( $element, array $children_list, string $tab_type, string $mob_type ): void {
 		$mob_resolved = $mob_type ?: $tab_type;
-		$cols_desktop = (int) ( $element->get_settings( 'ecs_slider_columns' ) ?: 1 );
-		$cols_tablet  = (int) $element->get_settings( 'ecs_slider_columns_tablet' ) ?: $cols_desktop;
-		$cols_mobile  = (int) $element->get_settings( 'ecs_slider_columns_mobile' ) ?: $cols_tablet;
+		$cols_desktop = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns' ) ) ?: 1;
+		$cols_tablet  = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns_tablet' ) ) ?: $cols_desktop;
+		$cols_mobile  = self::slider_columns_int( $element->get_settings( 'ecs_slider_columns_mobile' ) ) ?: $cols_tablet;
 		$navigation   = $element->get_settings( 'ecs_navigation' ) ?: 'arrows';
 		$show_arrows  = in_array( $navigation, [ 'arrows', 'both' ], true );
 		$show_dots    = in_array( $navigation, [ 'dots', 'both' ], true );

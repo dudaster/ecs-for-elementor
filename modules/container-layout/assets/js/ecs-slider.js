@@ -65,14 +65,25 @@
 		}
 	}
 
+	// ecs_slider_columns used to be a SLIDER control (saved as {size, unit}).
+	// It's now a SELECT storing a plain number, but sites with data saved
+	// under the old control type still have the object shape here — and
+	// parseInt() on an object yields NaN, collapsing the slider to 1 slide.
+	function sliderColumnsInt( value ) {
+		if ( value && typeof value === 'object' ) {
+			value = value.size;
+		}
+		return parseInt( value, 10 ) || 0;
+	}
+
 	function buildSwiperConfig( s ) {
 		var navigation = s.ecs_navigation || 'arrows';
 		var showArrows = navigation === 'arrows' || navigation === 'both';
 		var showDots   = navigation === 'dots'   || navigation === 'both';
 
-		var colsDesktop = parseInt( s.ecs_slider_columns, 10 ) || 1;
-		var colsTablet  = parseInt( s.ecs_slider_columns_tablet, 10 ) || colsDesktop;
-		var colsMobile  = parseInt( s.ecs_slider_columns_mobile, 10 ) || colsTablet;
+		var colsDesktop = sliderColumnsInt( s.ecs_slider_columns ) || 1;
+		var colsTablet  = sliderColumnsInt( s.ecs_slider_columns_tablet ) || colsDesktop;
+		var colsMobile  = sliderColumnsInt( s.ecs_slider_columns_mobile ) || colsTablet;
 		var layoutTablet = s.ecs_container_type_tablet || '';
 		var layoutMobile = s.ecs_container_type_mobile || '';
 
