@@ -171,6 +171,23 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	}
 
 	/**
+	 * check_capability( 'edit_post', $post_id ) only proves the caller may
+	 * edit the post_id THEY supplied — it says nothing about which post a
+	 * given binding_key ('element_id:control_key') actually belongs to in
+	 * the site-wide OPTION_BINDING_INDEX. Without this check, a Contributor
+	 * who owns some post of their own could send its post_id (passing the
+	 * capability check above) together with an element_id:control_key that
+	 * belongs to someone else's post, and silently hijack (save) or erase
+	 * (break) that other post's index entry. Refuse unless the index has no
+	 * entry for this key yet, or the entry already belongs to $post_id.
+	 */
+	private function check_index_entry_ownership( string $key, int $post_id, array $index ): void {
+		if ( isset( $index[ $key ] ) && (int) $index[ $key ] !== $post_id ) {
+			wp_send_json_error( [ 'message' => 'Insufficient permissions' ], 403 );
+		}
+	}
+
+	/**
 	 * Several source configs accept a 'post_id' to read data from a specific
 	 * post (currently the ACF source), independent of any post ownership
 	 * already checked elsewhere (e.g. the post a binding is saved on). The
@@ -356,8 +373,11 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 			wp_send_json_error( [ 'message' => 'Missing required parameters' ] );
 		}
 
+		$key   = $element_id . ':' . $control_key;
+		$index = (array) get_option( self::OPTION_BINDING_INDEX, [] );
+		$this->check_index_entry_ownership( $key, $post_id, $index );
+
 		$bindings = (array) get_post_meta( $post_id, self::META_BINDINGS, true );
-		$key = $element_id . ':' . $control_key;
 		$bindings[ $key ] = [
 			'element_id'  => $element_id,
 			'control_key' => $control_key,
@@ -367,7 +387,6 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		update_post_meta( $post_id, self::META_BINDINGS, $bindings );
 
 		// Update global index: element_key → document post_id.
-		$index         = (array) get_option( self::OPTION_BINDING_INDEX, [] );
 		$index[ $key ] = $post_id;
 		update_option( self::OPTION_BINDING_INDEX, $index, false );
 
@@ -383,13 +402,15 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 
 		$this->check_capability( 'edit_post', $post_id );
 
+		$key   = $element_id . ':' . $control_key;
+		$index = (array) get_option( self::OPTION_BINDING_INDEX, [] );
+		$this->check_index_entry_ownership( $key, $post_id, $index );
+
 		$bindings = (array) get_post_meta( $post_id, self::META_BINDINGS, true );
-		$key      = $element_id . ':' . $control_key;
 		unset( $bindings[ $key ] );
 		update_post_meta( $post_id, self::META_BINDINGS, $bindings );
 
 		// Remove from global index.
-		$index = (array) get_option( self::OPTION_BINDING_INDEX, [] );
 		unset( $index[ $key ] );
 		update_option( self::OPTION_BINDING_INDEX, $index, false );
 
