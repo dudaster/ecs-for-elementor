@@ -114,6 +114,9 @@ Dark Mode Colours, Menu Responsive, Editorial Text, Style Templates, JSON PowerE
 
 == Changelog ==
 
+= 4.3.14 =
+* Fixed: AJAX Load More/Infinite Load on archive pages (category, tag, author, etc.) returned an empty response and stopped working. Caused by the 4.3.8 security fix checking the post ID before it was resolved for archive listings.
+
 = 4.3.13 =
 * Security: Dynamic Repeater Builder's save/break binding handlers now verify that the binding entry being written actually belongs to the post being edited, closing a gap where a Contributor could hijack or erase another post's binding using their own post as cover. Thanks to Animesh (Automattic) for the report.
 

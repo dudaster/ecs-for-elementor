@@ -76,6 +76,7 @@ if ( $is_licensed ) {
 
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="elecs-license" value="">
+					<input type="hidden" name="_wp_http_referer" value="<?php echo esc_attr( admin_url( 'admin.php?page=ecs-license' ) ); ?>">
 					<?php wp_nonce_field( 'elecs-settings-save', 'elecs-custom-message' ); ?>
 					<button type="submit" class="ecs-license-deactivate-btn">
 						<?php esc_html_e( 'Deactivate License', 'ele-custom-skin' ); ?>
@@ -106,6 +107,7 @@ if ( $is_licensed ) {
 							value=""
 							autocomplete="off"
 						>
+						<input type="hidden" name="_wp_http_referer" value="<?php echo esc_attr( admin_url( 'admin.php?page=ecs-license' ) ); ?>">
 						<?php wp_nonce_field( 'elecs-settings-save', 'elecs-custom-message' ); ?>
 						<button type="submit" class="button button-primary ecs-license-form__btn">
 							<?php esc_html_e( 'Activate License', 'ele-custom-skin' ); ?>

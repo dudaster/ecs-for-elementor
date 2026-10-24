@@ -438,19 +438,6 @@ class ECS_Ajax_Load {
     $theme_id = $this->theme_id;
     $old_query = $wp_query->query_vars;
 
-    // This endpoint is reachable by anonymous visitors (wp_ajax_nopriv_ecsload),
-    // so both documents must be checked for public visibility before any of
-    // their content is loaded or returned. theme_id supplies the elements that
-    // actually get returned to the caller; post_id only supplies the wrapper
-    // used for matching in clean_response(), but is still validated here as a
-    // second line of defense since it also gets loaded and switched to.
-    if (
-      ! is_post_publicly_viewable( $theme_id ) || post_password_required( $theme_id ) ||
-      ! is_post_publicly_viewable( $post_id ) || post_password_required( $post_id )
-    ) {
-      wp_die();
-    }
-
     $this->query['paged'] = $this->current_page; // we need current(next) page to be loaded
     $this->query['post_status'] = 'publish';
 
@@ -458,6 +445,23 @@ class ECS_Ajax_Load {
     wp_reset_postdata();//this fixes some issues with some get_the_ID users.
     if (is_archive()){
       $post_id = $theme_id;
+    }
+
+    // This endpoint is reachable by anonymous visitors (wp_ajax_nopriv_ecsload),
+    // so both documents must be checked for public visibility before any of
+    // their content is loaded or returned. theme_id supplies the elements that
+    // actually get returned to the caller; post_id only supplies the wrapper
+    // used for matching in clean_response(), but is still validated here as a
+    // second line of defense since it also gets loaded and switched to.
+    // Resolved AFTER the is_archive() fallback above: on archive listings the
+    // caller's post_id is empty/false and only becomes valid once set to
+    // theme_id, so checking it before that point always failed and broke
+    // Load More on archive pages.
+    if (
+      ! is_post_publicly_viewable( $theme_id ) || post_password_required( $theme_id ) ||
+      ! is_post_publicly_viewable( $post_id ) || post_password_required( $post_id )
+    ) {
+      wp_die();
     }
 
 		$document = \Elementor\Plugin::$instance->documents->get_doc_for_frontend( $post_id );
@@ -482,7 +486,7 @@ class ECS_Ajax_Load {
     echo $this->clean_response($content,$id);
 
     \Elementor\Plugin::$instance->documents->restore_document();
-    $wp_query->query_vars = $query_vars;
+    $wp_query->query_vars = $old_query;
 
     die;
   }
