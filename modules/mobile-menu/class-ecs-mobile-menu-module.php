@@ -531,6 +531,12 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item' => 'color: {{VALUE}}; fill: {{VALUE}};',
 				],
 			],
+			// overwrite: true — render_type 'ui' makes Elementor store this control in its
+			// internal "style_controls" bucket, which remove_control() above does not clear
+			// (it only clears the default "controls" bucket), so re-registration without
+			// overwrite throws "Cannot redeclare control" whenever this hook runs more than
+			// once in a request (e.g. multiple nav-menu widgets on the same page).
+			[ 'overwrite' => true ]
 			);
 		// No position arg — inner_tab places it in the correct tab; all other Normal tab
 		// controls are removed by ECS so order within the tab doesn't matter.
@@ -556,7 +562,11 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 			// pointer_color_menu_item_hover has both tabs_wrapper and inner_tab set,
 			// so it's safe as a position anchor (avoids the undefined 'inner_tab' warning
 			// that tab-type controls trigger in Elementor's get_position_info()).
-			[ 'position' => [ 'type' => 'control', 'at' => 'before', 'of' => 'pointer_color_menu_item_hover' ] ]
+			// overwrite: true — see note on color_menu_item above.
+			[
+				'position'  => [ 'type' => 'control', 'at' => 'before', 'of' => 'pointer_color_menu_item_hover' ],
+				'overwrite' => true,
+			]
 		);
 
 		$element->remove_control( 'color_menu_item_hover_pointer_bg' );
@@ -577,7 +587,10 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 				],
 				'condition'    => [ 'pointer' => 'background' ],
 			],
-			[ 'position' => [ 'type' => 'control', 'at' => 'after', 'of' => 'color_menu_item_hover' ] ]
+			[
+				'position'  => [ 'type' => 'control', 'at' => 'after', 'of' => 'color_menu_item_hover' ],
+				'overwrite' => true,
+			]
 		);
 
 		// Active tab
@@ -596,7 +609,11 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 				],
 			],
 			// pointer_color_menu_item_active has both tabs_wrapper and inner_tab — safe anchor.
-			[ 'position' => [ 'type' => 'control', 'at' => 'before', 'of' => 'pointer_color_menu_item_active' ] ]
+			// overwrite: true — see note on color_menu_item above.
+			[
+				'position'  => [ 'type' => 'control', 'at' => 'before', 'of' => 'pointer_color_menu_item_active' ],
+				'overwrite' => true,
+			]
 		);
 	}
 
