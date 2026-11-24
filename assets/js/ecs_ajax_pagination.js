@@ -1,9 +1,12 @@
 jQuery( document ).ready(function() {
   jQuery( ".ecs-load-more-button" ).each(function() {
-    widget=jQuery(this);
-    settings = widget.attr("data-settings");
-    args = JSON.parse(settings);
-    widget.children( ".elementor-button" ).attr("href", "javascript:ECS_load_next_page('"+ args.widget_id +"');");
+    var button_args = JSON.parse( jQuery( this ).attr( "data-settings" ) );
+    // A click handler instead of a "javascript:" href built by string
+    // concatenation, so widget_id is never interpreted as code.
+    jQuery( this ).children( ".elementor-button" ).on( "click", function( event ) {
+      event.preventDefault();
+      ECS_load_next_page( button_args.widget_id );
+    });
   });
 });
 var canBeLoaded = true; // this param allows to initiate the AJAX call only if necessary
@@ -20,7 +23,6 @@ function ECS_load_next_page(id){
   if(args.load_method == 'loadmore'){
     button_text = jQuery(".elementor-element[data-id='" + args.widget_id + "'] .ecs-load-more-button .elementor-button");// add this .elementor-element[data-id='" + args.widget_id + "']
     button = jQuery(".elementor-element[data-id='" + args.widget_id + "'] .ecs-load-more-button");
-    attb = JSON.parse(button.attr("data-settings"));
   }
   if(args.load_method == 'lazyload'){
     animation = jQuery(".elementor-element[data-id='" + args.widget_id + "'] .ecs-lazyload");
@@ -37,7 +39,15 @@ function ECS_load_next_page(id){
     data : data,
     type : 'POST',
     beforeSend : function ( xhr ) {
-      if(args.load_method == 'loadmore') button_text.html(attb.loading_text); // change the button text, you can also add a preloader image
+      if(args.load_method == 'loadmore') {
+        // Show the loading label ECS rendered in a <template>, as DOM nodes;
+        // the current label nodes are set aside and put back after loading.
+        var loading = button.children( "template.ecs-loadmore-loading" ).get( 0 );
+        if ( loading && button_text.data( "ecs-label" ) === undefined ) {
+          button_text.data( "ecs-label", button_text.contents().detach() );
+          button_text.append( document.importNode( loading.content, true ) );
+        }
+      }
       canBeLoaded = false;
     },
     success : function( data ){
@@ -45,7 +55,11 @@ function ECS_load_next_page(id){
         posts.append(data); // insert new posts
         args.current_page++;
         if(args.load_method == 'loadmore'){
-          button_text.html( attb.text );
+          var label = button_text.data( "ecs-label" );
+          if ( label !== undefined ) {
+            button_text.empty().append( label );
+            button_text.removeData( "ecs-label" );
+          }
           button_text.blur();
         }
         newsettings = JSON.stringify(args);

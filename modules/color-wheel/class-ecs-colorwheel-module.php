@@ -74,7 +74,7 @@ class ECS_Colorwheel_Module extends ECS_Module_Base {
 		}
 
 		$name   = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
-		$colors = isset( $_POST['colors'] ) ? (array) $_POST['colors'] : [];
+		$colors = isset( $_POST['colors'] ) ? array_filter( (array) wp_unslash( $_POST['colors'] ), 'is_string' ) : []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each value goes through sanitize_hex_color() below
 
 		if ( empty( $name ) ) {
 			wp_send_json_error( 'Name required' );

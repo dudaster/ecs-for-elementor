@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 require_once ELECS_DIR.'theme-builder/conditions/loop.php';
 require_once ELECS_DIR.'theme-builder/documents/loop.php';

@@ -71,13 +71,13 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'layout',
 			[
-				'label'              => esc_html__( 'Layout', 'elementor-pro' ),
+				'label'              => esc_html__( 'Layout', 'ele-custom-skin' ),
 				'type'               => Controls_Manager::SELECT,
 				'default'            => 'horizontal',
 				'options'            => [
-					'horizontal' => esc_html__( 'Horizontal', 'elementor-pro' ),
-					'vertical'   => esc_html__( 'Vertical',   'elementor-pro' ),
-					'dropdown'   => esc_html__( 'Dropdown',   'elementor-pro' ),
+					'horizontal' => esc_html__( 'Horizontal', 'ele-custom-skin' ),
+					'vertical'   => esc_html__( 'Vertical',   'ele-custom-skin' ),
+					'dropdown'   => esc_html__( 'Dropdown',   'ele-custom-skin' ),
 				],
 				// prefix_class marks this widget as "DTE-controlled" so the CSS
 				// variable rules in ecs-mobile-menu.css apply only to it.
@@ -111,23 +111,23 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'align_items',
 			[
-				'label'                => esc_html__( 'Alignment', 'elementor-pro' ),
+				'label'                => esc_html__( 'Alignment', 'ele-custom-skin' ),
 				'type'                 => Controls_Manager::CHOOSE,
 				'options'              => [
 					'flex-start'    => [
-						'title' => esc_html__( 'Start', 'elementor-pro' ),
+						'title' => esc_html__( 'Start', 'ele-custom-skin' ),
 						'icon'  => 'eicon-text-align-left',
 					],
 					'center'        => [
-						'title' => esc_html__( 'Center', 'elementor-pro' ),
+						'title' => esc_html__( 'Center', 'ele-custom-skin' ),
 						'icon'  => 'eicon-text-align-center',
 					],
 					'flex-end'      => [
-						'title' => esc_html__( 'End', 'elementor-pro' ),
+						'title' => esc_html__( 'End', 'ele-custom-skin' ),
 						'icon'  => 'eicon-text-align-right',
 					],
 					'space-between' => [
-						'title' => esc_html__( 'Stretch', 'elementor-pro' ),
+						'title' => esc_html__( 'Stretch', 'ele-custom-skin' ),
 						'icon'  => 'eicon-text-align-justify',
 					],
 				],
@@ -177,17 +177,17 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_control(
 			'pointer',
 			[
-				'label'          => esc_html__( 'Pointer', 'elementor-pro' ),
+				'label'          => esc_html__( 'Pointer', 'ele-custom-skin' ),
 				'type'           => Controls_Manager::SELECT,
 				'default'        => 'underline',
 				'options'        => [
-					'none'        => esc_html__( 'None',        'elementor-pro' ),
-					'underline'   => esc_html__( 'Underline',   'elementor-pro' ),
-					'overline'    => esc_html__( 'Overline',    'elementor-pro' ),
-					'double-line' => esc_html__( 'Double Line', 'elementor-pro' ),
-					'framed'      => esc_html__( 'Framed',      'elementor-pro' ),
-					'background'  => esc_html__( 'Background',  'elementor-pro' ),
-					'text'        => esc_html__( 'Text',        'elementor-pro' ),
+					'none'        => esc_html__( 'None',        'ele-custom-skin' ),
+					'underline'   => esc_html__( 'Underline',   'ele-custom-skin' ),
+					'overline'    => esc_html__( 'Overline',    'ele-custom-skin' ),
+					'double-line' => esc_html__( 'Double Line', 'ele-custom-skin' ),
+					'framed'      => esc_html__( 'Framed',      'ele-custom-skin' ),
+					'background'  => esc_html__( 'Background',  'ele-custom-skin' ),
+					'text'        => esc_html__( 'Text',        'ele-custom-skin' ),
 				],
 				'prefix_class'   => 'e--pointer-',
 				'style_transfer' => true,
@@ -231,7 +231,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'animation_line',
 			[
-				'label'                => esc_html__( 'Animation', 'elementor-pro' ),
+				'label'                => esc_html__( 'Animation', 'ele-custom-skin' ),
 				'type'                 => Controls_Manager::SELECT,
 				'default'              => 'fade',
 				'options'              => [
@@ -260,7 +260,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'animation_framed',
 			[
-				'label'                => esc_html__( 'Animation', 'elementor-pro' ),
+				'label'                => esc_html__( 'Animation', 'ele-custom-skin' ),
 				'type'                 => Controls_Manager::SELECT,
 				'default'              => 'fade',
 				'options'              => [
@@ -288,7 +288,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'animation_background',
 			[
-				'label'                => esc_html__( 'Animation', 'elementor-pro' ),
+				'label'                => esc_html__( 'Animation', 'ele-custom-skin' ),
 				'type'                 => Controls_Manager::SELECT,
 				'default'              => 'fade',
 				'options'              => [
@@ -322,7 +322,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'animation_text',
 			[
-				'label'                => esc_html__( 'Animation', 'elementor-pro' ),
+				'label'                => esc_html__( 'Animation', 'ele-custom-skin' ),
 				'type'                 => Controls_Manager::SELECT,
 				'default'              => 'grow',
 				'options'              => [
@@ -362,9 +362,9 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_control(
 			'full_width',
 			[
-				'label'              => esc_html__( 'Full Width', 'elementor-pro' ),
+				'label'              => esc_html__( 'Full Width', 'ele-custom-skin' ),
 				'type'               => Controls_Manager::SWITCHER,
-				'description'        => esc_html__( 'Stretch the dropdown of the menu to full width.', 'elementor-pro' ),
+				'description'        => esc_html__( 'Stretch the dropdown of the menu to full width.', 'ele-custom-skin' ),
 				'prefix_class'       => 'elementor-nav-menu--',
 				'return_value'       => 'stretch',
 				'frontend_available' => true,
@@ -415,20 +415,20 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_control(
 			'text_align',
 			[
-				'label'     => esc_html__( 'Text Align', 'elementor-pro' ),
+				'label'     => esc_html__( 'Text Align', 'ele-custom-skin' ),
 				'type'      => Controls_Manager::CHOOSE,
 				'default'   => 'left',
 				'options'   => [
 					'left'   => [
-						'title' => esc_html__( 'Left', 'elementor-pro' ),
+						'title' => esc_html__( 'Left', 'ele-custom-skin' ),
 						'icon'  => 'eicon-text-align-left',
 					],
 					'center' => [
-						'title' => esc_html__( 'Center', 'elementor-pro' ),
+						'title' => esc_html__( 'Center', 'ele-custom-skin' ),
 						'icon'  => 'eicon-text-align-center',
 					],
 					'right'  => [
-						'title' => esc_html__( 'Right', 'elementor-pro' ),
+						'title' => esc_html__( 'Right', 'ele-custom-skin' ),
 						'icon'  => 'eicon-text-align-right',
 					],
 				],
@@ -452,12 +452,12 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_control(
 			'toggle',
 			[
-				'label'              => esc_html__( 'Toggle Button', 'elementor-pro' ),
+				'label'              => esc_html__( 'Toggle Button', 'ele-custom-skin' ),
 				'type'               => Controls_Manager::SELECT,
 				'default'            => 'burger',
 				'options'            => [
-					''       => esc_html__( 'None', 'elementor-pro' ),
-					'burger' => esc_html__( 'Hamburger', 'elementor-pro' ),
+					''       => esc_html__( 'None', 'ele-custom-skin' ),
+					'burger' => esc_html__( 'Hamburger', 'ele-custom-skin' ),
 				],
 				'prefix_class'       => 'elementor-nav-menu--toggle elementor-nav-menu--',
 				'render_type'        => 'template',
@@ -474,20 +474,20 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_control(
 			'toggle_align',
 			[
-				'label'                => esc_html__( 'Toggle Align', 'elementor-pro' ),
+				'label'                => esc_html__( 'Toggle Align', 'ele-custom-skin' ),
 				'type'                 => Controls_Manager::CHOOSE,
 				'default'              => 'center',
 				'options'              => [
 					'left'   => [
-						'title' => esc_html__( 'Left', 'elementor-pro' ),
+						'title' => esc_html__( 'Left', 'ele-custom-skin' ),
 						'icon'  => 'eicon-h-align-left',
 					],
 					'center' => [
-						'title' => esc_html__( 'Center', 'elementor-pro' ),
+						'title' => esc_html__( 'Center', 'ele-custom-skin' ),
 						'icon'  => 'eicon-h-align-center',
 					],
 					'right'  => [
-						'title' => esc_html__( 'Right', 'elementor-pro' ),
+						'title' => esc_html__( 'Right', 'ele-custom-skin' ),
 						'icon'  => 'eicon-h-align-right',
 					],
 				],
@@ -521,7 +521,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'color_menu_item',
 			[
-				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'label'        => esc_html__( 'Text Color', 'ele-custom-skin' ),
 				'type'         => Controls_Manager::COLOR,
 				'default'      => '',
 				'render_type'  => 'ui',
@@ -546,7 +546,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'color_menu_item_hover',
 			[
-				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'label'        => esc_html__( 'Text Color', 'ele-custom-skin' ),
 				'type'         => Controls_Manager::COLOR,
 				'render_type'  => 'ui',
 				'tabs_wrapper' => $tabs,
@@ -573,7 +573,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'color_menu_item_hover_pointer_bg',
 			[
-				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'label'        => esc_html__( 'Text Color', 'ele-custom-skin' ),
 				'type'         => Controls_Manager::COLOR,
 				'default'      => '#fff',
 				'render_type'  => 'ui',
@@ -598,7 +598,7 @@ class ECS_Mobile_Menu_Module extends ECS_Module_Base {
 		$element->add_responsive_control(
 			'color_menu_item_active',
 			[
-				'label'        => esc_html__( 'Text Color', 'elementor-pro' ),
+				'label'        => esc_html__( 'Text Color', 'ele-custom-skin' ),
 				'type'         => Controls_Manager::COLOR,
 				'default'      => '',
 				'render_type'  => 'ui',

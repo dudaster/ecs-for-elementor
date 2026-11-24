@@ -693,7 +693,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		$container_id = $frame['id'];
 
 		// Safety: verify the template post exists and is published.
-		if ( ! $layout_id || 'publish' !== get_post_status( $layout_id ) ) {
+		if ( ! $layout_id || ! self::is_custom_layout( $layout_id ) ) {
 			echo $container_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			return;
 		}
@@ -719,11 +719,12 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		// Inline template CSS before first render.
 		$css_path = WP_CONTENT_DIR . '/uploads/elementor/css/post-' . $layout_id . '.css';
 		if ( file_exists( $css_path ) ) {
-			echo '<style id="elementor-post-' . esc_attr( $layout_id ) . '-css">' . file_get_contents( $css_path ) . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped,WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			echo '<style id="elementor-post-' . esc_attr( $layout_id ) . '-css">' . str_ireplace( '</style', '<\/style', file_get_contents( $css_path ) ) . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped,WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		}
 
 		$hide_empty = ( 'hide-empty-slots' === $element->get_settings( 'ecs_hide_empty_slots' ) );
-		$direction  = $element->get_settings( 'ecs_direction' ) ?: 'row';
+		$direction  = $element->get_settings( 'ecs_direction' );
+		$direction  = in_array( $direction, [ 'row', 'column', 'row-reverse', 'column-reverse' ], true ) ? $direction : 'row';
 		$batch      = $children_list;
 		$first_pass = true;
 
@@ -813,7 +814,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 					];
 				}
 
-				echo '<div class="swiper ecs-swiper" data-ecs-slider-settings="' . esc_attr( wp_json_encode( $swiper_cfg ) ) . '">';
+				echo self::open_live_swiper( $swiper_cfg ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with JSON_HEX_TAG
 				echo '<div class="swiper-wrapper">';
 				foreach ( $children_list as $child ) {
 					echo '<div class="swiper-slide">' . $child . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -931,7 +932,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		// 4. Output HTML.
 		echo $outer_tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<div class="swiper ecs-swiper" data-ecs-slider-settings="' . esc_attr( wp_json_encode( $swiper_settings ) ) . '">';
+		echo self::open_live_swiper( $swiper_settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with JSON_HEX_TAG
 		echo '<div class="swiper-wrapper">';
 
 		foreach ( $children_list as $child ) {
@@ -1038,7 +1039,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	 * @param array<string> $children_list Rendered HTML of each child element.
 	 */
 	private function echo_custom_layout_content( $element, array $children_list, int $layout_id, string $container_id ): void {
-		if ( ! $layout_id || 'publish' !== get_post_status( $layout_id ) ) {
+		if ( ! $layout_id || ! self::is_custom_layout( $layout_id ) ) {
 			foreach ( $children_list as $child ) {
 				echo $child; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			}
@@ -1050,12 +1051,13 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		}
 
 		$hide_empty = ( 'hide-empty-slots' === $element->get_settings( 'ecs_hide_empty_slots' ) );
-		$direction  = $element->get_settings( 'ecs_direction' ) ?: 'row';
+		$direction  = $element->get_settings( 'ecs_direction' );
+		$direction  = in_array( $direction, [ 'row', 'column', 'row-reverse', 'column-reverse' ], true ) ? $direction : 'row';
 
 		$css_path = WP_CONTENT_DIR . '/uploads/elementor/css/post-' . $layout_id . '.css';
 		if ( file_exists( $css_path ) ) {
 			echo '<style id="elementor-post-' . esc_attr( $layout_id ) . '-css">'
-				. file_get_contents( $css_path ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPress.Security.EscapeOutput.OutputNotEscaped
+				. str_ireplace( '</style', '<\/style', file_get_contents( $css_path ) ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPress.Security.EscapeOutput.OutputNotEscaped
 				. '</style>';
 		}
 
@@ -1139,7 +1141,7 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 		if ( $show_arrows ) { $swiper_cfg['navigation'] = true; }
 		if ( $show_dots )   { $swiper_cfg['pagination'] = [ 'clickable' => true ]; }
 
-		echo '<div class="swiper ecs-swiper" data-ecs-slider-settings="' . esc_attr( wp_json_encode( $swiper_cfg ) ) . '">'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo self::open_live_swiper( $swiper_cfg ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded with JSON_HEX_TAG
 		echo '<div class="swiper-wrapper">';
 		foreach ( $children_list as $child ) {
 			echo '<div class="swiper-slide">' . $child . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -1308,6 +1310,25 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 	// ── Assets ────────────────────────────────────────────────────────────────
 
 	/**
+	 * Opening markup of a live slider. The Swiper config travels in a JSON
+	 * script inside the slider: ecs-slider.js only initialises sliders that
+	 * carry one.
+	 */
+	private static function open_live_swiper( array $config ): string {
+		return '<div class="swiper ecs-swiper">'
+			. '<script type="application/json" class="ecs-swiper-config">' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP ) . '</script>';
+	}
+
+	/**
+	 * Only published ECS Custom Layout templates can be used as a layout.
+	 */
+	private static function is_custom_layout( int $post_id ): bool {
+		return 'publish' === get_post_status( $post_id )
+			&& 'elementor_library' === get_post_type( $post_id )
+			&& 'ecs_custom_layout' === get_post_meta( $post_id, '_elementor_template_type', true );
+	}
+
+	/**
 	 * AJAX handler: render a DTE Custom Layout template with caller-supplied
 	 * children HTML strings so the Elementor editor canvas can display a live
 	 * preview of the injection result.
@@ -1325,10 +1346,12 @@ class ECS_Container_Layout_Module extends ECS_Module_Base {
 
 		$layout_id = absint( $_POST['layout_id'] ?? 0 );
 		$children  = isset( $_POST['children'] ) && is_array( $_POST['children'] )
-			? array_values( wp_unslash( $_POST['children'] ) )
+			// Editor-preview HTML of the requester's own canvas, sent back only to
+			// them and never stored; kses would strip the Elementor/SVG markup.
+			? array_values( array_filter( wp_unslash( $_POST['children'] ), 'is_string' ) ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			: [];
 
-		if ( ! $layout_id || 'publish' !== get_post_status( $layout_id ) ) {
+		if ( ! $layout_id || ! self::is_custom_layout( $layout_id ) ) {
 			wp_send_json_error( [ 'message' => 'Invalid template' ] );
 			return;
 		}

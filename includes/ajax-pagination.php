@@ -12,16 +12,23 @@ class ECS_Ajax_Load {
     
     $this->init();
     
+    // Nonce is verified in get_document_data(), the only consumer of these values.
+    // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
     if (!isset($args['post_id']))//debug line comment it
         if(!isset($_POST['ecs_ajax_settings'])) return;
-          else $args = json_decode( stripslashes( $_POST['ecs_ajax_settings'] ), true );
+          else $args = json_decode( wp_unslash( $_POST['ecs_ajax_settings'] ), true );
 
-    $this->post_id = $args['post_id'];
-    $this->current_page = $args['current_page'] + 1;
-    $this->widget_id = $args['widget_id'];
-    $this->theme_id = isset($args['theme_id']) ? $args['theme_id'] : $args['post_id'];
-    $this->query = json_decode( stripslashes( $_POST['query'] ), true );
-    if ($this->current_page > $args['max_num_pages']) return;
+    if ( ! is_array( $args ) || ! isset( $args['post_id'], $args['current_page'], $args['widget_id'], $args['max_num_pages'] ) ) return;
+
+    $this->post_id = absint( $args['post_id'] );
+    $this->current_page = absint( $args['current_page'] ) + 1;
+    // Elementor element IDs are short alphanumeric strings.
+    $this->widget_id = preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) $args['widget_id'] );
+    $this->theme_id = isset($args['theme_id']) ? absint( $args['theme_id'] ) : $this->post_id;
+    $query = isset( $_POST['query'] ) ? json_decode( wp_unslash( $_POST['query'] ), true ) : [];
+    // phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+    $this->query = is_array( $query ) ? $query : [];
+    if ($this->current_page > absint( $args['max_num_pages'] )) return;
     $this->init_ajax();
 
   }
@@ -51,12 +58,12 @@ class ECS_Ajax_Load {
           'type' => \Elementor\Controls_Manager::SELECT,
           'default' => '',
           'options' => [
-            '' => __( 'None', 'elementor-pro' ),
-            'numbers' => __( 'Numbers', 'elementor-pro' ),
+            '' => __( 'None', 'ele-custom-skin' ),
+            'numbers' => __( 'Numbers', 'ele-custom-skin' ),
             'loadmore' => __( 'Load More (Custom Skin)', 'ele-custom-skin' ),
             'lazyload' => __( 'Infinite Load (Custom Skin Pro)', 'ele-custom-skin' ),
-            'prev_next' => __( 'Previous/Next', 'elementor-pro' ),
-            'numbers_and_prev_next' => __( 'Numbers', 'elementor-pro' ) . ' + ' . __( 'Previous/Next', 'elementor-pro' ),
+            'prev_next' => __( 'Previous/Next', 'ele-custom-skin' ),
+            'numbers_and_prev_next' => __( 'Numbers', 'ele-custom-skin' ) . ' + ' . __( 'Previous/Next', 'ele-custom-skin' ),
           ],
         ]
       );
@@ -161,8 +168,8 @@ class ECS_Ajax_Load {
         [
           'label' => __( 'Text', 'ele-custom-skin' ),
           'type' => \Elementor\Controls_Manager::TEXT,
-          'default' => __( 'Load More', 'elementor' ),
-          'placeholder' => __( 'Load More', 'elementor' ),
+          'default' => __( 'Load More', 'ele-custom-skin' ),
+          'placeholder' => __( 'Load More', 'ele-custom-skin' ),
           'condition' => [
             'pagination_type' => 'loadmore',
           ],
@@ -174,8 +181,8 @@ class ECS_Ajax_Load {
         [
           'label' => __( 'Loading Text', 'ele-custom-skin' ),
           'type' => \Elementor\Controls_Manager::TEXT,
-          'default' => __( 'Loading...', 'elementor' ),
-          'placeholder' => __( 'Loading...', 'elementor' ),
+          'default' => __( 'Loading...', 'ele-custom-skin' ),
+          'placeholder' => __( 'Loading...', 'ele-custom-skin' ),
           'condition' => [
             'pagination_type' => 'loadmore',
           ],
@@ -440,6 +447,11 @@ class ECS_Ajax_Load {
 
     $this->query['paged'] = $this->current_page; // we need current(next) page to be loaded
     $this->query['post_status'] = 'publish';
+    // Keep the filters other plugins rely on active for this query.
+    unset( $this->query['suppress_filters'], $this->query['perm'] );
+    if ( ! $this->has_only_viewable_post_types( $this->query ) ) {
+      wp_die();
+    }
 
     $wp_query = new \WP_Query($this->query);
     wp_reset_postdata();//this fixes some issues with some get_the_ID users.
@@ -483,7 +495,7 @@ class ECS_Ajax_Load {
     ob_start();
         $document->print_elements_with_wrapper( $data );
     $content = ob_get_clean();
-    echo $this->clean_response($content,$id);
+    echo $this->clean_response($content,$id); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- widget HTML rendered by Elementor
 
     \Elementor\Plugin::$instance->documents->restore_document();
     $wp_query->query_vars = $old_query;
@@ -491,6 +503,21 @@ class ECS_Ajax_Load {
     die;
   }
   
+  /**
+   * Only the empty/"any" defaults and publicly viewable post types are loaded.
+   */
+  private function has_only_viewable_post_types( $query ) {
+    if ( empty( $query['post_type'] ) || 'any' === $query['post_type'] ) {
+      return true;
+    }
+    foreach ( (array) $query['post_type'] as $post_type ) {
+      if ( ! is_string( $post_type ) || ! is_post_type_viewable( $post_type ) ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private function clean_response($html,$id){
     $content = "";
     $dom = new DOMDocument();
@@ -498,7 +525,10 @@ class ECS_Ajax_Load {
     $dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
     //$dom->loadHTML($html);
     $xpath = new DOMXPath($dom);
-    $childs = $xpath->query('//div[@data-id="'.$id.'"]/div[@class="elementor-widget-container"]/div/* | //div[@data-elementor-type="custom_grid"]');
+    // Widgets rendered with Elementor's optimized markup (e.g. Archive Posts on
+    // Elementor 4.x) have no .elementor-widget-container wrapper, so .ecs-posts
+    // is then a direct child of the widget element.
+    $childs = $xpath->query('//div[@data-id="'.$id.'"]/div[@class="elementor-widget-container"]/div/* | //div[@data-id="'.$id.'"]/div[contains(concat(" ", normalize-space(@class), " "), " ecs-posts ")]/* | //div[@data-elementor-type="custom_grid"]');
 //    $childs = $xpath->query('//div[@data-elementor-type="custom_grid"]');
   //return $dom->saveHTML($childs->item(0));
     foreach($childs as $child){
@@ -515,8 +545,8 @@ class ECS_Ajax_Load {
     wp_register_script('ecs_ajax_load', ecs_asset_url( plugin_dir_url(__DIR__) . 'assets/js/ecs_ajax_pagination.js', plugin_dir_path(__DIR__) . 'assets/js/ecs_ajax_pagination.js' ),array('jquery'),ELECS_VER);
     
     wp_localize_script( 'ecs_ajax_load', 'ecs_ajax_params', array(
-        'ajaxurl' => site_url() . '/wp-admin/admin-ajax.php', // WordPress AJAX
-        'posts' => json_encode( $wp_query->query_vars ),
+        'ajaxurl' => admin_url( 'admin-ajax.php' ), // WordPress AJAX
+        'posts' => wp_json_encode( $wp_query->query_vars ),
         'nonce' => wp_create_nonce( 'ecsload' ),
      ) );
 
@@ -552,7 +582,8 @@ class ECS_Loading_Animation {
 
   public static function get_lazy_load_animations_html($animation){
     $arrs = self::animations();
-    return $arrs[$animation]['html'];    
+    // Only ever return markup from our own table.
+    return isset( $arrs[ $animation ] ) ? $arrs[ $animation ]['html'] : $arrs['default']['html'];
   }
   
   public static function get_lazy_load_animations_list(){

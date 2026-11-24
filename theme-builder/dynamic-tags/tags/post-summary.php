@@ -43,19 +43,16 @@ class Post_Summary extends Tag {
 	public function render() {
     add_filter( 'excerpt_more',function(){return '';}, 20 );
     add_filter( 'excerpt_length', function(){$settings = $this->get_settings(); return $settings['length'];}, 20 ); 
-		echo  $this->excerpt();
+		echo esc_html( $this->excerpt() );
 	}
-  
+
   public function excerpt() {
     $settings = $this->get_settings();
-    $limit =  $settings['length'];
-    $excerpt = explode(' ',get_the_excerpt(), $limit);
-    if (count($excerpt)>=$limit) {
-      array_pop($excerpt);
-      $excerpt = implode(" ",$excerpt);
-    } else {
-      $excerpt = implode(" ",$excerpt);
-    }
+    $limit = absint( $settings['length'] );
+    // Plain text, same word count as before (length - 1): cutting an HTML
+    // excerpt between words could leave a tag or attribute open, which the
+    // tag's "After" text would then complete.
+    $excerpt = wp_trim_words( get_the_excerpt(), max( 0, $limit - 1 ), '' );
     $excerpt = preg_replace('`[[^]]*]`','',$excerpt);
     return $excerpt;
   }

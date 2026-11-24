@@ -66,8 +66,7 @@ class ECS_Admin {
 
 		check_admin_referer( 'ecs_save_modules' );
 
-		$posted = isset( $_POST['ecs_modules'] ) ? (array) $_POST['ecs_modules'] : [];
-		$ids    = array_map( 'sanitize_key', $posted );
+		$ids = isset( $_POST['ecs_modules'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['ecs_modules'] ) ) : [];
 
 		$this->manager->set_active( $ids );
 

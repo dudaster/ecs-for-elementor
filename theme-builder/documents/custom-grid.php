@@ -44,7 +44,7 @@ class customGrid extends Theme_Section_Document {
   protected static function get_editor_panel_categories() {
 		$categories = [
 			'ele-custom-grid' => [
-				'title' => __( 'Custom Grid', 'elementor-pro' ),
+				'title' => __( 'Custom Grid', 'ele-custom-skin' ),
 			],
 		];
     return $categories + parent::get_editor_panel_categories();

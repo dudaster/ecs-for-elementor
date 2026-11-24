@@ -11,22 +11,22 @@ function ecs_admin_notice(){
     if ( defined( 'ELECSP_VER' ) ) return;
     $user_id = get_current_user_id();
     if (get_user_meta( $user_id, 'ele_custom_skin_notice_dismissed' )) return;
-    $offer = '2019-10-10' > date("Y-m-d") ? 'Limited Offer: <b style="color:red;">Unlimited Sites Lifetime License</b>.':"";
-    $image = '<img width="30px" src="'.ELECS_URL . 'assets/dudaster_icon.png" style="width:32px;margin-right:10px;margin-bottom: -11px;"/>';
     $user = wp_get_current_user();
     if ( in_array( 'administrator', (array) $user->roles ) ) {
-    echo '<div class="notice notice-info " style="padding-right: 38px; position: relative;">
-          <p> '.$image.' Ele Custom Skin <b>PRO</b> is out <a href="https://dudaster.com/ecs-pro/" target="_blank">Check it out!</a>. '.$offer.' <a class="button button-primary" style="margin-left:20px;" href="https://dudaster.com/ecs-pro/" target="_blank">Get it now!</a></p>
-        <a href="?ele_custom_skin_notice_dismissed"><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></a>
-        </div>';
+    ?>
+    <div class="notice notice-info " style="padding-right: 38px; position: relative;">
+          <p> <img width="30px" src="<?php echo esc_url( ELECS_URL . 'assets/dudaster_icon.png' ); ?>" style="width:32px;margin-right:10px;margin-bottom: -11px;"/> Ele Custom Skin <b>PRO</b> is out <a href="https://dudaster.com/ecs-pro/" target="_blank">Check it out!</a>. <a class="button button-primary" style="margin-left:20px;" href="https://dudaster.com/ecs-pro/" target="_blank">Get it now!</a></p>
+        <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'ele_custom_skin_notice_dismissed', '1' ), 'ele_custom_skin_notice_dismissed' ) ); ?>"><button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e( 'Dismiss this notice.', 'ele-custom-skin' ); ?></span></button></a>
+        </div>
+    <?php
     }
 }
 add_action('admin_notices', 'ecs_admin_notice');
 
 function ele_custom_skin_notice_dismissed() {
-    $user_id = get_current_user_id();
-    if ( isset( $_GET['ele_custom_skin_notice_dismissed'] )  )
-        add_user_meta( $user_id, 'ele_custom_skin_notice_dismissed', 'true', true );
+    if ( ! isset( $_GET['ele_custom_skin_notice_dismissed'] ) ) return;
+    check_admin_referer( 'ele_custom_skin_notice_dismissed' );
+    add_user_meta( get_current_user_id(), 'ele_custom_skin_notice_dismissed', 'true', true );
 }
 add_action( 'admin_init', 'ele_custom_skin_notice_dismissed' );
 

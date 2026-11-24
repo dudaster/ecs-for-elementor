@@ -74,7 +74,7 @@ class Ele_Custom_Loop_Item_Widget extends \Elementor\Widget_Base {
 		$this->start_controls_section(
 			'content_section',
 			[
-				'label' => __( 'Content', 'ele-term-list' ),
+				'label' => __( 'Content', 'ele-custom-skin' ),
 				'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
 			]
 		);
@@ -82,9 +82,9 @@ class Ele_Custom_Loop_Item_Widget extends \Elementor\Widget_Base {
     $this->add_control(
 			'important_note',
 			[
-				'label' => __( 'Loop Item Place Holder', 'ele-term-list' ),
+				'label' => __( 'Loop Item Place Holder', 'ele-custom-skin' ),
 				'type' => \Elementor\Controls_Manager::RAW_HTML,
-				'raw' => __( 'Place this widget where the Loop Item you want to show in Ele Custom Skin.', 'ele-term-list' ),
+				'raw' => __( 'Place this widget where the Loop Item you want to show in Ele Custom Skin.', 'ele-custom-skin' ),
 				'content_classes' => 'your-class',
         'selector'=>'{{wrapper}} .ecs-loop-preview'
 			]

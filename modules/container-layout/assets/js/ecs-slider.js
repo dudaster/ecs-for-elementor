@@ -6,10 +6,84 @@
 
 	// ── Live mode (PHP generated Swiper HTML) ─────────────────────────────────
 
+	/**
+	 * Config written by PHP in a <script type="application/json"> inside the
+	 * slider. Sliders without one were not rendered by ECS and are left alone.
+	 */
+	function readLiveConfig( el ) {
+		for ( var i = 0; i < el.children.length; i++ ) {
+			var child = el.children[ i ];
+			if ( child.tagName === 'SCRIPT' && child.classList.contains( 'ecs-swiper-config' ) ) {
+				try {
+					return JSON.parse( child.textContent );
+				} catch ( e ) {
+					return null;
+				}
+			}
+		}
+		return null;
+	}
+
+	function isNumber( value ) {
+		return typeof value === 'number' && isFinite( value );
+	}
+
+	/**
+	 * Rebuild the Swiper options from the keys the PHP side emits, with their
+	 * expected types. Nothing else reaches Swiper.
+	 */
+	function sanitizeLiveConfig( raw ) {
+		var settings = {};
+		if ( ! raw || typeof raw !== 'object' ) {
+			return settings;
+		}
+
+		[ 'slidesPerView', 'speed', 'spaceBetween' ].forEach( function ( key ) {
+			if ( isNumber( raw[ key ] ) ) {
+				settings[ key ] = raw[ key ];
+			}
+		} );
+		if ( typeof raw.loop === 'boolean' ) {
+			settings.loop = raw.loop;
+		}
+		if ( raw.navigation === true ) {
+			settings.navigation = true;
+		}
+		if ( raw.pagination && typeof raw.pagination === 'object' ) {
+			settings.pagination = { clickable: raw.pagination.clickable === true };
+		}
+		if ( raw.autoplay && typeof raw.autoplay === 'object' ) {
+			settings.autoplay = {
+				delay: isNumber( raw.autoplay.delay ) ? raw.autoplay.delay : 3000,
+				pauseOnMouseEnter: raw.autoplay.pauseOnMouseEnter === true,
+				disableOnInteraction: raw.autoplay.disableOnInteraction === true,
+			};
+		}
+		if ( raw.breakpoints && typeof raw.breakpoints === 'object' ) {
+			settings.breakpoints = {};
+			[ '0', '768', '1025' ].forEach( function ( width ) {
+				var bp = raw.breakpoints[ width ];
+				if ( ! bp || typeof bp !== 'object' ) {
+					return;
+				}
+				var clean = {};
+				if ( isNumber( bp.slidesPerView ) ) {
+					clean.slidesPerView = bp.slidesPerView;
+				}
+				if ( typeof bp.enabled === 'boolean' ) {
+					clean.enabled = bp.enabled;
+				}
+				settings.breakpoints[ width ] = clean;
+			} );
+		}
+
+		return settings;
+	}
+
 	function doInitLiveSlider( el ) {
 		el.setAttribute( 'data-ecs-swiper-init', '1' );
 
-		var settings = JSON.parse( el.getAttribute( 'data-ecs-slider-settings' ) || '{}' );
+		var settings = sanitizeLiveConfig( readLiveConfig( el ) );
 
 		if ( settings.navigation ) {
 			settings.navigation = {
@@ -25,7 +99,7 @@
 	}
 
 	function initLiveSlider( el ) {
-		if ( el.hasAttribute( 'data-ecs-swiper-init' ) ) {
+		if ( el.hasAttribute( 'data-ecs-swiper-init' ) || ! readLiveConfig( el ) ) {
 			return;
 		}
 

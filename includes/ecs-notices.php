@@ -55,29 +55,34 @@ class Ecs_Notice {
     public function admin_notice(){
       $user_id = get_current_user_id();
       if ($this->notice && get_user_meta( $user_id, $this->notice )) return;
-      $image = '<img width="30px" src="'.ELECS_URL . 'assets/dudaster_icon.png" style="width:32px;margin-right:10px;margin-bottom: -11px;"/> ';
+      $dismiss_url = wp_nonce_url( add_query_arg( 'ecsn_shown', rawurlencode( $this->notice ) ), 'ecsn_dismiss' );
       $user = wp_get_current_user();
       if ( in_array( $this->role, (array) $user->roles ) ) {
-      echo '<div class="notice notice-'.$this->type.' " style="padding-right: 38px; position: relative;">
-            <p> '.$image.$this->message.'</p>
-          <a href="?ecsn_shown='.$this->notice.'"><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></a>
-          </div>';
+      ?>
+      <div class="notice notice-<?php echo esc_attr( $this->type ); ?> " style="padding-right: 38px; position: relative;">
+            <p> <img width="30px" src="<?php echo esc_url( ELECS_URL . 'assets/dudaster_icon.png' ); ?>" style="width:32px;margin-right:10px;margin-bottom: -11px;"/> <?php echo wp_kses_post( $this->message ); ?></p>
+          <a href="<?php echo esc_url( $dismiss_url ); ?>"><button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e( 'Dismiss this notice.', 'ele-custom-skin' ); ?></span></button></a>
+          </div>
+      <?php
       }
     }
   
 }
 
 function ecs_notice_dismiss() {
-    $user_id = get_current_user_id();
-    if ( isset( $_GET['ecsn_shown'] )  )
-       if ( $_GET['ecsn_shown']) add_user_meta( $user_id,  $_GET['ecsn_shown'] , 'true', true );
+    if ( empty( $_GET['ecsn_shown'] ) ) return;
+    check_admin_referer( 'ecsn_dismiss' );
+    $notice = sanitize_text_field( wp_unslash( $_GET['ecsn_shown'] ) );
+    // Only notices that are currently shown can be dismissed.
+    if ( ! in_array( $notice, wp_list_pluck( ecs_load_notifications(), 'slug' ), true ) ) return;
+    add_user_meta( get_current_user_id(), $notice, 'true', true );
 }
 add_action( 'admin_init', 'ecs_notice_dismiss' );
 
 function ecs_check_for_notification(){
   if (!is_admin()) return;
   $user_id = get_current_user_id();
-  $current_date = date("Y-m-d"); 
+  $current_date = gmdate("Y-m-d"); 
   $notifications = ecs_load_notifications();
   $i=0;
   foreach($notifications as $notification){
@@ -97,7 +102,7 @@ function ecs_days_old(){
 function ecs_load_notifications(){
 
   $user_id = get_current_user_id();
-  $current_date = date("Y-m-d"); 
+  $current_date = gmdate("Y-m-d"); 
   $ecspro = ecs_is_plugin_active('ele-custom-skin-pro.php') ? true : false;
   $nver='ecs_notification_verification';
   $ndata='ecs_notification_data';
@@ -141,6 +146,7 @@ function ecs_load_notifications(){
 
 function ecs_data_get($url){
   if(!$url) return false; 
+  $body = false;
   $response = wp_remote_get($url,array( 'timeout' => 2 ));
   if( is_array($response) ) {
     $header = $response['headers']; // array of http header lines

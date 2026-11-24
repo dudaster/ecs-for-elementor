@@ -99,8 +99,14 @@ class ECS_DRB_Source_Terms extends ECS_DRB_Source_Base {
 	}
 
 	public function get_rows( array $config ): array {
+		// Same rule as the schema: only public taxonomies can be listed.
+		$taxonomy = sanitize_key( $config['taxonomy'] ?? 'category' );
+		if ( ! in_array( $taxonomy, get_taxonomies( [ 'public' => true ] ), true ) ) {
+			return [];
+		}
+
 		$args = [
-			'taxonomy'   => sanitize_key( $config['taxonomy'] ?? 'category' ),
+			'taxonomy'   => $taxonomy,
 			'number'     => intval( $config['number'] ?? 10 ),
 			'orderby'    => sanitize_key( $config['orderby'] ?? 'name' ),
 			'order'      => in_array( $config['order'] ?? 'ASC', [ 'ASC', 'DESC' ], true ) ? $config['order'] : 'ASC',

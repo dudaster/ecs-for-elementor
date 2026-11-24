@@ -182,7 +182,7 @@ class ECS_Loop_Custom_Layout_Module extends ECS_Module_Base {
 		$css_path = WP_CONTENT_DIR . '/uploads/elementor/css/post-' . $template_id . '.css';
 		if ( file_exists( $css_path ) ) {
 			echo '<style id="elementor-post-' . esc_attr( $template_id ) . '-css">'
-				. file_get_contents( $css_path ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				. str_ireplace( '</style', '<\/style', file_get_contents( $css_path ) ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPress.Security.EscapeOutput.OutputNotEscaped
 				. '</style>';
 		}
 
@@ -242,7 +242,7 @@ class ECS_Loop_Custom_Layout_Module extends ECS_Module_Base {
 				&& ( $element['settings']['ecs_use_custom_layout'] ?? '' ) === 'yes'
 			) {
 				$template_id = absint( $element['settings']['ecs_loop_layout_id'] ?? 0 );
-				if ( $template_id && 'publish' === get_post_status( $template_id ) ) {
+				if ( $template_id && self::is_custom_layout( $template_id ) ) {
 					$this->pending_widgets[ $element['id'] ] = $template_id;
 				}
 			}
@@ -413,10 +413,12 @@ class ECS_Loop_Custom_Layout_Module extends ECS_Module_Base {
 
 		$template_id = absint( $_POST['template_id'] ?? 0 );
 		$items       = isset( $_POST['items'] ) && is_array( $_POST['items'] )
-			? array_values( wp_unslash( $_POST['items'] ) )
+			// Editor-preview HTML of the requester's own canvas, sent back only to
+			// them and never stored; kses would strip the Elementor/SVG markup.
+			? array_values( array_filter( wp_unslash( $_POST['items'] ), 'is_string' ) ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			: [];
 
-		if ( ! $template_id || 'publish' !== get_post_status( $template_id ) ) {
+		if ( ! $template_id || ! self::is_custom_layout( $template_id ) ) {
 			wp_send_json_error( [ 'message' => 'Invalid template' ] );
 			return;
 		}
@@ -489,6 +491,16 @@ class ECS_Loop_Custom_Layout_Module extends ECS_Module_Base {
 		if ( $filter_was_active ) {
 			add_filter( 'elementor/element/should_render_shortcode', '__return_true' );
 		}
+	}
+
+
+	/**
+	 * Only published ECS Custom Layout templates can be used as a layout.
+	 */
+	private static function is_custom_layout( int $post_id ): bool {
+		return 'publish' === get_post_status( $post_id )
+			&& 'elementor_library' === get_post_type( $post_id )
+			&& 'ecs_custom_layout' === get_post_meta( $post_id, '_elementor_template_type', true );
 	}
 
 	/**

@@ -133,7 +133,9 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 				'bound'          => __( 'Bound — data is generated at runtime on every page load.', 'ele-custom-skin' ),
 				'notBound'       => __( 'Not bound. Apply once or bind to enable runtime generation.', 'ele-custom-skin' ),
 				'autoSuggest'    => __( 'Auto-suggest Mapping', 'ele-custom-skin' ),
+				/* translators: %d: number of rows generated from the data source. */
 				'previewRows'    => __( '%d rows generated', 'ele-custom-skin' ),
+				/* translators: %d: number of rows written into the repeater control. */
 				'appliedRows'    => __( '%d rows applied to repeater', 'ele-custom-skin' ),
 				'cached'         => __( '(cached)', 'ele-custom-skin' ),
 			],
@@ -153,6 +155,17 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 	}
 
 	// ── AJAX handlers ─────────────────────────────────────────────────────────
+
+	/**
+	 * Decode a JSON-encoded request field. Always returns an array, so a
+	 * payload that decodes to a scalar never reaches code expecting one.
+	 * Callers verify the nonce first; values are sanitized where they're used.
+	 */
+	private function request_json( string $key ): array {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$decoded = isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ? json_decode( wp_unslash( $_POST[ $key ] ), true ) : null;
+		return is_array( $decoded ) ? $decoded : [];
+	}
 
 	/**
 	 * Every handler is reachable by anyone who can read the 'ecs_drb' nonce,
@@ -236,7 +249,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		$this->check_capability( 'edit_posts' );
 
 		$source_id     = sanitize_key( $_POST['source_type'] ?? '' );
-		$source_config = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$source_config = $this->request_json( 'source_config' );
 		$this->check_source_config_post_capability( $source_config );
 
 		$source = ECS_DRB_Sources::instance()->get( $source_id );
@@ -255,7 +268,7 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		$this->check_capability( 'edit_posts' );
 
 		$source_id       = sanitize_key( $_POST['source_type'] ?? '' );
-		$source_config   = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
+		$source_config   = $this->request_json( 'source_config' );
 		$current_post_id = intval( $_POST['current_post_id'] ?? 0 );
 		if ( $current_post_id && empty( $source_config['post_id'] ) ) {
 			$source_config['_current_post_id'] = $current_post_id;
@@ -275,10 +288,10 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		$this->check_capability( 'edit_posts' );
 
 		$source_id      = sanitize_key( $_POST['source_type'] ?? '' );
-		$source_config  = json_decode( stripslashes( $_POST['source_config'] ?? '{}' ), true ) ?: [];
-		$mapping        = json_decode( stripslashes( $_POST['mapping'] ?? '[]' ), true ) ?: [];
-		$field_types    = json_decode( stripslashes( $_POST['field_types'] ?? '{}' ), true ) ?: [];
-		$use_cache      = filter_var( $_POST['use_cache'] ?? true, FILTER_VALIDATE_BOOLEAN );
+		$source_config  = $this->request_json( 'source_config' );
+		$mapping        = $this->request_json( 'mapping' );
+		$field_types    = $this->request_json( 'field_types' );
+		$use_cache      = filter_var( wp_unslash( $_POST['use_cache'] ?? true ), FILTER_VALIDATE_BOOLEAN );
 		$cache_ttl      = intval( $_POST['cache_ttl'] ?? self::CACHE_TTL );
 		$current_post_id = intval( $_POST['current_post_id'] ?? 0 );
 		if ( $current_post_id && empty( $source_config['post_id'] ) ) {
@@ -305,7 +318,8 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 			}
 		}
 
-		$rows = ECS_DRB_Mapper::resolve( $source_rows, $mapping, $field_types );
+		// Same sanitizing as the runtime binding path.
+		$rows = $this->sanitize_bound_row( ECS_DRB_Mapper::resolve( $source_rows, $mapping, $field_types ) );
 
 		wp_send_json_success( [
 			'rows'         => $rows,
@@ -327,8 +341,8 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		// checks don't apply, so this requires a site-level capability instead.
 		$this->check_capability( 'edit_theme_options' );
 
-		$name   = sanitize_text_field( $_POST['name'] ?? '' );
-		$config = json_decode( stripslashes( $_POST['config'] ?? '{}' ), true ) ?: [];
+		$name   = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+		$config = $this->request_json( 'config' );
 
 		if ( empty( $name ) ) {
 			wp_send_json_error( [ 'message' => 'Preset name is required' ] );
@@ -363,9 +377,9 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
 
 		$post_id     = intval( $_POST['post_id'] ?? 0 );
-		$element_id  = sanitize_text_field( $_POST['element_id'] ?? '' );
-		$control_key = sanitize_text_field( $_POST['control_key'] ?? '' );
-		$config      = json_decode( stripslashes( $_POST['config'] ?? '{}' ), true ) ?: [];
+		$element_id  = sanitize_text_field( wp_unslash( $_POST['element_id'] ?? '' ) );
+		$control_key = sanitize_text_field( wp_unslash( $_POST['control_key'] ?? '' ) );
+		$config      = $this->request_json( 'config' );
 
 		$this->check_capability( 'edit_post', $post_id );
 
@@ -397,8 +411,8 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		check_ajax_referer( 'ecs_drb', 'nonce' );
 
 		$post_id     = intval( $_POST['post_id'] ?? 0 );
-		$element_id  = sanitize_text_field( $_POST['element_id'] ?? '' );
-		$control_key = sanitize_text_field( $_POST['control_key'] ?? '' );
+		$element_id  = sanitize_text_field( wp_unslash( $_POST['element_id'] ?? '' ) );
+		$control_key = sanitize_text_field( wp_unslash( $_POST['control_key'] ?? '' ) );
 
 		$this->check_capability( 'edit_post', $post_id );
 
@@ -439,9 +453,9 @@ class ECS_Dynamic_Repeater_Module extends ECS_Module_Base {
 		$this->check_capability( 'edit_posts' );
 
 		$taxonomy = sanitize_key( $_POST['taxonomy'] ?? '' );
-		$search   = sanitize_text_field( $_POST['search'] ?? '' );
+		$search   = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
 
-		if ( ! $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
+		if ( ! $taxonomy || ! in_array( $taxonomy, get_taxonomies( [ 'public' => true ] ), true ) ) {
 			wp_send_json_success( [ 'terms' => [] ] );
 			return;
 		}

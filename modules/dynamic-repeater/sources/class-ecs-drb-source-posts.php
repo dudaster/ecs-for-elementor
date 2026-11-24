@@ -134,15 +134,23 @@ class ECS_DRB_Source_Posts extends ECS_DRB_Source_Base {
 	}
 
 	public function get_rows( array $config ): array {
+		// Same limits as the schema offers in the UI: public post types only,
+		// 1-200 posts, no password-protected posts.
+		$post_type = sanitize_key( $config['post_type'] ?? 'post' );
+		if ( ! in_array( $post_type, get_post_types( [ 'public' => true ] ), true ) ) {
+			return [];
+		}
+
 		$args = [
-			'post_type'      => sanitize_key( $config['post_type'] ?? 'post' ),
-			'posts_per_page' => intval( $config['posts_per_page'] ?? 10 ),
+			'post_type'      => $post_type,
+			'posts_per_page' => min( 200, max( 1, absint( $config['posts_per_page'] ?? 10 ) ) ),
 			'orderby'        => sanitize_key( $config['orderby'] ?? 'date' ),
 			'order'          => in_array( $config['order'] ?? 'DESC', [ 'ASC', 'DESC' ], true ) ? $config['order'] : 'DESC',
 			'post_status'    => 'publish',
+			'has_password'   => false,
 		];
 
-		if ( ! empty( $config['taxonomy'] ) && ! empty( $config['tax_terms'] ) ) {
+		if ( ! empty( $config['taxonomy'] ) && ! empty( $config['tax_terms'] ) && in_array( sanitize_key( $config['taxonomy'] ), get_taxonomies( [ 'public' => true ] ), true ) ) {
 			$term_slugs = array_map( 'trim', explode( ',', $config['tax_terms'] ) );
 			$args['tax_query'] = [ [
 				'taxonomy' => sanitize_key( $config['taxonomy'] ),

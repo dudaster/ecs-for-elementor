@@ -57,10 +57,10 @@ Let's be undependable from Preview As options
 
 		return [
 			'single' => [
-				'label' => __( 'Single', 'elementor-pro' ),
+				'label' => __( 'Single', 'ele-custom-skin' ),
 				'options' => $post_types_options,
 			],
-			'page/404' => __( '404', 'elementor-pro' ),
+			'page/404' => __( '404', 'ele-custom-skin' ),
 		];
 	}
 

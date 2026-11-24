@@ -120,22 +120,22 @@ class ECS_Default_Colours_Tab extends Global_Colors {
 		$default_colors = [
 			[
 				'_id'   => 'primary',
-				'title' => esc_html__( 'Primary', 'elementor' ),
+				'title' => esc_html__( 'Primary', 'ele-custom-skin' ),
 				'color' => '#6EC1E4',
 			],
 			[
 				'_id'   => 'secondary',
-				'title' => esc_html__( 'Secondary', 'elementor' ),
+				'title' => esc_html__( 'Secondary', 'ele-custom-skin' ),
 				'color' => '#54595F',
 			],
 			[
 				'_id'   => 'text',
-				'title' => esc_html__( 'Text', 'elementor' ),
+				'title' => esc_html__( 'Text', 'ele-custom-skin' ),
 				'color' => '#7A7A7A',
 			],
 			[
 				'_id'   => 'accent',
-				'title' => esc_html__( 'Accent', 'elementor' ),
+				'title' => esc_html__( 'Accent', 'ele-custom-skin' ),
 				'color' => '#61CE70',
 			],
 		];

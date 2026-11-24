@@ -1,10 +1,12 @@
 function ECS_update_admin_bar_menu(items){
   
-  for (i = 0; i < items.length; i++) {
-    if ( !jQuery( "#"+items[i].id ).length ) {
+  for (var i = 0; i < items.length; i++) {
+    if ( !document.getElementById( items[i].id ) ) {
  
-        itemtemplate='<li id="'+items[i].id+'"><a class="ab-item" href="'+items[i].href+'">'+items[i].title+'</a></li>';
-        jQuery( "#"+items[i].parent).append( itemtemplate );
+        // Built with .attr() instead of string concatenation so no value can
+        // break out of its attribute; title is escaped on the PHP side.
+        var link = jQuery( '<a class="ab-item"></a>' ).attr( 'href', items[i].href ).html( items[i].title );
+        jQuery( document.getElementById( items[i].parent ) ).append( jQuery( '<li></li>' ).attr( 'id', items[i].id ).append( link ) );
        
     }
   }

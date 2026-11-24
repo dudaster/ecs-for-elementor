@@ -169,34 +169,26 @@ class ECS_Style_Templates_Module extends ECS_Module_Base {
 	 * JavaScript populates the <select> and wires button events.
 	 */
 	private function render_panel_html( string $widget_type ): string {
-		$select_label  = esc_html__( '— Select template —', 'ele-custom-skin' );
-		$apply_label   = esc_html__( 'Apply', 'ele-custom-skin' );
-		$ow_label      = esc_html__( 'Overwrite', 'ele-custom-skin' );
-		$del_title     = esc_attr__( 'Delete template', 'ele-custom-skin' );
-		$link_label    = esc_html__( 'Link to template', 'ele-custom-skin' );
-		$ph_label      = esc_attr__( 'Template name…', 'ele-custom-skin' );
-		$save_label    = esc_html__( 'Save current style', 'ele-custom-skin' );
-		$widget        = esc_attr( $widget_type );
-
-		return <<<HTML
-<div class="ecs-st-panel" data-widget-type="{$widget}">
+		ob_start();
+		?>
+<div class="ecs-st-panel" data-widget-type="<?php echo esc_attr( $widget_type ); ?>">
 
 	<!-- Template select -->
 	<div class="elementor-control-input-wrapper ecs-st-select-wrap">
 		<select class="ecs-st-select">
-			<option value="">{$select_label}</option>
+			<option value=""><?php esc_html_e( '— Select template —', 'ele-custom-skin' ); ?></option>
 		</select>
 	</div>
 
 	<!-- Quick actions -->
 	<div class="ecs-st-actions">
 		<button class="ecs-st-btn ecs-st-btn-apply" data-action="apply">
-			<i class="eicon-check"></i><span>{$apply_label}</span>
+			<i class="eicon-check"></i><span><?php esc_html_e( 'Apply', 'ele-custom-skin' ); ?></span>
 		</button>
 		<button class="ecs-st-btn ecs-st-btn-overwrite" data-action="overwrite">
-			<i class="eicon-save"></i><span>{$ow_label}</span>
+			<i class="eicon-save"></i><span><?php esc_html_e( 'Overwrite', 'ele-custom-skin' ); ?></span>
 		</button>
-		<button class="ecs-st-btn ecs-st-btn-danger" data-action="delete_tpl" title="{$del_title}">
+		<button class="ecs-st-btn ecs-st-btn-danger" data-action="delete_tpl" title="<?php esc_attr_e( 'Delete template', 'ele-custom-skin' ); ?>">
 			<i class="eicon-trash-o"></i>
 		</button>
 	</div>
@@ -204,7 +196,7 @@ class ECS_Style_Templates_Module extends ECS_Module_Base {
 	<!-- Link switch -->
 	<div class="ecs-st-link-row">
 		<span class="ecs-st-link-label">
-			<i class="eicon-link"></i>{$link_label}
+			<i class="eicon-link"></i><?php esc_html_e( 'Link to template', 'ele-custom-skin' ); ?>
 		</span>
 		<label class="elementor-switch elementor-control-unit-2 ecs-st-link-switch">
 			<input type="checkbox" class="elementor-switch-input ecs-st-link-toggle">
@@ -219,15 +211,16 @@ class ECS_Style_Templates_Module extends ECS_Module_Base {
 	<!-- Save form -->
 	<div class="ecs-st-save-form">
 		<div class="elementor-control-input-wrapper">
-			<input type="text" class="ecs-st-name-input" placeholder="{$ph_label}" />
+			<input type="text" class="ecs-st-name-input" placeholder="<?php esc_attr_e( 'Template name…', 'ele-custom-skin' ); ?>" />
 		</div>
 		<button class="ecs-st-btn ecs-st-btn-save" data-action="save_new">
-			<i class="eicon-plus-circle-o"></i><span>{$save_label}</span>
+			<i class="eicon-plus-circle-o"></i><span><?php esc_html_e( 'Save current style', 'ele-custom-skin' ); ?></span>
 		</button>
 	</div>
 
 </div>
-HTML;
+		<?php
+		return ob_get_clean();
 	}
 
 	// ── Frontend merge ────────────────────────────────────────────────────────
@@ -446,6 +439,8 @@ HTML;
 	}
 
 	// ── AJAX ─────────────────────────────────────────────────────────────────
+	// Every handler below starts with verify_ajax(), which checks the nonce.
+	// phpcs:disable WordPress.Security.NonceVerification.Missing
 
 	private function verify_ajax(): void {
 		check_ajax_referer( 'ecs_style_templates', 'nonce' );
@@ -490,8 +485,8 @@ HTML;
 		$this->verify_ajax_write();
 
 		$widget_type   = sanitize_key( $_POST['widget_type'] ?? '' );
-		$template_name = sanitize_text_field( substr( $_POST['template_name'] ?? '', 0, 100 ) );
-		$raw           = json_decode( stripslashes( $_POST['style_settings'] ?? '{}' ), true );
+		$template_name = sanitize_text_field( substr( wp_unslash( $_POST['template_name'] ?? '' ), 0, 100 ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_text_field() wraps it
+		$raw           = json_decode( wp_unslash( $_POST['style_settings'] ?? '{}' ), true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized by sanitize_style_settings()
 		$style         = $this->sanitize_style_settings( is_array( $raw ) ? $raw : [] );
 
 		if ( empty( $widget_type ) || empty( $template_name ) ) {
@@ -522,8 +517,8 @@ HTML;
 		$this->verify_ajax_write();
 
 		$widget_type   = sanitize_key( $_POST['widget_type'] ?? '' );
-		$template_name = sanitize_text_field( substr( $_POST['template_name'] ?? '', 0, 100 ) );
-		$raw           = json_decode( stripslashes( $_POST['style_settings'] ?? '{}' ), true );
+		$template_name = sanitize_text_field( substr( wp_unslash( $_POST['template_name'] ?? '' ), 0, 100 ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_text_field() wraps it
+		$raw           = json_decode( wp_unslash( $_POST['style_settings'] ?? '{}' ), true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized by sanitize_style_settings()
 		$style         = $this->sanitize_style_settings( is_array( $raw ) ? $raw : [] );
 
 		if ( empty( $widget_type ) || empty( $template_name ) ) {
@@ -547,7 +542,7 @@ HTML;
 		$this->verify_ajax();
 
 		$widget_type   = sanitize_key( $_POST['widget_type'] ?? '' );
-		$template_name = sanitize_text_field( $_POST['template_name'] ?? '' );
+		$template_name = sanitize_text_field( wp_unslash( $_POST['template_name'] ?? '' ) );
 
 		$all    = get_option( self::OPTION_KEY, [] );
 		$preset = $all[ $widget_type ][ $template_name ] ?? null;
@@ -564,7 +559,7 @@ HTML;
 		$this->verify_ajax_write();
 
 		$widget_type   = sanitize_key( $_POST['widget_type'] ?? '' );
-		$template_name = sanitize_text_field( $_POST['template_name'] ?? '' );
+		$template_name = sanitize_text_field( wp_unslash( $_POST['template_name'] ?? '' ) );
 
 		$all = get_option( self::OPTION_KEY, [] );
 		if ( ! isset( $all[ $widget_type ][ $template_name ] ) ) {
@@ -607,6 +602,8 @@ HTML;
 
 		return $out;
 	}
+
+	// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 	// ── Assets ────────────────────────────────────────────────────────────────
 

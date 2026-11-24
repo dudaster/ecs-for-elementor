@@ -230,9 +230,9 @@ class Skin_Posts_ECS extends Skin_Base {
   public function end_grid(){
 
     if($this->grid_settings['current']) for($i = $this->grid_settings['current']; $i < $this->grid_settings['length'];$i++){
-      echo "<!-- start part [".$i."] finishing -->";
-      echo $this->grid[$i];
-      echo "<!-- end part [".$i."] finishing -->";
+      echo "<!-- start part [" . (int) $i . "] finishing -->";
+      echo $this->grid[$i]; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor-rendered template HTML
+      echo "<!-- end part [" . (int) $i . "] finishing -->";
     }
     $this->grid_settings['current'] = 0;
 
@@ -286,7 +286,7 @@ class Skin_Posts_ECS extends Skin_Base {
     $parent_settings[$this->get_id().'_post_slider'] = isset($parent_settings[$this->get_id().'_post_slider'])? $parent_settings[$this->get_id().'_post_slider'] : "";
      if($parent_settings[$this->get_id().'_post_slider'] == "yes") $classes .= ' swiper-slide';
      if ($this->grid_settings['allow']) {
-        echo $this->get_grid();
+        echo $this->get_grid(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor-rendered template HTML
         ?>
 		<div id="post-<?php the_ID(); ?>" <?php post_class( [ $classes ] ); ?>>
 		<?php
@@ -319,13 +319,13 @@ class Skin_Posts_ECS extends Skin_Base {
         apply_filters( 'ecs_dynamic_filter', "", $post,"",$this->parent->get_settings());//this is for pre-use of custom values
         $template = $this->get_template();
         $new_template = apply_filters( 'ecs_dynamic_filter', $template, $post,"",$this->parent->get_settings());
-        echo  $new_template ? $new_template : $template;
+        echo  $new_template ? $new_template : $template; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor-rendered template HTML
       }
-        else echo $this->get_template(); 
+        else echo $this->get_template(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor-rendered template HTML
     }
 
 			else  echo '<div style="display:table;border:1px solid #c6ced5; background:#dde1e5; width:100%; height:100%; min-height:200px;text-align:center; padding:20px;"><span style="vertical-align:middle;display: table-cell;color:#8995a0;">'.
-        __( "Please select a default template! ", 'ele-custom-skin').'</span></div>';
+        esc_html__( "Please select a default template! ", 'ele-custom-skin').'</span></div>';
 
     do_action( 'ECS_before_render_post_footer', $this );
 		$this->render_post_footer();
@@ -350,7 +350,7 @@ class Skin_Posts_ECS extends Skin_Base {
                
       ];
 
-      $pagination=json_encode($args);
+      $pagination=wp_json_encode($args);
       return $pagination;
     }
   
@@ -381,7 +381,7 @@ class Skin_Posts_ECS extends Skin_Base {
       ] );
 
       ?>
-      <div <?php echo $this->parent->get_render_attribute_string( 'container' ); ?>>
+      <div <?php $this->parent->print_render_attribute_string( 'container' ); ?>>
       <?php
 	}
 
@@ -432,7 +432,7 @@ class Skin_Posts_ECS extends Skin_Base {
 				'total' => $page_limit,
 				'prev_next' => false,
 				'show_all' => 'yes' !== $parent_settings['pagination_numbers_shorten'],
-				'before_page_number' => '<span class="elementor-screen-only">' . __( 'Page', 'elementor-pro' ) . '</span>',
+				'before_page_number' => '<span class="elementor-screen-only">' . __( 'Page', 'ele-custom-skin' ) . '</span>',
 			];
 
 			if ( is_singular() && ! is_front_page() ) {
@@ -455,8 +455,8 @@ class Skin_Posts_ECS extends Skin_Base {
 		}
 
 		?>
-		<nav class="elementor-pagination" role="navigation" aria-label="<?php esc_attr_e( 'Pagination', 'elementor-pro' ); ?>">
-			<?php echo implode( PHP_EOL, $links ); ?>
+		<nav class="elementor-pagination" role="navigation" aria-label="<?php esc_attr_e( 'Pagination', 'ele-custom-skin' ); ?>">
+			<?php echo implode( PHP_EOL, $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup from paginate_links() / Elementor's get_posts_nav_link() ?>
 		</nav>
 		<?php
 
@@ -477,36 +477,31 @@ class Skin_Posts_ECS extends Skin_Base {
     $target= $this->parent->get_id();
 
 		?>
-		<nav class="ecs-lazyload elementor-pagination" data-targetid="<?php echo $target; ?>">
-            <?php echo $animation; ?>
-			<a href="<?php echo $next_page_link; ?>" >
+		<nav class="ecs-lazyload elementor-pagination" data-targetid="<?php echo esc_attr( $target ); ?>">
+            <?php echo $animation; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- fixed markup from ECS_Loading_Animation, no user input ?>
+			<a href="<?php echo esc_url( $next_page_link ); ?>" >
         &gt;
       </a>
 		</nav>
 		<?php
-	}  
+	}
   protected function render_loadmore_button() {
 		$settings =  $this->parent->get_settings();
     $next_page = $this->parent->get_current_page()+1;
     $next_page_link = trailingslashit( get_permalink() ) . '?page='.$next_page;
     $class='';
-    $args = [ 'loading_text'  =>  $settings['loadmore_loading_text'],
-         'text' => $settings['loadmore_text'],//or infinitescroll for pro
-         'widget_id' => $this->parent->get_id(),
-
-    ];
-
-    $data=htmlentities(json_encode($args), ENT_QUOTES);
+    $args = [ 'widget_id' => $this->parent->get_id() ];
 
 		if ( $settings['loadmore_hover_animation'] ) {
-			$class = 'elementor-animation-' . $settings['loadmore_hover_animation'];
+			$class = 'elementor-animation-' . sanitize_html_class( $settings['loadmore_hover_animation'] );
 		}
 
 		?>
-		<nav class="elementor-button-wrapper elementor-pagination ecs-load-more-button" data-settings="<?php echo $data; ?>">
-			<a href="<?php echo $next_page_link; ?>" class="elementor-button-link elementor-button <?php echo $class; ?>" role="button">
-				<span><?php echo $settings['loadmore_text']; ?></span>
+		<nav class="elementor-button-wrapper elementor-pagination ecs-load-more-button" data-settings="<?php echo esc_attr( wp_json_encode( $args ) ); ?>">
+			<a href="<?php echo esc_url( $next_page_link ); ?>" class="elementor-button-link elementor-button <?php echo esc_attr( $class ); ?>" role="button">
+				<span><?php echo wp_kses_post( $settings['loadmore_text'] ); ?></span>
 			</a>
+			<template class="ecs-loadmore-loading"><?php echo wp_kses_post( $settings['loadmore_loading_text'] ); ?></template>
 		</nav>
 		<?php
 	}
@@ -520,13 +515,13 @@ class Skin_Posts_ECS extends Skin_Base {
       $this->render_loop_header();
       $should_escape = apply_filters( 'elementor_pro/theme_builder/archive/escape_nothing_found_message', true );
       $message = $this->parent->get_settings_for_display( 'nothing_found_message' );
-      if ( $should_escape ) {
-          $message = esc_html( $message );
-      }
+      // Same filter Elementor Pro uses; when a site opts out of escaping,
+      // still keep the message to safe post HTML.
+      $message = $should_escape ? esc_html( $message ) : wp_kses_post( $message );
 
       $message = '<div class="elementor-posts-nothing-found">' . $message . '</div>';
       do_action( 'ECS_not_found', $this );
-      echo  $message;
+      echo  $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above
       $this->render_loop_footer();
   }
   

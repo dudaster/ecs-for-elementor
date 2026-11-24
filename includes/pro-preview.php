@@ -109,7 +109,7 @@ add_action( 'ECS_after_control', function($skin){
 					$skin->get_id().'_alternating_templates' => 'yes',
           $skin->get_id().'_pro_features' => 'yes'
 				],
-				'title_field' => '<p style="text-align:center;"><i class="fa fa-lock" aria-hidden="true"></i> '.__('Template for every ', 'ele-custom-skin').'{{{nth}}}'.__('th post', 'ele-custom-skin').'</p>',
+				'title_field' => '<p style="text-align:center;"><i class="fa fa-lock" aria-hidden="true"></i> '.__('Template for every ', 'ele-custom-skin').'{{ nth }}'.__('th post', 'ele-custom-skin').'</p>',
 			]
 		);
     
@@ -125,7 +125,7 @@ add_action( 'ECS_after_control', function($skin){
 				],        
 			]
 		);
-    if ('2019-09-20' <= date("Y-m-d"))  $skin->add_control(
+    if ('2019-09-20' <= gmdate("Y-m-d"))  $skin->add_control(
 			'masonrys',
 			[
 				'label' => '<i class="fa fa-lock" aria-hidden="true"></i> '.__( 'Masonry', 'ele-custom-skin' ),

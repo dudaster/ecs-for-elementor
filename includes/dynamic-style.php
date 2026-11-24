@@ -87,7 +87,8 @@ function ECS_set_dynamic_style( \Elementor\Element_Base $element ) {
   }
   
 
-  echo $ECS_css ? "<style>".$ECS_css."</style>" :"";
+  // CSS only: no markup inside the style block.
+  echo $ECS_css ? "<style>" . wp_strip_all_tags( $ECS_css ) . "</style>" : ""; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS, tags stripped
   /* end custom css*/
 }
 
